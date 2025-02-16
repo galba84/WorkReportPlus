@@ -44,9 +44,9 @@ public class DailyWorkReportController {
         return "new_report";
     }
 
-    @GetMapping("/api/reports/search")
-    public String searchReports(@RequestParam("startDate") String startDate,
-                                @RequestParam("endDate") String endDate,
+    @GetMapping("/search")
+    public String searchReports(@RequestParam(value = "startDate", required = false) String startDate,
+                                @RequestParam(value = "endDate", required = false) String endDate,
                                 @RequestParam(value = "region", required = false) String region,
                                 Model model) {
         model.addAttribute("reports", List.of());
