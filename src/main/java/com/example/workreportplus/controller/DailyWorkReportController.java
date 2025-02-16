@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.ui.Model;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/api/daily-work-report")
 public class DailyWorkReportController {
@@ -47,8 +49,7 @@ public class DailyWorkReportController {
                                 @RequestParam("endDate") String endDate,
                                 @RequestParam(value = "region", required = false) String region,
                                 Model model) {
-        List<Report> reports = reportService.searchReports(startDate, endDate, region);
-        model.addAttribute("reports", reports);
+        model.addAttribute("reports", List.of());
         return "search_reports"; // Returns the same template with search results
     }
 }

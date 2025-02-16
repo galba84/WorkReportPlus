@@ -21,7 +21,7 @@ services:
     container_name: workreportplus_app
     restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3307/work_report_db
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/work_report_db
       SPRING_DATASOURCE_USERNAME: workreport_user
       SPRING_DATASOURCE_PASSWORD: userpass
       SPRING_FLYWAY_ENABLED: "true"

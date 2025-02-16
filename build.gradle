@@ -3,6 +3,8 @@ plugins {
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'nu.studer.jooq' version '9.0' // ✅ Update to the latest version
+    id 'org.flywaydb.flyway' version '11.3.2' // ✅ Use the latest Flyway version
+
 }
 
 group = 'com.example'
@@ -34,6 +36,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
+
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     // jOOQ Code Generation Dependencies
     // ✅ Use the same jOOQ version for runtime and generation
@@ -44,7 +47,6 @@ dependencies {
 
     // ✅ Add SLF4J logging
     implementation 'org.slf4j:slf4j-api:2.0.9'
-    implementation 'org.slf4j:slf4j-simple:2.0.9'
 
 
     compileOnly 'org.projectlombok:lombok'
@@ -88,3 +90,15 @@ jooq {
         }
     }
 }
+
+
+flyway {
+    url = 'jdbc:mariadb://mariadb:3306/work_report_db' // ✅ Use container hostname, NOT localhost
+    user = 'root'
+    password = 'adm'
+    schemas = ['work_report_db']
+    locations = ['classpath:db/migration'] // ✅ Use `classpath:` for embedded resources
+    baselineOnMigrate = true
+    cleanDisabled = false
+}
+
