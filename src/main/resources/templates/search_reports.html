@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Search Reports</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div th:insert="~{fragments/header :: body}"></div> <!-- Include the header fragment -->
+
+<h2>Search Reports</h2>
+
+<!-- Search Form -->
+<form th:action="@{/api/reports/search}" method="GET">
+    <!-- Date Range -->
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" name="startDate" required>
+
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" name="endDate" required>
+
+    <!-- Region Selection -->
+    <label for="region">Region:</label>
+    <select id="region" name="region">
+        <option value="">-- Select Region --</option>
+        <option value="North">North</option>
+        <option value="South">South</option>
+        <option value="East">East</option>
+        <option value="West">West</option>
+    </select>
+
+    <!-- Search Button -->
+    <button type="submit">Search</button>
+</form>
+
+<!-- Results Section -->
+<div id="results">
+    <h3>Search Results</h3>
+    <table border="1">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Report Date</th>
+            <th>Region</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Dynamically populate results -->
+        <tr th:each="report : ${reports}">
+            <td th:text="${report.id}"></td>
+            <td th:text="${report.date}"></td>
+            <td th:text="${report.region}"></td>
+            <td th:text="${report.description}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

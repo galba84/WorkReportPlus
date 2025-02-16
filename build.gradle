@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'nu.studer.jooq' version '9.0' // ✅ Update to the latest version
 }
 
 group = 'com.example'
@@ -34,6 +35,18 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+    // jOOQ Code Generation Dependencies
+    // ✅ Use the same jOOQ version for runtime and generation
+    implementation 'org.jooq:jooq:3.18.5'
+    jooqGenerator 'org.jooq:jooq-meta:3.18.5'
+    jooqGenerator 'org.jooq:jooq-codegen:3.18.5'
+    jooqGenerator 'org.mariadb.jdbc:mariadb-java-client'
+
+    // ✅ Add SLF4J logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
+
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
@@ -46,4 +59,32 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+jooq {
+    version = '3.18.5' // ✅ Ensure jOOQ version is up to date
+
+    configurations {
+        main { // ✅ Use `main` instead of older `generationTool`
+            generationTool {
+                jdbc {
+                    driver = 'org.mariadb.jdbc.Driver'
+                    url = 'jdbc:mariadb://localhost:3307/work_report_db'
+                    user = 'workreport_user'
+                    password = 'userpass'
+                }
+                generator {
+                    database {
+                        name = 'org.jooq.meta.mariadb.MariaDBDatabase'
+                        inputSchema = 'work_report_db' // ✅ Ensure schema is set
+                        includes = '.*'
+                    }
+                    target {
+                        packageName = 'com.example.jooq'
+                        directory = layout.buildDirectory.dir("generated/sources/jooq/main").get().asFile.absolutePath
+                    }
+                }
+            }
+        }
+    }
 }

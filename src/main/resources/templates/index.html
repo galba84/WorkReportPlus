@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Home</title>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Include the header fragment -->
+<div th:insert="~{fragments/header :: body}">
+    <!-- Pass the info message -->
+    <th:block th:with="infoMessage='Welcome to the Report System'"></th:block>
+</div>
+
+<h1>Welcome to the Home Page</h1>
+
+</body>
+</html>
