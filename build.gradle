@@ -36,6 +36,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
+    // ✅ Add SLF4J logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
 
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     // jOOQ Code Generation Dependencies
@@ -45,8 +47,6 @@ dependencies {
     jooqGenerator 'org.jooq:jooq-codegen:3.18.5'
     jooqGenerator 'org.mariadb.jdbc:mariadb-java-client'
 
-    // ✅ Add SLF4J logging
-    implementation 'org.slf4j:slf4j-api:2.0.9'
 
 
     compileOnly 'org.projectlombok:lombok'

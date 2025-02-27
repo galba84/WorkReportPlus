@@ -10,35 +10,35 @@
 
     <!-- User Information (If Logged In) -->
     <div class="user-info" th:if="${#authentication.isAuthenticated()}">
-        <span>Welcome, <b th:text="${#authentication.name}">User</b>!</span>
+        <span>Welcome,
+            <b th:if="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
+               th:text="${#authentication.principal.attributes['email']}">User</b>
 
-        <!-- Check if user is OAuth2 (Google Login) and display email -->
-        <span th:if="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
-              th:text="${#authentication.principal.attributes['email']}"></span>
-
-        <!-- Fallback: Show username for non-OAuth2 users -->
-        <span th:unless="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}">
-            (Username: <b th:text="${#authentication.name}"></b>)
+            <b th:unless="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
+               th:text="${#authentication.name}">User</b>
         </span>
     </div>
+
+    <!-- Separator -->
+    <hr>
 
     <!-- Navigation Menu -->
     <div class="menu">
         <a th:href="@{/api/daily-work-report}">New Report</a>
-        <a th:href="@{/open-report}">Open Report</a>
+        <a th:href="@{/api/daily-work-report/view}">Open Report</a>
         <a th:href="@{/api/daily-work-report/search}">Search Report</a>
         <form th:action="@{/logout}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <button type="submit">Logout</button>
         </form>
-
     </div>
 </div>
 
 <script>
     function clearCookies() {
         document.cookie.split(";").forEach(function(cookie) {
-            document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");
+            document.cookie = cookie.replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");
         });
     }
     window.onload = clearCookies;

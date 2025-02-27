@@ -5,20 +5,18 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-<div th:insert="~{fragments/header :: body}"></div> <!-- Include the header fragment -->
+
+<div th:insert="~{fragments/header :: body}"></div>
 
 <h2>Search Reports</h2>
 
-<!-- Search Form -->
 <form th:action="@{/api/daily-work-report/search}" method="GET">
-    <!-- Date Range -->
     <label for="startDate">Start Date:</label>
     <input type="date" id="startDate" name="startDate" required>
 
     <label for="endDate">End Date:</label>
     <input type="date" id="endDate" name="endDate" required>
 
-    <!-- Region Selection -->
     <label for="region">Region:</label>
     <select id="region" name="region">
         <option value="">-- Select Region --</option>
@@ -28,29 +26,30 @@
         <option value="West">West</option>
     </select>
 
-    <!-- Search Button -->
     <button type="submit">Search</button>
 </form>
 
-<!-- Results Section -->
 <div id="results">
     <h3>Search Results</h3>
-    <table border="1">
+    <table class="full-width-table">
         <thead>
         <tr>
             <th>ID</th>
             <th>Report Date</th>
             <th>Region</th>
             <th>Description</th>
+            <th>Action</th>
         </tr>
         </thead>
         <tbody>
-        <!-- Dynamically populate results -->
         <tr th:each="report : ${reports}">
             <td th:text="${report.id}"></td>
             <td th:text="${report.date}"></td>
             <td th:text="${report.region}"></td>
             <td th:text="${report.description}"></td>
+            <td>
+                <a th:href="@{/api/daily-work-report/view/{id}(id=${report.id})}">Open</a>
+            </td>
         </tr>
         </tbody>
     </table>

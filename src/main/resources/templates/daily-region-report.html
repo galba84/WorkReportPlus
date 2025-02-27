@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Daily Regional Report</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<div th:insert="~{fragments/header :: body}"></div> <!-- Include the header fragment -->
+
+<h2>Daily Regional Report</h2>
+
+<!-- Regional Report Details -->
+<div class="report-details">
+    <p><strong>Report ID:</strong> <span th:text="${report.id}"></span></p>
+    <p><strong>Report Date:</strong> <span th:text="${report.date}"></span></p>
+    <p><strong>Region:</strong> <span th:text="${report.region}"></span></p>
+    <p><strong>Created By:</strong> <span th:text="${report.createdBy}"></span></p>
+    <p><strong>Created On:</strong> <span th:text="${report.createdOn}"></span></p>
+    <p><strong>Updated By:</strong> <span th:text="${report.updatedBy}"></span></p>
+    <p><strong>Updated On:</strong> <span th:text="${report.updatedOn}"></span></p>
+    <p><strong>Status:</strong> <span th:text="${report.status}"></span></p>
+    <p><strong>Description:</strong> <span th:text="${report.description}"></span></p>
+</div>
+
+<hr>
+
+<!-- Group Reports Section -->
+<h3>Group Reports</h3>
+<th:block th:if="${report.groupReports != null and not #lists.isEmpty(report.groupReports)}">
+    <table class="full-width-table">
+        <thead>
+        <tr>
+            <th>Group ID</th>
+            <th>Region</th>
+            <th>Created By</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="groupReport : ${report.groupReports}">
+            <td th:text="${groupReport.id}"></td>
+            <td th:text="${groupReport.region}"></td>
+            <td th:text="${groupReport.createdBy}"></td>
+            <td th:text="${groupReport.status}"></td>
+            <td th:text="${groupReport.description}"></td>
+            <td>
+                <a th:href="@{/api/daily-work-report/view/{id}(id=${groupReport.id})}" class="button">Open</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</th:block>
+<th:block th:if="${report.groupReports == null or #lists.isEmpty(report.groupReports)}">
+    <p>No group reports available.</p>
+</th:block>
+
+<hr>
+
+<!-- Contractors Per Group Report -->
+<th:block th:each="groupReport : ${report.groupReports}">
+    <h4 th:text="'Contractors for ' + ${groupReport.id}"></h4>
+    <th:block th:if="${groupReport.contractors != null and groupReport.contractors.size() > 0}">
+        <table class="full-width-table">
+            <thead>
+            <tr>
+                <th>Contractor Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="contractor : ${groupReport.contractors}">
+                <td th:text="${contractor.toString()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+    <th:block th:if="${groupReport.contractors == null or groupReport.contractors.size() == 0}">
+        <p>No contractors available for this group report.</p>
+    </th:block>
+</th:block>
+
+<hr>
+
+<!-- Contractor Losses Per Group Report -->
+<th:block th:each="groupReport : ${report.groupReports}">
+    <h4 th:text="'Contractor Losses for ' + ${groupReport.id}"></h4>
+    <th:block th:if="${groupReport.contractorLooses != null and groupReport.contractorLooses.size() > 0}">
+        <table class="full-width-table">
+            <thead>
+            <tr>
+                <th>Loss Type</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="loss : ${groupReport.contractorLooses}">
+                <td th:text="${loss.personnelLossesType}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+    <th:block th:if="${groupReport.contractorLooses == null or groupReport.contractorLooses.size() == 0}">
+        <p>No contractor losses reported for this group report.</p>
+    </th:block>
+</th:block>
+
+</body>
+</html>
