@@ -14,16 +14,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 @Configuration
 public class SecurityConfig {
+
+    public static final String ADMIN = "ADMIN";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index", "/login", "/oauth2/**").permitAll()
-                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/**").hasAnyRole("USER", ADMIN)
+                        .requestMatchers("/admin/**").hasRole(ADMIN)
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -33,8 +36,8 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
-                            request.getSession().invalidate();  // ✅ Destroy HTTP session
-                            response.sendRedirect("https://accounts.google.com/Logout"); // ✅ Logout from Google OAuth2
+                            request.getSession().invalidate();  // Destroy HTTP session
+                            response.sendRedirect("https://accounts.google.com/Logout"); // Logout from Google OAuth2
                         })
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
@@ -43,7 +46,10 @@ public class SecurityConfig {
                 )
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/logout")
-                );
+
+                )
+                .exceptionHandling()
+                        .accessDeniedHandler(new CustomAccessDeniedHandler());
 
         return http.build();
     }
@@ -60,14 +66,14 @@ public class SecurityConfig {
             // Assign roles based on email
             Set<String> roles = new HashSet<>();
             if ("verlenanatoly@gmail.com".equals(email)) {
-                roles.add("ROLE_ADMIN");
+                roles.add(ADMIN);
             } else {
-                roles.add("ROLE_USER");
+                roles.add("USER");
             }
 
-            // Convert roles to GrantedAuthorities
+            // Convert roles to GrantedAuthorities with ROLE_ prefix
             Set<GrantedAuthority> authorities = roles.stream()
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toSet());
 
             return new CustomOAuth2User(oAuth2User, authorities);

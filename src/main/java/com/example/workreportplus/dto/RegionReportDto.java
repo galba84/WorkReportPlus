@@ -1,51 +1,28 @@
 package com.example.workreportplus.dto;
 
+import com.example.workreportplus.dto.templates.TrackedDto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-public class RegionReportDto {
+import java.util.List;
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class RegionReportDto extends TrackedDto {
 
     @NotNull
     private String reportDate;
 
     @NotBlank
-    private String region;
+    private RegionDto region;
 
     private String regionDescription;
 
     private List<GroupReportDto> groupReports;
 
-    // Getters and Setters
-    public String getReportDate() {
-        return reportDate;
-    }
+    private Map<String, String> extraData;
 
-    public void setReportDate(String reportDate) {
-        this.reportDate = reportDate;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public String getRegionDescription() {
-        return regionDescription;
-    }
-
-    public void setRegionDescription(String regionDescription) {
-        this.regionDescription = regionDescription;
-    }
-
-    public List<GroupReportDto> getGroupReports() {
-        return groupReports;
-    }
-
-    public void setGroupReports(List<GroupReportDto> groupReports) {
-        this.groupReports = groupReports;
-    }
 }

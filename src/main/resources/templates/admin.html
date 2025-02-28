@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras/springsecurity5">
+<head>
+    <title>ADMIN PAGE</title>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Include the header fragment -->
+<div th:insert="~{fragments/header :: body}">
+    <!-- Pass the info message -->
+    <th:block th:with="infoMessage='Welcome to the Report System'"></th:block>
+</div>
+
+<h1>Welcome to the ADMIN Page</h1>
+<p>Current User Roles:</p>
+<p th:each="authority : ${#authentication.getAuthorities()}">
+    <span th:text="${authority.getAuthority().replace('ROLE_', '')}"></span>
+</p>
+</body>
+</html>
