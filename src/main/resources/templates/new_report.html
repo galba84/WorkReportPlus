@@ -74,19 +74,24 @@
                         <option value="Group C">Group C</option>
                     </select>
 
-                    <label for="groupMembers_${groupIndex}">Group Members:</label>
-                    <input type="text" id="groupMembers_${groupIndex}" name="groupReports[${groupIndex}].groupMembers" required>
-
-                    <label for="place_${groupIndex}">Place:</label>
-                    <select id="place_${groupIndex}" name="groupReports[${groupIndex}].place" required>
-                        <option value="">Select Place</option>
-                        <option value="Site 1">Site 1</option>
-                        <option value="Site 2">Site 2</option>
-                        <option value="Site 3">Site 3</option>
+                   <label for="contractorsIds_${groupIndex}">Contractors:</label>
+                    <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds" multiple required>
+                        <option value="1">Ivanov A</option>
+                        <option value="2">Petrov B</option>
+                        <option value="3">Sidoroff C</option>
                     </select>
 
-                    <label for="workedRepaired_${groupIndex}">Worked/Repaired:</label>
-                    <input type="checkbox" id="workedRepaired_${groupIndex}" name="groupReports[${groupIndex}].workedRepaired">
+                    <label for="placeIds_${groupIndex}">Places:</label>
+                    <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeIds" multiple required>
+                        <option value="1">Site 1</option>
+                        <option value="2">Site 2</option>
+                        <option value="3">Site 3</option>
+                    </select>
+
+
+
+                    <label for="groupDescription_${groupIndex}">worked ? :</label>
+                    <input type="checkbox" id="worked${groupIndex}" name="groupReports[${groupIndex}].worked" value="true">
 
                     <label for="groupDescription_${groupIndex}">Description:</label>
                     <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>

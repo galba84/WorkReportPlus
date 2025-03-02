@@ -1,17 +1,15 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.dto.RegionReportDto;
+import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.service.ReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import org.springframework.ui.Model;
 
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class DailyWorkReportController {
     private ReportService service;
 
     @PostMapping
-    public String submitReport(@ModelAttribute @Valid RegionReportDto regionReportDto,
+    public String submitReport(@ModelAttribute RegionReportRequest request,
                                BindingResult bindingResult,
                                Model model) {
         if (bindingResult.hasErrors()) {
@@ -34,19 +32,20 @@ public class DailyWorkReportController {
         }
 
         // Log submitted data (For now, we'll just log instead of storing it in DB)
-        logger.info("Received Region Report: {}", regionReportDto);
-        if (regionReportDto.getGroupReports() != null) {
-            regionReportDto.getGroupReports().forEach(group ->
+        logger.info("Received Region Report: {}", request);
+        if (request.getGroupReports() != null) {
+            request.getGroupReports().forEach(group ->
                     logger.info("Group Report: {}", group));
         }
-
+        DailyRegionReportResponse dailyRegionReportResponse = service.saveReport(request);
         model.addAttribute("successMessage", "Report submitted successfully!");
+        model.addAttribute("regionReport", dailyRegionReportResponse);
         return "new_report"; // Redirect to the same page with a success message
     }
 
     @GetMapping
     public String showReportForm(Model model) {
-        model.addAttribute("regionReport", new RegionReportDto());
+        model.addAttribute("regionReport", new DailyRegionReportResponse());
         return "new_report";
     }
 

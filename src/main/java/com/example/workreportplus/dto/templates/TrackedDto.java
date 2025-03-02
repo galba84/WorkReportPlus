@@ -15,5 +15,4 @@ public class TrackedDto extends IdDto {
     @NotBlank
     private String updatedBy;
     private LocalDate updatedOn;
-    private String status;
 }

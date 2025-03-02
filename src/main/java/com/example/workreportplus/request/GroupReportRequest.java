@@ -1,17 +1,14 @@
-package com.example.workreportplus.dto;
+package com.example.workreportplus.request;
 
 import com.example.workreportplus.ENUM.PersonnelLossesType;
-import com.example.workreportplus.dto.templates.TrackedDto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 import java.util.Map;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class GroupReportDto extends TrackedDto {
+public class GroupReportRequest {
     @NotBlank
     private String groupName;
 
