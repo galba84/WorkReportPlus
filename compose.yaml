@@ -1,41 +1,42 @@
+
 services:
-  mariadb:
-    image: mariadb:11.1
-    container_name: mariadb_container
+  db:
+    image: postgres:16
+    container_name: postgres_container
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: adm
-      MYSQL_DATABASE: work_report_db
-      MYSQL_USER: workreport_user
-      MYSQL_PASSWORD: userpass
+      - POSTGRES_USER=workreport_user
+      - POSTGRES_PASSWORD=userpass
+      - POSTGRES_DB=postgres
     ports:
-      - "3307:3306"  # Changed to avoid conflicts with local MySQL
+      - "5432:5432"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data  # ✅ Correct PostgreSQL path
     networks:
-      - workreport_network
+      - mynetwork
 
-  springboot-app:
+  app:
     build:
-      context: .  # 👈 This tells Docker Compose to use the current directory (which contains Dockerfile)
+      context: .
     container_name: workreportplus_app
     restart: always
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/work_report_db
-      SPRING_DATASOURCE_USERNAME: workreport_user
-      SPRING_DATASOURCE_PASSWORD: userpass
-      SPRING_FLYWAY_ENABLED: "true"
-      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
-    depends_on:
-      - mariadb
     ports:
       - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=workreport_user
+      - SPRING_DATASOURCE_PASSWORD=userpass
+      - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/postgres
+      - SPRING_FLYWAY_USER=workreport_user
+      - SPRING_FLYWAY_PASSWORD=userpass
     networks:
-      - workreport_network
-
-volumes:
-  mariadb_data:
+      - mynetwork
 
 networks:
-  workreport_network:
+  mynetwork:
     driver: bridge
+
+volumes:
+  db_data:  # ✅ Named volume for PostgreSQL persistence

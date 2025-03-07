@@ -1,37 +1,38 @@
 package com.example.workreportplus.dto;
 
 import com.example.workreportplus.ENUM.PersonnelLossesType;
+import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.dto.templates.TrackedDto;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class GroupReportDto extends TrackedDto {
-    @NotBlank
+
+    private UUID groupId;
+
     private String groupName;
 
-    @NotBlank
     private String regionName;
 
+    private UUID regionReportId;
 
-    @NotBlank
-    private List<String> placeIds;
+    private List<UUID> placeIds;
 
-    @NotBlank
-    List<String> contractorsIds;
+    private List<UUID> contractorsIds;
 
-    @NotBlank
     private String description;
 
-    @NotBlank
     private Map<String, PersonnelLossesType> contractorLoosesIdTypeMap;
 
     private boolean worked;
 
     private Map<String,String> extraDataGroupReport;
+
+    private ReportStatus status;
 }

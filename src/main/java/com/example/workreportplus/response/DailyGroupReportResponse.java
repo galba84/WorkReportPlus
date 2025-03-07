@@ -1,27 +1,27 @@
 package com.example.workreportplus.response;
 
+import com.example.workreportplus.ENUM.ReportStatus;
+import lombok.Builder;
 import lombok.Data;
-import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
-public class DailyGroupReportResponse {
+@Builder
+public class DailyGroupReportResponse implements ReportResponse {
 
-    private String id;
+    private UUID id;
 
-    private String regionReportId;
+    private UUID regionReportId;
 
-    @NotBlank
-    private String region;
+    private String regionName;
 
     private LocalDate date;
 
-    @NotBlank
     private String createdBy;
 
-    private String status;
-    @NotBlank
     private List<WorkingAreaResponse> workingAreas;
 
     private List<ContractorResponse> contractors;
@@ -29,5 +29,9 @@ public class DailyGroupReportResponse {
     private List<ContractorLoosesResponse> contractorLooses;
 
     private String description;
+
+    private boolean worked;
+
+    private ReportStatus status;
 
 }

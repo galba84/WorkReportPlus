@@ -1,12 +1,11 @@
 plugins {
-    id 'java'
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'nu.studer.jooq' version '9.0' // ✅ Update to the latest version
-    id 'org.flywaydb.flyway' version '11.3.2' // ✅ Use the latest Flyway version
-
+    id 'nu.studer.jooq' version '9.0'
+    id 'org.flywaydb.flyway' version '11.3.2'
 }
 
+apply plugin: 'java'
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
@@ -34,27 +33,25 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.flywaydb:flyway-core'
-    implementation 'org.flywaydb:flyway-mysql'
-    // ✅ Add SLF4J logging
-    implementation 'org.slf4j:slf4j-api:2.0.9'
 
+    runtimeOnly 'org.postgresql:postgresql:42.6.0' // PostgreSQL driver
+
+    implementation 'org.slf4j:slf4j-api:2.0.9'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-    // jOOQ Code Generation Dependencies
-    // ✅ Use the same jOOQ version for runtime and generation
-    implementation 'org.jooq:jooq:3.18.5'
-    jooqGenerator 'org.jooq:jooq-meta:3.18.5'
-    jooqGenerator 'org.jooq:jooq-codegen:3.18.5'
-    jooqGenerator 'org.mariadb.jdbc:mariadb-java-client'
+
+    implementation 'org.jooq:jooq:3.19.20' // Ensure consistent jOOQ version
+    jooqGenerator 'org.jooq:jooq-meta:3.19.20'
+    jooqGenerator 'org.jooq:jooq-codegen:3.19.20'
+    jooqGenerator 'org.postgresql:postgresql:42.6.0' // PostgreSQL driver for jOOQ
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
-    //mapping
+
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -66,21 +63,21 @@ tasks.named('test') {
 }
 
 jooq {
-    version = '3.18.5' // ✅ Ensure jOOQ version is up to date
+    version = '3.19.20'
 
     configurations {
-        main { // ✅ Use `main` instead of older `generationTool`
+        main {
             generationTool {
                 jdbc {
-                    driver = 'org.mariadb.jdbc.Driver'
-                    url = 'jdbc:mariadb://localhost:3307/work_report_db'
+                    driver = 'org.postgresql.Driver'
+                    url = 'jdbc:postgresql://localhost:5432/postgres'
                     user = 'workreport_user'
                     password = 'userpass'
                 }
                 generator {
                     database {
-                        name = 'org.jooq.meta.mariadb.MariaDBDatabase'
-                        inputSchema = 'work_report_db' // ✅ Ensure schema is set
+                        name = 'org.jooq.meta.postgres.PostgresDatabase'
+                        inputSchema = 'public'
                         includes = '.*'
                     }
                     target {
@@ -93,14 +90,12 @@ jooq {
     }
 }
 
-
 flyway {
-    url = 'jdbc:mariadb://mariadb:3306/work_report_db' // ✅ Use container hostname, NOT localhost
-    user = 'root'
-    password = 'adm'
-    schemas = ['work_report_db']
-    locations = ['classpath:db/migration'] // ✅ Use `classpath:` for embedded resources
+    url = 'jdbc:postgresql://localhost:5432/postgres'
+    user = 'workreport_user'
+    password = 'userpass'
+    schemas = ['public']
+    locations = ['classpath:db/migration']
     baselineOnMigrate = true
     cleanDisabled = false
 }
-

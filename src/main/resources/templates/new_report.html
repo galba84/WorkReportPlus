@@ -29,13 +29,10 @@
     <input type="date" id="reportDate" name="reportDate" required>
 
     <!-- Region Dropdown -->
-    <label for="region">Region:</label>
-    <select id="region" name="region" required>
-        <option value="">Select Region</option>
-        <option value="North">North</option>
-        <option value="South">South</option>
-        <option value="East">East</option>
-        <option value="West">West</option>
+    <label for="regionName">Region:</label>
+    <select id="regionName" name="regionName">
+        <option value="">-- Select Region --</option>
+        <option th:each="regionName : ${regionNames}" th:value="${regionName}" th:text="${regionName}"></option>
     </select>
 
     <!-- Region Report Description -->

@@ -14,7 +14,7 @@
 <div class="report-details">
     <p><strong>Report ID:</strong> <span th:text="${report.id}"></span></p>
     <p><strong>Report Date:</strong> <span th:text="${report.date}"></span></p>
-    <p><strong>Region:</strong> <span th:text="${report.region}"></span></p>
+    <p><strong>Region:</strong> <span th:text="${report.regionName}"></span></p>
     <p><strong>Created By:</strong> <span th:text="${report.createdBy}"></span></p>
     <p><strong>Created On:</strong> <span th:text="${report.createdOn}"></span></p>
     <p><strong>Updated By:</strong> <span th:text="${report.updatedBy}"></span></p>
@@ -42,7 +42,7 @@
         <tbody>
         <tr th:each="groupReport : ${report.groupReports}">
             <td th:text="${groupReport.id}"></td>
-            <td th:text="${groupReport.region}"></td>
+            <td th:text="${groupReport.regionName}"></td>
             <td th:text="${groupReport.createdBy}"></td>
             <td th:text="${groupReport.status}"></td>
             <td th:text="${groupReport.description}"></td>

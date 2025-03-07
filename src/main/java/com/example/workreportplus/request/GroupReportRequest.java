@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class GroupReportRequest {
+public class GroupReportRequest implements ReportRequest {
     @NotBlank
     private String groupName;
 

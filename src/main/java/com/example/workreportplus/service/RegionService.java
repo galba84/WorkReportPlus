@@ -1,0 +1,39 @@
+package com.example.workreportplus.service;
+
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+import static com.example.jooq.Tables.REGION;
+
+@Service
+public class RegionService {
+
+    private final DSLContext dsl;
+
+    public RegionService(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    public UUID getRegionIdByName(String name) {
+        return dsl.select(REGION.ID)
+                .from(REGION)
+                .where(REGION.REGION_NAME.eq(name))
+                .fetchOne(REGION.ID);
+    }
+
+    public List<String> getRegionNames() {
+        return dsl.select(REGION.REGION_NAME)
+                .from(REGION)
+                .fetchInto(String.class);
+    }
+
+    public String getRegionNameById(UUID id) {
+        return dsl.select(REGION.REGION_NAME)
+                .from(REGION)
+                .where(REGION.ID.eq(id))
+                .fetchOne(REGION.REGION_NAME);
+    }
+}
