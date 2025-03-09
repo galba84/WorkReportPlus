@@ -1,15 +1,34 @@
 package com.example.workreportplus.mapper;
 
-import com.example.workreportplus.dto.GroupReportDto;
-import com.example.workreportplus.request.GroupReportRequest;
+
+import com.example.workreportplus.dto.RegionReportDto;
+import com.example.workreportplus.request.RegionReportRequest;
+import com.example.workreportplus.service.RegionService;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.MappingTarget;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.UUID;
 
 @Mapper(componentModel = "spring")
-public interface RegionReportMapper {
-    RegionReportMapper INSTANCE = Mappers.getMapper(RegionReportMapper.class);
+public abstract class RegionReportMapper {
 
-    // Correct the mapping to directly set `regionName`
-    GroupReportDto requestToDto(GroupReportRequest request);
+    @Autowired
+    protected RegionService regionService;  // Now properly injected
 
+    public abstract RegionReportDto requestToDto(RegionReportRequest request);
+
+    @AfterMapping
+    protected void setGroupId(@MappingTarget RegionReportDto dto, RegionReportRequest request) {
+        UUID regionId = regionService.getRegionIdByName(request.getRegionName());
+        if (regionId == null) {
+            return;
+        }
+        dto.setRegionId(regionId);
+        if (request.getGroupReports() == null) {
+            dto.setGroupReportIds(List.of());
+        }
+    }
 }

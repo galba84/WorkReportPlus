@@ -10,13 +10,13 @@ import java.util.Map;
 
 @Data
 @NoArgsConstructor
-public class RegionReportRequest {
+public class RegionReportRequest implements ReportRequest {
 
     @NotNull
     private String reportDate;
 
     @NotBlank
-    private String region;
+    private String regionName;
 
     private String regionDescription;
 

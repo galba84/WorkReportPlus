@@ -20,10 +20,7 @@
     <label for="region">Region:</label>
     <select id="region" name="region">
         <option value="">-- Select Region --</option>
-        <option value="North">North</option>
-        <option value="South">South</option>
-        <option value="East">East</option>
-        <option value="West">West</option>
+        <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}"></option>
     </select>
 
     <button type="submit">Search</button>
@@ -45,7 +42,7 @@
         <tr th:each="report : ${reports}">
             <td th:text="${report.id}"></td>
             <td th:text="${report.date}"></td>
-            <td th:text="${report.region}"></td>
+            <td th:text="${report.regionName}"></td>
             <td th:text="${report.description}"></td>
             <td>
                 <a th:href="@{/api/daily-work-report/view/{id}(id=${report.id})}">Open</a>
