@@ -4,6 +4,7 @@ package com.example.workreportplus.service;
 import com.example.jooq.tables.records.GroupreportRecord;
 import com.example.jooq.tables.records.RegionreportRecord;
 import com.example.workreportplus.ENUM.ReportStatus;
+import com.example.workreportplus.Utils.JsonUtils;
 import com.example.workreportplus.Utils.SecurityUtil;
 import com.example.workreportplus.dto.GroupReportDto;
 import com.example.workreportplus.dto.RegionReportDto;
@@ -26,14 +27,13 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.example.jooq.Tables.REGIONREPORT;
 import static com.example.jooq.tables.Groupreport.GROUPREPORT;
+import static com.example.workreportplus.Utils.JsonUtils.toJsonB;
 
 @Service
 public class RegionReportService implements ReportService {
@@ -145,6 +145,7 @@ public class RegionReportService implements ReportService {
                                         .id(record.get(REGIONREPORT.ID))
                                         .description(record.get(REGIONREPORT.REGION_DESCRIPTION))
                                         .status(status)
+                                        .extraData(JsonUtils.jsonbToMap(record.get(REGIONREPORT.EXTRA_DATA)))
                                         .date(record.get(REGIONREPORT.REPORT_DATE))
                                         .regionName(regionService.getRegionNameById(record.get(REGIONREPORT.REGION_ID)))
                                         .createdOn(record.get(REGIONREPORT.CREATED_ON).toLocalDate())
@@ -152,6 +153,7 @@ public class RegionReportService implements ReportService {
                                         .createdBy(record.get(REGIONREPORT.CREATED_BY))
                                         .updatedBy(record.get(REGIONREPORT.UPDATED_BY))
                                         .groupReports(groupReportService.getReportsByRegionId(record.get(REGIONREPORT.ID)))
+
                                         .build();
                             }
                     );
@@ -174,6 +176,7 @@ public class RegionReportService implements ReportService {
             groupReports.forEach(groupReport -> {
                 GroupReportDto groupReportDto = groupReportMapper.requestToDto(groupReport);
                 groupReportDto.setRegionReportId(regionReportId);
+                groupReportDto.setReportDate(report.getReportDate());
                 saveGroupReport(groupReportDto);
             });
         }
@@ -184,15 +187,18 @@ public class RegionReportService implements ReportService {
     public UUID saveRegionReport(RegionReportDto regionReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername(); // Fetch user from SecurityContextHolder
         // Date formatter (adjust format based on your input format)
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
 
         // Convert Strings to LocalDate safely
-        LocalDate reportDate = parseDate(regionReportDto.getReportDate(), formatter);
+        LocalDate reportDate = regionReportDto.getReportDate();
 
         RegionreportRecord record = dsl.newRecord(REGIONREPORT);
         record.setRegionId(regionReportDto.getRegionId()); // Set the group ID
         record.setReportDate(reportDate);
         record.setRegionDescription(regionReportDto.getRegionDescription());
+        record.setArrivedContractors(toJsonB(regionReportDto.getArrivedContractors()));
+        record.setDepartedContractors(toJsonB(regionReportDto.getDeparturedContractors()));
+        record.setExtraData(toJsonB(regionReportDto.getExtraData()));
         record.setCreatedBy(currentUser); // Store the logged-in user
         record.setUpdatedBy(currentUser);
         record.setCreatedOn(LocalDateTime.now());
@@ -206,19 +212,6 @@ public class RegionReportService implements ReportService {
     }
 
 
-    /**
-     * Helper method to parse String to LocalDate safely.
-     */
-    private LocalDate parseDate(String dateStr, DateTimeFormatter formatter) {
-        try {
-            return (dateStr != null && !dateStr.isEmpty()) ? LocalDate.parse(dateStr, formatter) : null;
-        } catch (DateTimeParseException e) {
-            // Log the error and return null (or handle it differently if needed)
-            System.err.println("Invalid date format: " + dateStr);
-            return null;
-        }
-    }
-
     public static Boolean fromInt(int value) {
         return value != 0; // Returns true if value is not 0, otherwise false
     }
@@ -227,8 +220,9 @@ public class RegionReportService implements ReportService {
         String currentUser = SecurityUtil.getCurrentUsername(); // ✅ Fetch user from SecurityContextHolder
 
         GroupreportRecord record = dsl.newRecord(GROUPREPORT);
-        record.setGroupId(groupReportDto.getGroupId()); // ✅ Set the group ID
+        record.setGroupId(UUID.fromString(groupReportDto.getGroupName())); // ✅ Set the group ID
         record.setRegionReportId(groupReportDto.getRegionReportId());
+        record.setReportDate(groupReportDto.getReportDate());
         if (groupReportDto.getStatus() != null) {
             record.setStatus(fromInt(groupReportDto.getStatus().getValue()));
         } else {

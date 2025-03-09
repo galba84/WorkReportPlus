@@ -22,11 +22,8 @@ public abstract class RegionReportMapper {
 
     @AfterMapping
     protected void setGroupId(@MappingTarget RegionReportDto dto, RegionReportRequest request) {
-        UUID regionId = regionService.getRegionIdByName(request.getRegionName());
-        if (regionId == null) {
-            return;
-        }
-        dto.setRegionId(regionId);
+
+        dto.setRegionId(UUID.fromString(request.getRegionName()));
         if (request.getGroupReports() == null) {
             dto.setGroupReportIds(List.of());
         }

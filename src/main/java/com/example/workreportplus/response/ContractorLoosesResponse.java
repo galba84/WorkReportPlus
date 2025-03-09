@@ -14,9 +14,9 @@ public class ContractorLoosesResponse extends ContractorResponse {
 
     private PersonnelLossesType personnelLossesType;
 
-    // ✅ Corrected Constructor
+
     public ContractorLoosesResponse(String name, PersonnelLossesType personnelLossesType) {
-        super(name); // Pass name to parent class (ContractorResponse)
+        super(name, name, name, name, name);
         this.personnelLossesType = personnelLossesType;
     }
 }

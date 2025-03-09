@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -28,6 +29,7 @@ public class DailyRegionReportResponse implements ReportResponse {
     private String updatedBy;
     private LocalDate updatedOn;
     private ReportStatus status;
+    private Map<String, String> extraData;
 
     List<DailyGroupReportResponse> groupReports;
 }

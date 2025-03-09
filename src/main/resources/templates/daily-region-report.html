@@ -6,7 +6,8 @@
 </head>
 <body>
 
-<div th:insert="~{fragments/header :: body}"></div> <!-- Include the header fragment -->
+<!-- Include the header fragment -->
+<div th:insert="~{fragments/header :: body}"></div>
 
 <h2>Daily Regional Report</h2>
 
@@ -16,12 +17,33 @@
     <p><strong>Report Date:</strong> <span th:text="${report.date}"></span></p>
     <p><strong>Region:</strong> <span th:text="${report.regionName}"></span></p>
     <p><strong>Created By:</strong> <span th:text="${report.createdBy}"></span></p>
-    <p><strong>Created On:</strong> <span th:text="${report.createdOn}"></span></p>
-    <p><strong>Updated By:</strong> <span th:text="${report.updatedBy}"></span></p>
-    <p><strong>Updated On:</strong> <span th:text="${report.updatedOn}"></span></p>
     <p><strong>Status:</strong> <span th:text="${report.status}"></span></p>
     <p><strong>Description:</strong> <span th:text="${report.description}"></span></p>
 </div>
+
+<hr>
+
+<!-- Extra Data -->
+<h3>Additional Information</h3>
+<th:block th:if="${report.extraData != null and not report.extraData.isEmpty()}">
+    <table class="full-width-table">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${report.extraData}">
+            <td th:text="${entry.key}"></td>
+            <td th:text="${entry.value}"></td>
+        </tr>
+        </tbody>
+    </table>
+</th:block>
+<th:block th:if="${report.extraData == null or report.extraData.isEmpty()}">
+    <p>No extra data available.</p>
+</th:block>
 
 <hr>
 
@@ -32,7 +54,7 @@
         <thead>
         <tr>
             <th>Group ID</th>
-            <th>Region</th>
+            <th>Created On</th>
             <th>Created By</th>
             <th>Status</th>
             <th>Description</th>
@@ -42,7 +64,7 @@
         <tbody>
         <tr th:each="groupReport : ${report.groupReports}">
             <td th:text="${groupReport.id}"></td>
-            <td th:text="${groupReport.regionName}"></td>
+            <td th:text="${groupReport.createdOn}"></td>
             <td th:text="${groupReport.createdBy}"></td>
             <td th:text="${groupReport.status}"></td>
             <td th:text="${groupReport.description}"></td>
@@ -60,23 +82,30 @@
 <hr>
 
 <!-- Contractors Per Group Report -->
+<h3>Contractors</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="'Contractors for ' + ${groupReport.id}"></h4>
-    <th:block th:if="${groupReport.contractors != null and groupReport.contractors.size() > 0}">
+    <h4 th:text="'Contractors for Group ' + ${groupReport.id}"></h4>
+    <th:block th:if="${groupReport.contractors != null and not #lists.isEmpty(groupReport.contractors)}">
         <table class="full-width-table">
             <thead>
             <tr>
                 <th>Contractor Name</th>
+                <th>Rank</th>
+                <th>Position</th>
+                <th>Nickname</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="contractor : ${groupReport.contractors}">
-                <td th:text="${contractor.toString()}"></td>
+                <td th:text="${contractor.firstName} + ' ' + ${contractor.lastName}"></td>
+                <td th:text="${contractor.rank}"></td>
+                <td th:text="${contractor.position}"></td>
+                <td th:text="${contractor.nickname}"></td>
             </tr>
             </tbody>
         </table>
     </th:block>
-    <th:block th:if="${groupReport.contractors == null or groupReport.contractors.size() == 0}">
+    <th:block th:if="${groupReport.contractors == null or #lists.isEmpty(groupReport.contractors)}">
         <p>No contractors available for this group report.</p>
     </th:block>
 </th:block>
@@ -84,23 +113,26 @@
 <hr>
 
 <!-- Contractor Losses Per Group Report -->
+<h3>Contractor Losses</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="'Contractor Losses for ' + ${groupReport.id}"></h4>
-    <th:block th:if="${groupReport.contractorLooses != null and groupReport.contractorLooses.size() > 0}">
+    <h4 th:text="'Contractor Losses for Group ' + ${groupReport.id}"></h4>
+    <th:block th:if="${groupReport.contractorLooses != null and not #lists.isEmpty(groupReport.contractorLooses)}">
         <table class="full-width-table">
             <thead>
             <tr>
                 <th>Loss Type</th>
+                <th>Details</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="loss : ${groupReport.contractorLooses}">
                 <td th:text="${loss.personnelLossesType}"></td>
+                <td th:text="${loss.details}"></td>
             </tr>
             </tbody>
         </table>
     </th:block>
-    <th:block th:if="${groupReport.contractorLooses == null or groupReport.contractorLooses.size() == 0}">
+    <th:block th:if="${groupReport.contractorLooses == null or #lists.isEmpty(groupReport.contractorLooses)}">
         <p>No contractor losses reported for this group report.</p>
     </th:block>
 </th:block>

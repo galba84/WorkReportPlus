@@ -1,10 +1,12 @@
 package com.example.workreportplus.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,8 @@ import java.util.Map;
 public class RegionReportRequest implements ReportRequest {
 
     @NotNull
-    private String reportDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Ensures correct JSON serialization
+    private LocalDate reportDate;
 
     @NotBlank
     private String regionName;
