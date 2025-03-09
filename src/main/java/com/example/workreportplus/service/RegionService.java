@@ -1,5 +1,6 @@
 package com.example.workreportplus.service;
 
+import com.example.workreportplus.dto.RegionDto;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,11 @@ public class RegionService {
         return dsl.select(REGION.REGION_NAME)
                 .from(REGION)
                 .fetchInto(String.class);
+    }
+
+    public List<RegionDto> getRegions() {
+        return dsl.selectFrom(REGION)
+                .fetchInto(RegionDto.class);
     }
 
     public String getRegionNameById(UUID id) {

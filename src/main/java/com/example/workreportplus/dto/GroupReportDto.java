@@ -6,6 +6,7 @@ import com.example.workreportplus.dto.templates.TrackedDto;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,4 +36,9 @@ public class GroupReportDto extends TrackedDto {
     private Map<String,String> extraDataGroupReport;
 
     private ReportStatus status;
+
+    private LocalDate reportDate;
+
+    private Map<String, String> extraData;
+
 }

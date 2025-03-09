@@ -16,17 +16,19 @@ import com.example.workreportplus.response.ContractorResponse;
 import com.example.workreportplus.response.DailyGroupReportResponse;
 import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.example.jooq.tables.Groupreport.GROUPREPORT;
@@ -34,14 +36,17 @@ import static com.example.jooq.tables.Groupreport.GROUPREPORT;
 @Service
 public class GroupReportService implements ReportService {
     private final DSLContext dsl;
-    private final RegionReportMapper regionReportMapper;
     private final GroupReportMapper groupReportMapper;
-
+    private final ContractorService contractorService;
+    private final PositionService positionService;
+    ObjectMapper objectMapper = new ObjectMapper();
     public GroupReportService(DSLContext dsl, RegionReportMapper regionReportMapper,
-                              GroupReportMapper groupReportMapper) {
+                              GroupReportMapper groupReportMapper, ContractorService contractorService,
+                              PositionService positionService) {
         this.dsl = dsl;
-        this.regionReportMapper = regionReportMapper;
         this.groupReportMapper = groupReportMapper;
+        this.contractorService = contractorService;
+        this.positionService = positionService;
     }
 
 
@@ -144,8 +149,15 @@ public class GroupReportService implements ReportService {
         return (contractorIds == null || contractorIds.length == 0)
                 ? List.of()
                 : Arrays.stream(contractorIds)
-                .map(UUID::toString) // ✅ Convert UUID to String
-                .map(ContractorResponse::new) // ✅ Pass as String to ContractorResponse constructor
+                .map(contractorService::getContractorById)
+                .map(e->ContractorResponse
+                        .builder()
+                        .firstName(e.getFirstName())
+                        .lastName(e.getLastName())
+                        .rank(e.getC_rank())
+                        .position(positionService.getNameById(e.getPositionId()))
+                        .nickname(e.getNickName())
+                        .build())
                 .toList();
     }
 
@@ -207,12 +219,47 @@ public class GroupReportService implements ReportService {
 
 
         return DailyGroupReportResponse.builder()
+                .id(record.getId())
                 .regionReportId(record.get(GROUPREPORT.ID))
                 .date(record.get(GROUPREPORT.REPORT_DATE))
                 .description(record.get(GROUPREPORT.DESCRIPTION))
                 .status(status)
                 .contractors(getContractorResponses(record))
+                .extraData(getExtraDataGroupReport(record))
+                .contractorLooses(getLoosesGroupReport(record))
                 .createdBy(record.get(GROUPREPORT.CREATED_BY))
+                .createdOn(record.get(GROUPREPORT.CREATED_ON).toLocalDate())
+                .createdBy(record.get(GROUPREPORT.UPDATED_BY))
+                .createdOn(record.get(GROUPREPORT.UPDATED_ON).toLocalDate())
                 .build();
+    }
+
+    public Map<String, String> getExtraDataGroupReport(GroupreportRecord record) {
+        JSONB jsonb = (JSONB) record.get(11);
+
+        if (jsonb == null) {
+            return Collections.emptyMap(); // Return an empty map if JSONB is null
+        }
+
+        try {
+            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Error converting JSONB to Map", e);
+        }
+    }
+
+    public Map<String, String> getLoosesGroupReport(GroupreportRecord record) {
+
+        JSONB jsonb = (JSONB) record.get(4);
+
+        if (jsonb == null) {
+            return Collections.emptyMap(); // Return an empty map if JSONB is null
+        }
+
+        try {
+            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Error converting JSONB to Map", e);
+        }
     }
 }

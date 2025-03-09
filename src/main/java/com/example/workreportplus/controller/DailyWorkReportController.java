@@ -1,11 +1,14 @@
 package com.example.workreportplus.controller;
 
+import com.example.workreportplus.dto.ContractorDto;
+import com.example.workreportplus.dto.GroupDto;
+import com.example.workreportplus.dto.PlaceDto;
+import com.example.workreportplus.dto.RegionDto;
 import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
 import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
-import com.example.workreportplus.service.RegionReportService;
-import com.example.workreportplus.service.RegionService;
+import com.example.workreportplus.service.*;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -32,34 +36,47 @@ public class DailyWorkReportController {
     private RegionReportService regionReportService;
     @Autowired
     private RegionService regionService;
+    @Autowired
+    private ContractorService contractorService;
+    @Autowired
+    private PlacesService placeService;
+    @Autowired
+    private GroupService groupService;
 
     @PostMapping
     public String submitReport(@ModelAttribute @Valid RegionReportRequest request,
                                BindingResult bindingResult,
-                               Model model) {
+                               RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", "Validation failed. Please fill in all required fields.");
-            return "new_report"; // Return back to form with error message
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed.");
+            return "redirect:/new_report";
         }
 
-        // Log submitted data (For now, we'll just log instead of storing it in DB)
         logger.info("Received Region Report: {}", request);
         if (request.getGroupReports() != null) {
-            request.getGroupReports().forEach(group ->
-                    logger.info("Group Report: {}", group));
+            request.getGroupReports().forEach(group -> logger.info("Group Report: {}", group));
         }
-        DailyRegionReportResponse dailyRegionReportResponse = regionReportService.saveReport(request);
-        model.addAttribute("successMessage", "Report submitted successfully!");
-        model.addAttribute("regionReport", dailyRegionReportResponse);
-        model.addAttribute(REGION_NAMES, regionService.getRegionNames());
 
-        return "new_report"; // Redirect to the same page with a success message
+        regionReportService.saveReport(request);
+
+        redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully!");
+        return "redirect:/api/daily-work-report";
     }
 
     @GetMapping
     public String showReportForm(Model model) {
         model.addAttribute("regionReport", new DailyRegionReportResponse());
-        model.addAttribute(REGION_NAMES, regionService.getRegionNames());
+        List<RegionDto> regions = regionService.getRegions();
+        List<GroupDto> groups = groupService.getAllGroups();
+        List<ContractorDto> contractors = contractorService.getContractors();
+        List<PlaceDto> places = placeService.getAllPlaces();
+        //mock
+        groups.forEach(e->e.setContractors(contractors));
+        model.addAttribute("regions", regions);
+        model.addAttribute("groups", groups);
+        model.addAttribute("contractors", contractors);
+        model.addAttribute("places", places);
+
         return "new_report";
     }
 
@@ -86,7 +103,6 @@ public class DailyWorkReportController {
 
         // Add to the model for display in the template
         model.addAttribute("reports", reports);
-        model.addAttribute(REGION_NAMES, regionService.getRegionNames());
 
         return "search_reports"; // Returns the same template with search results
     }
@@ -107,7 +123,7 @@ public class DailyWorkReportController {
 
 
     @GetMapping("/view/{id}") // ✅ Fixed PathVariable Mapping
-    public String viewReport(@PathVariable String id, Model model) {
+    public String viewRegionReport(@PathVariable String id, Model model) {
         ReportResponse report = regionReportService.getReportById(UUID.fromString(id));
 
         if (report == null) {

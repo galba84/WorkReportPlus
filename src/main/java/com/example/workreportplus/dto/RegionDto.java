@@ -12,7 +12,6 @@ public class RegionDto extends IdDto {
     private String regionName;
 
     public RegionDto(String regionName) {
-        setId("1");
         this.regionName = regionName;
     }
 }
