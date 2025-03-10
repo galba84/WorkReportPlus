@@ -226,7 +226,7 @@ public class GroupReportService implements ReportService {
                 .status(status)
                 .contractors(getContractorResponses(record))
                 .extraData(getExtraDataGroupReport(record))
-                .contractorLooses(getLoosesGroupReport(record))
+                .contractorLooses(getContractorLooses(record))
                 .createdBy(record.get(GROUPREPORT.CREATED_BY))
                 .createdOn(record.get(GROUPREPORT.CREATED_ON).toLocalDate())
                 .createdBy(record.get(GROUPREPORT.UPDATED_BY))
@@ -234,8 +234,16 @@ public class GroupReportService implements ReportService {
                 .build();
     }
 
+    private static List<UUID> getContractorLooses(GroupreportRecord record) {
+        UUID[] elements = record.get(GROUPREPORT.LOOSES);
+        if (elements == null) {
+            return List.of();
+        }
+        return List.of(elements);
+    }
+
     public Map<String, String> getExtraDataGroupReport(GroupreportRecord record) {
-        JSONB jsonb = (JSONB) record.get(11);
+        JSONB jsonb = record.get(GROUPREPORT.EXTRA_DATA_GROUP_REPORT);
 
         if (jsonb == null) {
             return Collections.emptyMap(); // Return an empty map if JSONB is null
@@ -248,18 +256,4 @@ public class GroupReportService implements ReportService {
         }
     }
 
-    public Map<String, String> getLoosesGroupReport(GroupreportRecord record) {
-
-        JSONB jsonb = (JSONB) record.get(4);
-
-        if (jsonb == null) {
-            return Collections.emptyMap(); // Return an empty map if JSONB is null
-        }
-
-        try {
-            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {});
-        } catch (IOException e) {
-            throw new RuntimeException("Error converting JSONB to Map", e);
-        }
-    }
 }
