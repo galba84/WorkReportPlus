@@ -196,8 +196,8 @@ public class RegionReportService implements ReportService {
         record.setRegionId(regionReportDto.getRegionId()); // Set the group ID
         record.setReportDate(reportDate);
         record.setRegionDescription(regionReportDto.getRegionDescription());
-        record.setArrivedContractors(toJsonB(regionReportDto.getArrivedContractors()));
-        record.setDepartedContractors(toJsonB(regionReportDto.getDeparturedContractors()));
+        record.setArrivedContractors(setArrivedContractors(regionReportDto));
+        record.setDepartedContractors(setDepartedContractors(regionReportDto));
         record.setExtraData(toJsonB(regionReportDto.getExtraData()));
         record.setCreatedBy(currentUser); // Store the logged-in user
         record.setUpdatedBy(currentUser);
@@ -209,6 +209,28 @@ public class RegionReportService implements ReportService {
         // Assuming RegionreportRecord has a method to get its ID
         // If the ID is stored as an Integer in the database, this should work fine
         return record.getId(); // Return the ID as an Integer
+    }
+
+    private static UUID[] setDepartedContractors(RegionReportDto regionReportDto) {
+        if (regionReportDto.getDepartedContractors() == null) {
+            return new UUID[0];
+        }
+        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
+    }
+
+    private static UUID[] getValue(RegionReportDto regionReportDto) {
+        return getArray(regionReportDto);
+    }
+
+    private static UUID[] getArray(RegionReportDto regionReportDto) {
+        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
+    }
+
+    private static UUID[] setArrivedContractors(RegionReportDto regionReportDto) {
+        if (regionReportDto.getArrivedContractors() == null) {
+            return new UUID[0];
+        }
+        return regionReportDto.getArrivedContractors().toArray(new UUID[0]);
     }
 
 

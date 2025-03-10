@@ -1,7 +1,7 @@
 
 services:
   db:
-    image: postgres:16
+    image: postgres:15.3
     container_name: postgres_container
     restart: always
     environment:
@@ -11,13 +11,21 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data  # ✅ Correct PostgreSQL path
+      - db_data:/var/lib/postgresql/data  # ✅ Persistent storage
+      - ./init-scripts:/docker-entrypoint-initdb.d # ✅ Runs init.sql on first startup
     networks:
       - mynetwork
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workreport_user -d workreport"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   app:
     build:
       context: .
+      args:
+        - JAR_FILE=build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar
     container_name: workreportplus_app
     restart: always
     ports:
@@ -39,4 +47,4 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:  # ✅ Named volume for PostgreSQL persistence
+  db_data:

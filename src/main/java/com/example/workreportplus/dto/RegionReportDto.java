@@ -27,6 +27,6 @@ public class RegionReportDto extends TrackedDto {
 
     private Map<String, String> extraData;
     private List<UUID> arrivedContractors;
-    private List<UUID> departuredContractors;
+    private List<UUID> departedContractors;
 
 }

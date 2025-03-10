@@ -30,7 +30,7 @@ public class DailyGroupReportResponse implements ReportResponse {
 
     private List<ContractorResponse> contractors;
 
-    private Map<String, String> contractorLooses;
+    private List<UUID> contractorLooses;
 
     private String description;
 

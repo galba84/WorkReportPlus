@@ -1,8 +1,10 @@
+import nu.studer.gradle.jooq.JooqGenerate
+
 plugins {
     id 'org.springframework.boot' version '3.4.2'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'nu.studer.jooq' version '9.0'
-    id 'org.flywaydb.flyway' version '11.3.2'
+    id 'org.flywaydb.flyway' version '11.3.4'
 }
 
 apply plugin: 'java'
@@ -56,10 +58,23 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.flywaydb:flyway-database-postgresql:11.3.4'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.withType(JooqGenerate).configureEach { enabled = enabled }
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/postgres'
+    user = 'workreport_user'
+    password = 'userpass'
+    schemas = ['public']
+    locations = ['classpath:db/migration']
+    baselineOnMigrate = true
+    cleanDisabled = false
 }
 
 jooq {
@@ -90,12 +105,3 @@ jooq {
     }
 }
 
-flyway {
-    url = 'jdbc:postgresql://localhost:5432/postgres'
-    user = 'workreport_user'
-    password = 'userpass'
-    schemas = ['public']
-    locations = ['classpath:db/migration']
-    baselineOnMigrate = true
-    cleanDisabled = false
-}
