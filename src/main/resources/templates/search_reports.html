@@ -1,41 +1,43 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Search Reports</title>
+    <meta charset="UTF-8">
+    <title th:text="#{page.title.searchReports}">Search Reports</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
 
+<!-- Header Fragment -->
 <div th:insert="~{fragments/header :: body}"></div>
 
-<h2>Search Reports</h2>
+<h2 th:text="#{page.title.searchReports}">Search Reports</h2>
 
 <form th:action="@{/api/daily-work-report/search}" method="GET">
-    <label for="startDate">Start Date:</label>
+    <label for="startDate" th:text="#{form.startDate}">Start Date:</label>
     <input type="date" id="startDate" name="startDate" required>
 
-    <label for="endDate">End Date:</label>
+    <label for="endDate" th:text="#{form.endDate}">End Date:</label>
     <input type="date" id="endDate" name="endDate" required>
 
-    <label for="region">Region:</label>
+    <label for="region" th:text="#{form.region}">Region:</label>
     <select id="region" name="region">
-        <option value="">-- Select Region --</option>
+        <option value="" th:text="#{form.selectRegion}">-- Select Region --</option>
         <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}"></option>
     </select>
 
-    <button type="submit">Search</button>
+    <button type="submit" th:text="#{form.button.search}">Search</button>
 </form>
 
 <div id="results">
-    <h3>Search Results</h3>
+    <h3 th:text="#{table.header.results}">Search Results</h3>
     <table class="full-width-table">
         <thead>
         <tr>
-            <th>ID</th>
-            <th>Report Date</th>
-            <th>Region</th>
-            <th>Description</th>
-            <th>Action</th>
+            <th th:text="#{table.header.id}">ID</th>
+            <th th:text="#{table.header.date}">Report Date</th>
+            <th th:text="#{table.header.region}">Region</th>
+            <th th:text="#{table.header.description}">Description</th>
+            <th th:text="#{table.header.action}">Action</th>
         </tr>
         </thead>
         <tbody>
@@ -45,7 +47,7 @@
             <td th:text="${report.regionName}"></td>
             <td th:text="${report.description}"></td>
             <td>
-                <a th:href="@{/api/daily-work-report/view/{id}(id=${report.id})}">Open</a>
+                <a th:href="@{/api/daily-work-report/view/{id}(id=${report.id})}" th:text="#{table.link.open}">Open</a>
             </td>
         </tr>
         </tbody>

@@ -1,16 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>Header</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
+
 <body>
+<!-- Language Switcher -->
+<div class="language-switcher">
+    <span th:text="#{language.label}">Language</span>:
+    <a th:href="@{/change-lang(lang='en')}">English</a> |
+    <a th:href="@{/change-lang(lang='uk')}">Українська</a>
+</div>
+
+<div th:text="#{debug.text}">Debug Text</div>
 <div class="header">
     <!-- Info message dynamically set -->
     <div class="info-message" th:text="${infoMessage}">Default Info Message</div>
 
     <!-- User Information (If Logged In) -->
     <div class="user-info" th:if="${#authentication.isAuthenticated()}">
-        <span>Welcome,
+        <span th:text="#{welcome}">Welcome,
             <b th:if="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
                th:text="${#authentication.principal.attributes['email']}">User</b>
 
@@ -24,24 +35,26 @@
 
     <!-- Navigation Menu -->
     <div class="menu">
-        <a th:href="@{/api/daily-work-report}">New Report</a>
-        <a th:href="@{/api/daily-work-report/search}">Search Report</a>
+        <a th:href="@{/api/daily-work-report}" th:text="#{menu.newReport}">New Report</a>
+        <a th:href="@{/api/daily-work-report/search}" th:text="#{menu.searchReport}">Search Report</a>
+        <a th:href="@{/api/daily-work-report/export}" th:text="#{menu.exportReport}">Export Report</a>
         <form th:action="@{/logout}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit">Logout</button>
+            <button type="submit" th:text="#{menu.logout}">Logout</button>
         </form>
     </div>
 </div>
 
-<script>
-    function clearCookies() {
-        document.cookie.split(";").forEach(function(cookie) {
-            document.cookie = cookie.replace(/^ +/, "")
-                .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");
-        });
-    }
-    window.onload = clearCookies;
-</script>
+<!--<script>-->
+<!--    function clearCookies() {-->
+<!--        document.cookie.split(";").forEach(function (cookie) {-->
+<!--            document.cookie = cookie.replace(/^ +/, "")-->
+<!--                .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");-->
+<!--        });-->
+<!--    }-->
+
+<!--    window.onload = clearCookies;-->
+<!--</script>-->
 
 </body>
 </html>

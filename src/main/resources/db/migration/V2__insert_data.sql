@@ -20,16 +20,16 @@ VALUES (gen_random_uuid(), 'North America'),
        (gen_random_uuid(), 'Europe'),
        (gen_random_uuid(), 'Asia'),
        (gen_random_uuid(), 'South America'),
-       (gen_random_uuid(), 'Africa');
-
+       (gen_random_uuid(), 'Africa')
+ON CONFLICT (region_name) DO NOTHING;
 -- Insert Positions
 INSERT INTO Place (id, name, area_type_id, county, district, region)
 VALUES
     (gen_random_uuid(), 'Kyiv Center', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Kyiv County', 'Shevchenkivskyi District', 'Kyivska Oblast'),
     (gen_random_uuid(), 'Lviv Old Town', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Lviv County', 'Halytskyi District', 'Lvivska Oblast'),
     (gen_random_uuid(), 'Odesa Port', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Odesa County', 'Prymorskyi District', 'Odeska Oblast'),
-    (gen_random_uuid(), 'Kharkiv Science Park', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Kharkiv County', 'Nemyshlianskyi District', 'Kharkivska Oblast');
-
+    (gen_random_uuid(), 'Kharkiv Science Park', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Kharkiv County', 'Nemyshlianskyi District', 'Kharkivska Oblast')
+ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO Positions (id, position_name)
 VALUES (gen_random_uuid(), 'Командир роти'),

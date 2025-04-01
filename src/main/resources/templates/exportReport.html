@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{page.title.exportReport}">Export Report</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Include the header fragment -->
+<div th:insert="~{fragments/header :: body}">
+    <th:block th:with="infoMessage=#{welcome.message}"></th:block>
+</div>
+
+<h2 th:text="#{page.title.exportReport}">Export Report</h2>
+
+<form id="documentForm">
+    <label for="template" th:text="#{form.label.template}">Select a document template:</label>
+    <select id="template">
+        <option th:each="template : ${templates}" th:value="${template}" th:text="${template}">Template</option>
+    </select>
+    <br>
+    <button type="button" onclick="generateDocument()" th:text="#{form.button.generate}">Generate Report</button>
+</form>
+
+<p id="downloadLink" style="display: none;">
+    <a id="documentLink" href="#" download th:text="#{form.link.download}">Download Generated Document</a>
+</p>
+
+<script>
+    function generateDocument() {
+        let template = document.getElementById("template").value;
+
+        fetch(`/api/daily-work-report/export/word?template=${template}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to generate document");
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                let url = window.URL.createObjectURL(blob);
+                let link = document.getElementById("documentLink");
+                link.href = url;
+                link.download = template + ".doc";
+                document.getElementById("downloadLink").style.display = "block";
+            })
+            .catch(error => {
+                alert("Error generating document: " + error.message);
+            });
+    }
+</script>
+
+</body>
+</html>
