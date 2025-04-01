@@ -1,30 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Daily Regional Report</title>
+    <meta charset="UTF-8">
+    <title th:text="#{page.title.dailyReport}">Daily Regional Report</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
 
-<!-- Include the header fragment -->
+<!-- Include header -->
 <div th:insert="~{fragments/header :: body}"></div>
 
-<h2>Daily Regional Report</h2>
+<h2 th:text="#{page.title.dailyReport}">Daily Regional Report</h2>
 
-<!-- Regional Report Details -->
 <div class="report-details">
-    <p><strong>Report ID:</strong> <span th:text="${report.id}"></span></p>
-    <p><strong>Report Date:</strong> <span th:text="${report.date}"></span></p>
-    <p><strong>Region:</strong> <span th:text="${report.regionName}"></span></p>
-    <p><strong>Created By:</strong> <span th:text="${report.createdBy}"></span></p>
-    <p><strong>Status:</strong> <span th:text="${report.status}"></span></p>
-    <p><strong>Description:</strong> <span th:text="${report.description}"></span></p>
+    <p><strong th:text="#{report.id}">Report ID:</strong> <span th:text="${report.id}"></span></p>
+    <p><strong th:text="#{report.date}">Report Date:</strong> <span th:text="${report.date}"></span></p>
+    <p><strong th:text="#{report.region}">Region:</strong> <span th:text="${report.regionName}"></span></p>
+    <p><strong th:text="#{report.createdBy}">Created By:</strong> <span th:text="${report.createdBy}"></span></p>
+    <p><strong th:text="#{report.status}">Status:</strong> <span th:text="${report.status}"></span></p>
+    <p><strong th:text="#{report.description}">Description:</strong> <span th:text="${report.description}"></span></p>
 </div>
 
 <hr>
 
-<!-- Extra Data -->
-<h3>Additional Information</h3>
+<h3 th:text="#{section.extraData}">Additional Information</h3>
 <th:block th:if="${report.extraData != null and not report.extraData.isEmpty()}">
     <table class="full-width-table">
         <thead>
@@ -42,23 +41,22 @@
     </table>
 </th:block>
 <th:block th:if="${report.extraData == null or report.extraData.isEmpty()}">
-    <p>No extra data available.</p>
+    <p th:text="#{extraData.none}">No extra data available.</p>
 </th:block>
 
 <hr>
 
-<!-- Group Reports Section -->
-<h3>Group Reports</h3>
+<h3 th:text="#{section.groupReports}">Group Reports</h3>
 <th:block th:if="${report.groupReports != null and not #lists.isEmpty(report.groupReports)}">
     <table class="full-width-table">
         <thead>
         <tr>
-            <th>Group ID</th>
-            <th>Created On</th>
-            <th>Created By</th>
-            <th>Status</th>
-            <th>Description</th>
-            <th>Action</th>
+            <th th:text="#{groupReport.id}">Group ID</th>
+            <th th:text="#{groupReport.createdOn}">Created On</th>
+            <th th:text="#{groupReport.createdBy}">Created By</th>
+            <th th:text="#{groupReport.status}">Status</th>
+            <th th:text="#{groupReport.description}">Description</th>
+            <th th:text="#{groupReport.action}">Action</th>
         </tr>
         </thead>
         <tbody>
@@ -69,22 +67,22 @@
             <td th:text="${groupReport.status}"></td>
             <td th:text="${groupReport.description}"></td>
             <td>
-                <a th:href="@{/api/daily-work-report/view/{id}(id=${groupReport.id})}" class="button">Open</a>
+                <a th:href="@{/api/daily-work-report/view/{id}(id=${groupReport.id})}"
+                   th:text="#{groupReport.open}" class="button">Open</a>
             </td>
         </tr>
         </tbody>
     </table>
 </th:block>
 <th:block th:if="${report.groupReports == null or #lists.isEmpty(report.groupReports)}">
-    <p>No group reports available.</p>
+    <p th:text="#{groupReport.none}">No group reports available.</p>
 </th:block>
 
 <hr>
 
-<!-- Contractors Per Group Report -->
-<h3>Contractors</h3>
+<h3 th:text="#{section.contractors}">Contractors</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="'Contractors for Group ' + ${groupReport.id}"></h4>
+    <h4 th:text="#{contractors.forGroup} + ${groupReport.id}">Contractors for Group</h4>
     <th:block th:if="${groupReport.contractors != null and not #lists.isEmpty(groupReport.contractors)}">
         <table class="full-width-table">
             <thead>
@@ -97,7 +95,7 @@
             </thead>
             <tbody>
             <tr th:each="contractor : ${groupReport.contractors}">
-                <td th:text="${contractor.firstName} + ' ' + ${contractor.lastName}"></td>
+                <td th:text="${contractor.firstName + ' ' + contractor.lastName}"></td>
                 <td th:text="${contractor.rank}"></td>
                 <td th:text="${contractor.position}"></td>
                 <td th:text="${contractor.nickname}"></td>
@@ -106,22 +104,21 @@
         </table>
     </th:block>
     <th:block th:if="${groupReport.contractors == null or #lists.isEmpty(groupReport.contractors)}">
-        <p>No contractors available for this group report.</p>
+        <p th:text="#{contractors.none}">No contractors available for this group report.</p>
     </th:block>
 </th:block>
 
 <hr>
 
-<!-- Contractor Losses Per Group Report -->
-<h3>Contractor Losses</h3>
+<h3 th:text="#{section.contractorLosses}">Contractor Losses</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="'Contractor Losses for Group ' + ${groupReport.id}"></h4>
+    <h4 th:text="#{losses.forGroup} + ${groupReport.id}">Contractor Losses for Group</h4>
     <th:block th:if="${groupReport.contractorLooses != null and not #lists.isEmpty(groupReport.contractorLooses)}">
         <table class="full-width-table">
             <thead>
             <tr>
-                <th>Loss Type</th>
-                <th>Details</th>
+                <th th:text="#{losses.type}">Loss Type</th>
+                <th th:text="#{losses.details}">Details</th>
             </tr>
             </thead>
             <tbody>
@@ -133,7 +130,7 @@
         </table>
     </th:block>
     <th:block th:if="${groupReport.contractorLooses == null or #lists.isEmpty(groupReport.contractorLooses)}">
-        <p>No contractor losses reported for this group report.</p>
+        <p th:text="#{losses.none}">No contractor losses reported for this group report.</p>
     </th:block>
 </th:block>
 

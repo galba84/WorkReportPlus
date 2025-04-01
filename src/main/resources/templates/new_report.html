@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>New Report</title>
+    <meta charset="UTF-8">
+    <title th:text="#{page.title.newReport}">New Report</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -10,7 +11,7 @@
 <!-- Include the header fragment -->
 <div th:insert="~{fragments/header :: body}"></div>
 
-<h2>Submit New Region Report</h2>
+<h2 th:text="#{form.heading}">Submit New Region Report</h2>
 
 <!-- Success Message -->
 <div th:if="${successMessage}" style="color: green;">
@@ -24,46 +25,35 @@
 
 <form id="regionReportForm" th:action="@{/api/daily-work-report}" method="post">
 
-    <!-- Hidden field for status -->
     <input type="hidden" name="status" value="true">
 
-    <!-- Date Picker -->
-    <label for="reportDate">Report Date:</label>
+    <label for="reportDate" th:text="#{form.reportDate}">Report Date:</label>
     <input type="date" id="reportDate" name="reportDate" required>
 
-    <!-- Region Dropdown -->
-    <label for="regionName">Region:</label>
+    <label for="regionName" th:text="#{form.region}">Region:</label>
     <select id="regionName" name="regionName" required>
-        <option value="">-- Select Region --</option>
+        <option th:text="#{form.selectRegion}" value="">-- Select Region --</option>
         <option th:each="region : ${regions}" th:value="${region.id}" th:text="${region.regionName}"></option>
     </select>
 
-    <!-- Region Report Description -->
-    <label for="regionDescription">Description:</label>
+    <label for="regionDescription" th:text="#{form.description}">Description:</label>
     <textarea id="regionDescription" name="regionDescription" rows="3"></textarea>
 
-    <!-- Extra Data (Region Level) -->
-    <h3>Additional Data</h3>
+    <h3 th:text="#{form.additionalData}">Additional Data</h3>
     <div id="extraDataContainer">
         <div class="extraDataEntry">
             <input type="text" name="extraData[key][]" placeholder="Key">
             <input type="text" name="extraData[value][]" placeholder="Value">
-            <button type="button" class="removeExtraData">Remove</button>
+            <button type="button" class="removeExtraData" th:text="#{form.remove}">Remove</button>
         </div>
     </div>
-    <button type="button" id="addExtraData">+ Add Extra Data</button>
+    <button type="button" id="addExtraData" th:text="#{form.addExtraData}">+ Add Extra Data</button>
 
-    <!-- Group Reports Container -->
-    <h3>Group Reports</h3>
-    <div id="groupReportsContainer">
-        <!-- Group reports will be dynamically added here -->
-    </div>
+    <h3 th:text="#{form.groupReports}">Group Reports</h3>
+    <div id="groupReportsContainer"></div>
+    <button type="button" id="addGroupReport" th:text="#{form.groupReports}">+ Add Group Report</button>
 
-    <!-- Add Group Report Button -->
-    <button type="button" id="addGroupReport">+ Add Group Report</button>
-
-    <!-- Submit Button -->
-    <button type="submit">Submit Report</button>
+    <button type="submit" th:text="#{form.submit}">Submit Report</button>
 </form>
 
 <!-- JavaScript to Handle Dynamic Fields -->
@@ -79,107 +69,109 @@
     ).join('');
     let placeOptions = places.map(place => `<option value="${place.id}">${place.name}</option>`).join('');
 
+    // Localized labels
+    let labels = {
+        groupName: /*[[#{form.groupName}]]*/ 'Group Name:',
+        places: /*[[#{form.places}]]*/ 'Places:',
+        contractors: /*[[#{form.contractors}]]*/ 'Contractors:',
+        worked: /*[[#{form.worked}]]*/ 'Worked?',
+        description: /*[[#{form.groupDescription}]]*/ 'Description:',
+        contractorLosses: /*[[#{form.contractorLosses}]]*/ 'Contractor Losses',
+        addContractorLoss: /*[[#{form.addContractorLoss}]]*/ '+ Add Contractor Loss',
+        extraData: /*[[#{form.groupExtraData}]]*/ 'Extra Data',
+        addExtraData: /*[[#{form.addExtraData}]]*/ '+ Add Extra Data',
+        remove: /*[[#{form.remove}]]*/ 'Remove'
+    };
+
     $(document).ready(function () {
         let groupIndex = 0;
 
         $("#addGroupReport").click(function () {
-            let groupReportHtml = `
-            <div class="groupReport" id="groupReport_${groupIndex}">
-                <h4>Group Report</h4>
+            let html = `
+                <div class="groupReport" id="groupReport_${groupIndex}">
+                    <h4>Group Report</h4>
 
-                <label for="groupName_${groupIndex}">Group Name:</label>
-                <select id="groupName_${groupIndex}" name="groupReports[${groupIndex}].groupName" required>
-                    <option value="">Select Group</option>
-                    ${groupOptions}
-                </select>
+                    <label for="groupName_${groupIndex}">${labels.groupName}</label>
+                    <select id="groupName_${groupIndex}" name="groupReports[${groupIndex}].groupName" required>
+                        <option value="">${/*[[#{form.selectGroup}]]*/'Select Group'}</option>
+                        ${groupOptions}
+                    </select>
 
-                <label for="placeIds_${groupIndex}">Places:</label>
-                <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeIds" multiple required>
-                    ${placeOptions}
-                </select>
+                    <label for="placeIds_${groupIndex}">${labels.places}</label>
+                    <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeIds" multiple required>
+                        ${placeOptions}
+                    </select>
 
-                <label for="contractorsIds_${groupIndex}">Contractors:</label>
-                <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds" multiple required>
-                    ${contractorOptions}
-                </select>
+                    <label for="contractorsIds_${groupIndex}">${labels.contractors}</label>
+                    <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds" multiple required>
+                        ${contractorOptions}
+                    </select>
 
-                <label for="worked_${groupIndex}">Worked?</label>
-                <input type="checkbox" id="worked_${groupIndex}" name="groupReports[${groupIndex}].worked" value="true">
+                    <label for="worked_${groupIndex}">${labels.worked}</label>
+                    <input type="checkbox" id="worked_${groupIndex}" name="groupReports[${groupIndex}].worked" value="true">
 
-                <label for="groupDescription_${groupIndex}">Description:</label>
-                <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>
+                    <label for="groupDescription_${groupIndex}">${labels.description}</label>
+                    <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>
 
-                <h4>Contractor Losses</h4>
-                <div id="contractorLossesContainer_${groupIndex}"></div>
-                <button type="button" class="addContractorLoss" data-group-id="${groupIndex}">+ Add Contractor Loss</button>
+                    <h4>${labels.contractorLosses}</h4>
+                    <div id="contractorLossesContainer_${groupIndex}"></div>
+                    <button type="button" class="addContractorLoss" data-group-id="${groupIndex}">${labels.addContractorLoss}</button>
 
-                <h4>Extra Data</h4>
-                <div id="extraDataGroupContainer_${groupIndex}"></div>
-                <button type="button" class="addExtraDataGroup" data-group-id="${groupIndex}">+ Add Extra Data</button>
+                    <h4>${labels.extraData}</h4>
+                    <div id="extraDataGroupContainer_${groupIndex}"></div>
+                    <button type="button" class="addExtraDataGroup" data-group-id="${groupIndex}">${labels.addExtraData}</button>
 
-                <button type="button" class="removeGroupReport" data-group-id="groupReport_${groupIndex}">Remove</button>
-            </div>
-        `;
-
-            $("#groupReportsContainer").append(groupReportHtml);
+                    <button type="button" class="removeGroupReport" data-group-id="groupReport_${groupIndex}">${labels.remove}</button>
+                </div>`;
+            $("#groupReportsContainer").append(html);
             groupIndex++;
         });
 
-        // Remove dynamically added group report sections
         $(document).on("click", ".removeGroupReport", function () {
             let groupId = $(this).data("group-id");
             $("#" + groupId).remove();
         });
 
-        // ✅ Fix: Add event listener for "Add Extra Data" in Region Report
         $("#addExtraData").click(function () {
-            let extraDataHtml = `
+            let html = `
             <div class="extraDataEntry">
                 <input type="text" name="extraData[key][]" placeholder="Key">
                 <input type="text" name="extraData[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData">Remove</button>
-            </div>
-        `;
-            $("#extraDataContainer").append(extraDataHtml);
+                <button type="button" class="removeExtraData">${labels.remove}</button>
+            </div>`;
+            $("#extraDataContainer").append(html);
         });
 
-        // ✅ Fix: Add extra data to group report dynamically
         $(document).on("click", ".addExtraDataGroup", function () {
             let groupId = $(this).data("group-id");
-            let extraDataHtml = `
+            let html = `
             <div class="extraDataEntry">
                 <input type="text" name="groupReports[${groupId}].extraDataGroupReport[key][]" placeholder="Key">
                 <input type="text" name="groupReports[${groupId}].extraDataGroupReport[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData">Remove</button>
-            </div>
-        `;
-            $(`#extraDataGroupContainer_${groupId}`).append(extraDataHtml);
+                <button type="button" class="removeExtraData">${labels.remove}</button>
+            </div>`;
+            $(`#extraDataGroupContainer_${groupId}`).append(html);
         });
 
-        // ✅ Fix: Add contractor loss to group report dynamically
         $(document).on("click", ".addContractorLoss", function () {
             let groupId = $(this).data("group-id");
-            let contractorLossHtml = `
+            let html = `
             <div class="contractorLossEntry">
                 <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[key][]" placeholder="Contractor ID">
                 <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[value][]" placeholder="Loss Type">
-                <button type="button" class="removeContractorLoss">Remove</button>
-            </div>
-        `;
-            $(`#contractorLossesContainer_${groupId}`).append(contractorLossHtml);
+                <button type="button" class="removeContractorLoss">${labels.remove}</button>
+            </div>`;
+            $(`#contractorLossesContainer_${groupId}`).append(html);
         });
 
-        // ✅ Fix: Remove extra data entry dynamically
         $(document).on("click", ".removeExtraData", function () {
             $(this).parent().remove();
         });
 
-        // ✅ Fix: Remove contractor loss entry dynamically
         $(document).on("click", ".removeContractorLoss", function () {
             $(this).parent().remove();
         });
     });
-
     /*]]>*/
 </script>
 

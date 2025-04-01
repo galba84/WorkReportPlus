@@ -60,6 +60,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     implementation 'org.flywaydb:flyway-database-postgresql:11.3.4'
+
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.poi:poi-scratchpad:5.2.3'  // Required for RTF processing
 }
 
 tasks.named('test') {
