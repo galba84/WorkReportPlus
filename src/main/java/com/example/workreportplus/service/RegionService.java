@@ -25,6 +25,15 @@ public class RegionService {
                 .fetchOne(REGION.ID);
     }
 
+    public boolean regionExistsByName(String name) {
+        return dsl.fetchExists(
+                dsl.selectOne()
+                        .from(REGION)
+                        .where(REGION.REGION_NAME.eq(name))
+        );
+    }
+
+
     public List<String> getRegionNames() {
         return dsl.select(REGION.REGION_NAME)
                 .from(REGION)

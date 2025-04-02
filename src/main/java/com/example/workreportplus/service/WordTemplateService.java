@@ -3,67 +3,68 @@ package com.example.workreportplus.service;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.*;
-import javax.swing.text.rtf.RTFEditorKit;
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class WordTemplateService {
 
     public byte[] generateWordFromRtfTemplate(String templateName, Map<String, String> variables) throws IOException {
-        // Load the RTF template from the docTemplates folder
+        // 1️⃣ Sanitize and convert the template name
+        templateName = convertTemplateName(templateName);
+        if (templateName == null || templateName.isBlank()) {
+            throw new IllegalArgumentException("Template name must not be null or blank");
+        }
+
+        // 2️⃣ Load the resource safely
         ClassPathResource templateResource = new ClassPathResource("docTemplates/" + templateName + ".rtf");
-        if (!templateResource.exists()) {
-            throw new FileNotFoundException("Template file not found: " + templateName);
+        if (!templateResource.exists() || !templateResource.isReadable()) {
+            throw new FileNotFoundException("Template file not found or not readable: " + templateName);
         }
 
-        // Read RTF content into a string
-        String rtfContent;
-        try (InputStream inputStream = templateResource.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            StringBuilder contentBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                contentBuilder.append(line).append("\n");
-            }
-            rtfContent = contentBuilder.toString();
+        // 3️⃣ Read the RTF as raw bytes (avoiding BufferedReader which can corrupt RTF)
+        byte[] rtfBytes;
+        try (InputStream inputStream = templateResource.getInputStream()) {
+            rtfBytes = inputStream.readAllBytes();
         }
 
-        // Replace placeholders
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            rtfContent = rtfContent.replace("{{" + entry.getKey() + "}}", entry.getValue());
-        }
+        String rtfContent = new String(rtfBytes, StandardCharsets.UTF_8);
 
-        // Convert modified text back to proper RTF format using RTFEditorKit
-        RTFEditorKit rtfEditorKit = new RTFEditorKit();
-        StyledDocument document = new DefaultStyledDocument(); // Use StyledDocument to handle text
-
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(rtfContent.getBytes(StandardCharsets.UTF_8))) {
-            rtfEditorKit.read(bais, document, 0);
-        } catch (BadLocationException e) {
-            throw new IOException("Error processing RTF document", e);
-        }
-
-// ✅ Fix: Ensure text is inserted if document is empty
-        if (document.getLength() == 0) {
-            try {
-                document.insertString(0, rtfContent, null); // Manually insert the processed text
-            } catch (BadLocationException e) {
-                throw new IOException("Error inserting text into RTF document", e);
+        // 4️⃣ Replace placeholders safely
+        if (variables != null) {
+            for (Map.Entry<String, String> entry : variables.entrySet()) {
+                String placeholder = "{{" + entry.getKey() + "}}";
+                String value = Optional.ofNullable(entry.getValue()).orElse("");
+                rtfContent = rtfContent.replace(placeholder, value);
             }
         }
 
-// Write the properly formatted RTF document
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            rtfEditorKit.write(outputStream, document, 0, document.getLength());
-        } catch (BadLocationException e) {
-            throw new IOException("Error writing RTF document", e);
+        // 5️⃣ Validate that at least something was replaced
+        if (rtfContent.contains("{{")) {
+            System.err.println("⚠ Warning: Some placeholders were not replaced in template: " + templateName);
         }
 
-        return outputStream.toByteArray();
+        // 6️⃣ Validate content is not empty
+        if (rtfContent.isBlank()) {
+            throw new IOException("RTF content became empty after processing, aborting.");
+        }
 
+        // 7️⃣ Return as byte array
+        return rtfContent.getBytes(StandardCharsets.UTF_8);
+    }
+
+
+
+    private String convertTemplateName(String templateName) {
+        if ("Group Report".equals(templateName)) {
+            return "groupReport";
+        } else if ("Region Report".equals(templateName)) {
+            return "regionReport";
+        }
+        return templateName;
     }
 }

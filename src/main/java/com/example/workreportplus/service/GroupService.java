@@ -25,8 +25,37 @@ public class GroupService {
                 .fetchOne(GROUP.ID);
     }
 
+    public boolean groupExistsByName(String groupName) {
+        return dsl.fetchExists(
+                dsl.selectOne()
+                        .from(GROUP)
+                        .where(GROUP.NAME.eq(groupName))
+        );
+    }
+
+
     public List<GroupDto> getAllGroups() {
         return dsl.selectFrom(GROUP)
                 .fetchInto(GroupDto.class);
+    }
+
+    public List<String> getGroupNames() {
+        return dsl.select(GROUP.NAME)
+                .from(GROUP)
+                .fetchInto(String.class);
+    }
+
+    public List<UUID> getGroupIdsByRegionId(UUID regionId) {
+        return dsl.select(GROUP.ID)
+                .from(GROUP)
+                .where(GROUP.REGION_ID.eq(regionId))
+                .fetchInto(UUID.class);
+    }
+
+    public String getGroupNameById(String groupId) {
+        return dsl.select(GROUP.NAME)
+                .from(GROUP)
+                .where(GROUP.ID.eq(UUID.fromString(groupId)))
+                .fetchOne(GROUP.NAME);
     }
 }

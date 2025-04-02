@@ -1,3 +1,4 @@
+<!--exportReport.html-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -16,9 +17,27 @@
 
 <form id="documentForm">
     <label for="template" th:text="#{form.label.template}">Select a document template:</label>
-    <select id="template">
+    <select id="template" name="templateName">
         <option th:each="template : ${templates}" th:value="${template}" th:text="${template}">Template</option>
     </select>
+
+    <div id="regionField">
+        <label for="regionName" th:text="#{form.label.region}">Select Region:</label>
+        <select id="regionName" name="regionName">
+            <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}">Region</option>
+        </select>
+    </div>
+
+    <div id="groupField">
+        <label for="groupName" th:text="#{form.label.group}">Select Group:</label>
+        <select id="groupName" name="groupName">
+            <option th:each="group : ${groupNames}" th:value="${group}" th:text="${group}">Group</option>
+        </select>
+    </div>
+
+    <label for="reportDate" th:text="#{form.label.date}">Report Date:</label>
+    <input type="date" id="reportDate" name="reportDate">
+
     <br>
     <button type="button" onclick="generateDocument()" th:text="#{form.button.generate}">Generate Report</button>
 </form>
@@ -28,10 +47,38 @@
 </p>
 
 <script>
-    function generateDocument() {
-        let template = document.getElementById("template").value;
+    // Hide region and group fields initially
+    document.addEventListener("DOMContentLoaded", function() {
+        toggleFields();
+        document.getElementById("template").addEventListener("change", toggleFields);
+    });
 
-        fetch(`/api/daily-work-report/export/word?template=${template}`)
+    function toggleFields() {
+        const template = document.getElementById("template").value;
+        document.getElementById("regionField").style.display = template === "Region Report" ? "block" : "none";
+        document.getElementById("groupField").style.display = template === "Group Report" ? "block" : "none";
+    }
+
+    function generateDocument() {
+        const template = document.getElementById("template").value;
+        const region = document.getElementById("regionName").value;
+        const group = document.getElementById("groupName").value;
+        const reportDate = document.getElementById("reportDate").value;
+
+        if (!reportDate) {
+            alert("Please select a report date.");
+            return;
+        }
+
+        let url = `/api/daily-work-report/export/word?templateName=${encodeURIComponent(template)}&reportDate=${encodeURIComponent(reportDate)}`;
+
+        if (template === "Region Report") {
+            url += `&regionName=${encodeURIComponent(region)}`;
+        } else if (template === "Group Report") {
+            url += `&groupName=${encodeURIComponent(group)}`;
+        }
+
+        fetch(url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error("Failed to generate document");
@@ -39,10 +86,10 @@
                 return response.blob();
             })
             .then(blob => {
-                let url = window.URL.createObjectURL(blob);
+                let downloadUrl = window.URL.createObjectURL(blob);
                 let link = document.getElementById("documentLink");
-                link.href = url;
-                link.download = template + ".doc";
+                link.href = downloadUrl;
+                link.download = template + ".rtf";
                 document.getElementById("downloadLink").style.display = "block";
             })
             .catch(error => {
