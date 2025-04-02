@@ -266,4 +266,15 @@ public class RegionReportService implements ReportService {
         record.store(); // ✅ Saves the record
     }
 
+    public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
+        Condition condition = REGIONREPORT.REGION_ID.eq(regionId);
+        if (reportDate != null) {
+            condition = condition.and(REGIONREPORT.REPORT_DATE.eq(reportDate));
+        }
+
+        return dsl.selectFrom(REGIONREPORT)
+                .where(condition)
+                .limit(1)
+                .fetchOneInto(RegionReportDto.class);
+    }
 }

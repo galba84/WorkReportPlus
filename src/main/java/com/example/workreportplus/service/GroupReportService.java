@@ -40,6 +40,7 @@ public class GroupReportService implements ReportService {
     private final ContractorService contractorService;
     private final PositionService positionService;
     ObjectMapper objectMapper = new ObjectMapper();
+
     public GroupReportService(DSLContext dsl, RegionReportMapper regionReportMapper,
                               GroupReportMapper groupReportMapper, ContractorService contractorService,
                               PositionService positionService) {
@@ -150,7 +151,7 @@ public class GroupReportService implements ReportService {
                 ? List.of()
                 : Arrays.stream(contractorIds)
                 .map(contractorService::getContractorById)
-                .map(e->ContractorResponse
+                .map(e -> ContractorResponse
                         .builder()
                         .firstName(e.getFirstName())
                         .lastName(e.getLastName())
@@ -160,9 +161,6 @@ public class GroupReportService implements ReportService {
                         .build())
                 .toList();
     }
-
-
-
 
 
     @Override
@@ -250,10 +248,46 @@ public class GroupReportService implements ReportService {
         }
 
         try {
-            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {});
+            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {
+            });
         } catch (IOException e) {
             throw new RuntimeException("Error converting JSONB to Map", e);
         }
+    }
+
+    public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate) {
+        Condition condition = GROUPREPORT.GROUP_ID.eq(groupId);
+        if (reportDate != null) {
+            condition = condition.and(GROUPREPORT.REPORT_DATE.eq(reportDate));
+        }
+
+        GroupreportRecord record = dsl.selectFrom(GROUPREPORT)
+                .where(condition)
+                .limit(1)
+                .fetchAny(); // avoid TooManyRowsException
+
+        if (record == null) {
+            return null; // or throw exception if you prefer
+        }
+
+        // === Manual mapping ===
+        GroupReportDto dto = new GroupReportDto();
+        dto.setGroupId(record.get(GROUPREPORT.GROUP_ID));
+        dto.setGroupName(record.get(GROUPREPORT.GROUP_ID).toString());
+        dto.setRegionReportId(record.get(GROUPREPORT.REGION_REPORT_ID));
+        dto.setPlaceIds(Arrays.stream(record.get(GROUPREPORT.PLACE_IDS)).toList()); // check if this is Array or JSONB
+        dto.setContractorsIds(Arrays.stream(record.get(GROUPREPORT.CONTRACTORS_IDS)).toList()); // same here
+        dto.setDescription(record.get(GROUPREPORT.DESCRIPTION));
+        dto.setWorked(record.get(GROUPREPORT.IS_WORKED));
+        dto.setReportDate(record.get(GROUPREPORT.REPORT_DATE));
+
+        // 👇 Handle status manually if it's Boolean in DB but Enum in code
+        Boolean statusValue = record.get(GROUPREPORT.STATUS);
+        if (statusValue != null) {
+            dto.setStatus(statusValue ? ReportStatus.ACTIVE : ReportStatus.DELETED);
+        }
+
+        return dto;
     }
 
 }
