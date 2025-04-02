@@ -25,11 +25,10 @@ ON CONFLICT (region_name) DO NOTHING;
 -- Insert Positions
 INSERT INTO Place (id, name, area_type_id, county, district, region)
 VALUES
-    (gen_random_uuid(), 'Kyiv Center', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Kyiv County', 'Shevchenkivskyi District', 'Kyivska Oblast'),
-    (gen_random_uuid(), 'Lviv Old Town', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Lviv County', 'Halytskyi District', 'Lvivska Oblast'),
-    (gen_random_uuid(), 'Odesa Port', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Odesa County', 'Prymorskyi District', 'Odeska Oblast'),
-    (gen_random_uuid(), 'Kharkiv Science Park', (SELECT id FROM AreaType ORDER BY random() LIMIT 1), 'Kharkiv County', 'Nemyshlianskyi District', 'Kharkivska Oblast')
-ON CONFLICT (name) DO NOTHING;
+    (gen_random_uuid(), 'Kyiv Center', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Kyiv County', 'Shevchenkivskyi District', 'Kyivska Oblast'),
+    (gen_random_uuid(), 'Lviv Old Town', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Lviv County', 'Halytskyi District', 'Lvivska Oblast'),
+    (gen_random_uuid(), 'Odesa Port', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Odesa County', 'Prymorskyi District', 'Odeska Oblast'),
+    (gen_random_uuid(), 'Kharkiv Science Park', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Kharkiv County', 'Nemyshlianskyi District', 'Kharkivska Oblast');
 
 INSERT INTO Positions (id, position_name)
 VALUES (gen_random_uuid(), 'Командир роти'),
@@ -72,13 +71,16 @@ INSERT INTO Region (id, region_name)
 VALUES (gen_random_uuid(), 'Київська область'),
        (gen_random_uuid(), 'Харківська область'),
        (gen_random_uuid(), 'Одеська область'),
-       (gen_random_uuid(), 'Львівська область');
+       (gen_random_uuid(), 'Львівська область')
+ON CONFLICT (region_name) DO NOTHING;
 
 -- Insert Groups
 INSERT INTO "Group" (id, name, region_id)
 VALUES (gen_random_uuid(), 'Sales Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
        (gen_random_uuid(), 'Marketing Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
-       (gen_random_uuid(), 'Support Team', (SELECT id FROM Region ORDER BY random() LIMIT 1));
+       (gen_random_uuid(), 'Support Team', (SELECT id FROM Region ORDER BY random() LIMIT 1))
+ON CONFLICT (name) DO NOTHING;
+
 --
 -- -- Insert Group Reports
 -- INSERT INTO GroupReport (id, group_id, description, is_worked, created_by, updated_by)

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Google Sheets Viewer</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+
+<div id="app">
+    <h2>Google Sheet Data</h2>
+
+    <!-- Input fields -->
+    <div>
+        <label>Sheet ID:</label>
+        <input v-model="sheetId" placeholder="Sheet Name (e.g., ID!)">
+        <label>Upper Bound:</label>
+        <input v-model="upperBound" placeholder="e.g., A1:">
+        <label>Lower Bound:</label>
+        <input v-model="lowerBound" placeholder="e.g., B20">
+        <button @click="fetchData">Load Data</button>
+    </div>
+
+    <div v-if="error" style="color: red">{{ error }}</div>
+
+    <table v-if="data.length" border="1" cellpadding="5" cellspacing="0">
+        <tr>
+            <th v-for="(header, index) in data[0]" :key="index">{{ header }}</th>
+        </tr>
+        <tr v-for="(row, rowIndex) in data.slice(1)" :key="rowIndex">
+            <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+        </tr>
+    </table>
+
+    <p v-if="!data.length && !error">No data loaded yet.</p>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                sheetId: 'ID!',     // optional default
+                upperBound: 'A1:',
+                lowerBound: 'B20',
+                data: [],
+                error: null
+            };
+        },
+        methods: {
+            fetchData() {
+                const url = `/read-sheets?sheetId=${encodeURIComponent(this.sheetId)}&upperBound=${encodeURIComponent(this.upperBound)}&lowerBound=${encodeURIComponent(this.lowerBound)}`;
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('API error');
+                        return response.json();
+                    })
+                    .then(json => {
+                        this.data = json;
+                        this.error = null;
+                    })
+                    .catch(err => {
+                        this.error = err.message;
+                        this.data = [];
+                    });
+            }
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>

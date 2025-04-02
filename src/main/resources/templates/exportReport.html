@@ -12,43 +12,44 @@
 <div th:insert="~{fragments/header :: body}">
     <th:block th:with="infoMessage=#{welcome.message}"></th:block>
 </div>
+<div class="form-container">
 
-<h2 th:text="#{page.title.exportReport}">Export Report</h2>
+    <h2 th:text="#{page.title.exportReport}">Export Report</h2>
 
-<form id="documentForm">
-    <label for="template" th:text="#{form.label.template}">Select a document template:</label>
-    <select id="template" name="templateName">
-        <option th:each="template : ${templates}" th:value="${template}" th:text="${template}">Template</option>
-    </select>
-
-    <div id="regionField">
-        <label for="regionName" th:text="#{form.label.region}">Select Region:</label>
-        <select id="regionName" name="regionName">
-            <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}">Region</option>
+    <form id="documentForm">
+        <label for="template" th:text="#{form.label.template}">Select a document template:</label>
+        <select id="template" name="templateName">
+            <option th:each="template : ${templates}" th:value="${template}" th:text="${template}">Template</option>
         </select>
-    </div>
 
-    <div id="groupField">
-        <label for="groupName" th:text="#{form.label.group}">Select Group:</label>
-        <select id="groupName" name="groupName">
-            <option th:each="group : ${groupNames}" th:value="${group}" th:text="${group}">Group</option>
-        </select>
-    </div>
+        <div id="regionField">
+            <label for="regionName" th:text="#{form.label.region}">Select Region:</label>
+            <select id="regionName" name="regionName">
+                <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}">Region</option>
+            </select>
+        </div>
 
-    <label for="reportDate" th:text="#{form.label.date}">Report Date:</label>
-    <input type="date" id="reportDate" name="reportDate">
+        <div id="groupField">
+            <label for="groupName" th:text="#{form.label.group}">Select Group:</label>
+            <select id="groupName" name="groupName">
+                <option th:each="group : ${groupNames}" th:value="${group}" th:text="${group}">Group</option>
+            </select>
+        </div>
 
-    <br>
-    <button type="button" onclick="generateDocument()" th:text="#{form.button.generate}">Generate Report</button>
-</form>
+        <label for="reportDate" th:text="#{form.label.date}">Report Date:</label>
+        <input type="date" id="reportDate" name="reportDate">
 
+        <br>
+        <button type="button" onclick="generateDocument()" th:text="#{form.button.generate}">Generate Report</button>
+    </form>
+</div>
 <p id="downloadLink" style="display: none;">
     <a id="documentLink" href="#" download th:text="#{form.link.download}">Download Generated Document</a>
 </p>
 
 <script>
     // Hide region and group fields initially
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         toggleFields();
         document.getElementById("template").addEventListener("change", toggleFields);
     });
