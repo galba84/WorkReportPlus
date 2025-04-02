@@ -10,26 +10,28 @@
 <!-- Header Fragment -->
 <div th:insert="~{fragments/header :: body}"></div>
 
-<h2 th:text="#{page.title.searchReports}">Search Reports</h2>
 
-<form th:action="@{/api/daily-work-report/search}" method="GET">
-    <label for="startDate" th:text="#{form.startDate}">Start Date:</label>
-    <input type="date" id="startDate" name="startDate" required>
+<div class="form-container">
+    <h2 th:text="#{page.title.searchReports}">Search Reports</h2>
 
-    <label for="endDate" th:text="#{form.endDate}">End Date:</label>
-    <input type="date" id="endDate" name="endDate" required>
+    <form th:action="@{/api/daily-work-report/search}" method="GET">
+        <label for="startDate" th:text="#{form.startDate}">Start Date:</label>
+        <input type="date" id="startDate" name="startDate" required>
 
-    <label for="region" th:text="#{form.region}">Region:</label>
-    <select id="region" name="region">
-        <option value="" th:text="#{form.selectRegion}">-- Select Region --</option>
-        <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}"></option>
-    </select>
+        <label for="endDate" th:text="#{form.endDate}">End Date:</label>
+        <input type="date" id="endDate" name="endDate" required>
 
-    <button type="submit" th:text="#{form.button.search}">Search</button>
-</form>
+        <label for="region" th:text="#{form.region}">Region:</label>
+        <select id="region" name="region">
+            <option value="" th:text="#{form.selectRegion}">-- Select Region --</option>
+            <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}"></option>
+        </select>
 
+        <button type="submit" th:text="#{form.button.search}">Search</button>
+    </form>
+</div>
 <div id="results">
-    <h3 th:text="#{table.header.results}">Search Results</h3>
+<!--    <h3 th:text="#{table.header.results}">Search Results</h3>-->
     <table class="full-width-table">
         <thead>
         <tr>

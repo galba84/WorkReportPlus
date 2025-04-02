@@ -172,3 +172,73 @@ button {
     background-color: #0056b3;
 }
 
+
+/* Form Container */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto 30px auto; /* also adds bottom space before table */
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+/* Uniform spacing for all inputs */
+.form-container label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.form-container input,
+.form-container select {
+    margin-top: 5px;
+    margin-bottom: 15px;
+    padding: 8px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Space for the button */
+.form-container button {
+    margin-top: 15px;
+    padding: 10px;
+}
+
+/* General spacing for form elements */
+#regionReportForm label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+#regionReportForm input,
+#regionReportForm select,
+#regionReportForm textarea {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+/* ExtraData section */
+#extraDataContainer .extraDataEntry {
+    margin-bottom: 10px;
+}
+
+/* Spacing for Add / Remove buttons */
+#addExtraData,
+#addGroupReport,
+.removeExtraData {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+/* Submit button */
+#regionReportForm button[type="submit"] {
+    margin-top: 20px;
+    width: 100%;
+}
+

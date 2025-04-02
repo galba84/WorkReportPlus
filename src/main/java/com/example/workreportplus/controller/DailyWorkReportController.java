@@ -103,6 +103,7 @@ public class DailyWorkReportController {
 
         // Add to the model for display in the template
         model.addAttribute("reports", reports);
+        model.addAttribute("regionNames", regionService.getRegionNames());
 
         return "search_reports"; // Returns the same template with search results
     }
