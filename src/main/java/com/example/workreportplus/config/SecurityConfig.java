@@ -31,7 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index", "/login", "/oauth2/**", "/access-denied").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/api/**").hasAnyRole(ROLE_USER, ROLE_ADMIN)
-                        .requestMatchers("/admin/**").hasRole(ROLE_ADMIN)
+                        .requestMatchers("/admin/**","/read-sheets/**").hasRole(ROLE_ADMIN)
+                        .requestMatchers("/sheets-viewer.html").hasRole(ROLE_ADMIN)
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

@@ -176,11 +176,13 @@ button {
 /* Form Container */
 .form-container {
     max-width: 600px;
-    margin: 0 auto 30px auto; /* also adds bottom space before table */
+    /* also adds bottom space before table */
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 5px;
     background: #f9f9f9;
+    /* or any value you like */
+    margin: 30px auto;
 }
 
 /* Uniform spacing for all inputs */
