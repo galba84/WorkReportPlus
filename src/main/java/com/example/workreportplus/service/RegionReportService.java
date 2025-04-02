@@ -186,10 +186,6 @@ public class RegionReportService implements ReportService {
 
     public UUID saveRegionReport(RegionReportDto regionReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername(); // Fetch user from SecurityContextHolder
-        // Date formatter (adjust format based on your input format)
-
-
-        // Convert Strings to LocalDate safely
         LocalDate reportDate = regionReportDto.getReportDate();
 
         RegionreportRecord record = dsl.newRecord(REGIONREPORT);

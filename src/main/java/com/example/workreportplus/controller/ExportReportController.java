@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static java.time.LocalTime.now;
@@ -72,7 +73,7 @@ public class ExportReportController {
             return ResponseEntity.badRequest().build();
         }
         // Define placeholders and their values
-        Map<String, String> variables = enreachTemplatevariables(templateName, regionName, groupName, reportDate);
+        Map<String, String> variables = enrichTemplateVariables(templateName, regionName, groupName, reportDate);
         byte[] wordBytes = wordTemplateService.generateWordFromRtfTemplate(templateName, variables);
 
         return ResponseEntity.ok()
@@ -103,12 +104,12 @@ public class ExportReportController {
         return true;
     }
 
-    private Map<String, String> enreachTemplatevariables(String templateName, String regionName, String groupName,
-                                                         LocalDate reportDate) throws IOException {
+    private Map<String, String> enrichTemplateVariables(String templateName, String regionName, String groupName,
+                                                        LocalDate reportDate) throws IOException {
         Map<String, String> variables = new HashMap<>();
         if (REGION_REPORT.equalsIgnoreCase(templateName)) {
             variables.put("regionName", regionName);
-            variables.put("reportDate", reportDate.toString());
+            variables.put("reportDate", formatDate(reportDate));
             UUID regionId = regionService.getRegionIdByName(regionName);
             List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
             List<GroupReportDto> groupReportDtoList = new ArrayList<>();
@@ -142,10 +143,15 @@ public class ExportReportController {
         return variables;
     }
 
+    private String formatDate(LocalDate reportDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy 'року'", new Locale("uk"));
+        return reportDate.format(formatter);
+    }
+
 
     private void createGroupReport(String groupName, LocalDate reportDate, Map<String, String> variables) {
         variables.put("groupName", groupName);
-        variables.put("reportDate", reportDate.toString());
+        variables.put("reportDate", formatDate(reportDate));
         UUID groupId = groupService.getGroupIdByName(groupName);
         GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate);
         variables.put("contractors", String.join("\n", report.getContractorsIds().toString()));
