@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Header</title>
@@ -7,26 +8,34 @@
 </head>
 
 <body>
+
 <!-- Language Switcher -->
 <div class="language-switcher">
     <span th:text="#{language.label}">Language</span>:
-    <a th:href="@{/change-lang(lang='en')}">English</a> |
-    <a th:href="@{/change-lang(lang='uk')}">Українська</a>
+    <a th:href="@{/change-lang(lang='en')}" th:classappend="${#locale.language == 'en'} ? 'active'">English</a> |
+    <a th:href="@{/change-lang(lang='uk')}" th:classappend="${#locale.language == 'uk'} ? 'active'">Українська</a>
 </div>
 
 <div class="header">
+
     <!-- Info message dynamically set -->
     <div class="info-message" th:text="${infoMessage}">Default Info Message</div>
 
-    <!-- User Information (If Logged In) -->
-    <div class="user-info" th:if="${#authentication.isAuthenticated()}">
-        <span th:text="#{welcome}">Welcome,
-            <b th:if="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
-               th:text="${#authentication.principal.attributes['email']}">User</b>
+    <!-- DEBUG: Show current user roles -->
+    <div th:if="${#authentication != null and #authentication.isAuthenticated()}">
+        <p>Roles:
+            <span th:each="role : ${#authentication.authorities}"
+                  th:text="${role.getAuthority()} + ' '">ROLE</span>
+        </p>
+    </div>
 
-            <b th:unless="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
-               th:text="${#authentication.name}">User</b>
-        </span>
+    <!-- User Information (If Logged In) -->
+    <div class="user-info" th:if="${#authentication != null and #authentication.isAuthenticated()}">
+        <span th:text="#{welcome}">Welcome,</span>
+        <b th:if="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
+           th:text="${#authentication.principal.attributes['email']}">User</b>
+        <b th:unless="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)}"
+           th:text="${#authentication.name}">User</b>
     </div>
 
     <!-- Separator -->
@@ -34,26 +43,24 @@
 
     <!-- Navigation Menu -->
     <div class="menu">
+
+        <!-- Visible for ALL authenticated users -->
         <a th:href="@{/api/daily-work-report}" th:text="#{menu.newReport}">New Report</a>
         <a th:href="@{/api/daily-work-report/search}" th:text="#{menu.searchReport}">Search Report</a>
         <a th:href="@{/api/daily-work-report/export}" th:text="#{menu.exportReport}">Export Report</a>
+
+        <!-- ADMIN only link example -->
+        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+            <a th:href="@{/admin}" th:text="#{menu.adminPage}">Admin</a>
+        </div>
+
+        <!-- Logout -->
         <form th:action="@{/logout}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
             <button type="submit" th:text="#{menu.logout}">Logout</button>
         </form>
     </div>
 </div>
-
-<!--<script>-->
-<!--    function clearCookies() {-->
-<!--        document.cookie.split(";").forEach(function (cookie) {-->
-<!--            document.cookie = cookie.replace(/^ +/, "")-->
-<!--                .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/");-->
-<!--        });-->
-<!--    }-->
-
-<!--    window.onload = clearCookies;-->
-<!--</script>-->
 
 </body>
 </html>
