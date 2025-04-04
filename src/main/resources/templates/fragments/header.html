@@ -54,6 +54,16 @@
             <a th:href="@{/admin}" th:text="#{menu.adminPage}">Admin</a>
         </div>
 
+        <!-- ADMIN only link example -->
+        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+            <a th:href="@{/users}" th:text="#{menu.usersPage}">Users</a>
+        </div>
+
+        <!-- ADMIN only link example -->
+        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+            <a th:href="@{/sheets-viewer.html}" th:text="#{menu.sheetsViewer}">Sheets Viever</a>
+        </div>
+
         <!-- Logout -->
         <form th:action="@{/logout}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>

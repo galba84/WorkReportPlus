@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Users</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+</head>
+
+<body>
+
+<!-- Include the header fragment -->
+<div th:insert="~{fragments/header :: body}">
+    <th:block th:with="infoMessage=#{admin.page.info.message}"></th:block>
+</div>
+
+
+<h1>User Management</h1>
+
+<div th:if="${infoMessage}" class="alert alert-success">
+    <span th:text="${infoMessage}"></span>
+</div>
+
+
+<!-- Existing Users -->
+<table border="1">
+    <thead>
+    <tr>
+        <th>Nickname</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Loop users -->
+    <tr th:each="user : ${users}">
+        <form th:action="@{/users/add}" method="post">
+            <td th:text="${user.nickname}"></td>
+            <td th:text="${user.email}"></td>
+            <td>
+                <select name="role">
+                    <option th:selected="${user.role == 'ADMIN'}">ADMIN</option>
+                    <option th:selected="${user.role == 'POWER_USER'}">POWER_USER</option>
+                    <option th:selected="${user.role == 'USER'}">USER</option>
+                </select>
+            </td>
+            <td>
+                <input type="hidden" name="email" th:value="${user.email}" />
+                <input type="hidden" name="nickname" th:value="${user.nickname}" />
+                <button type="submit">Update</button>
+            </td>
+        </form>
+    </tr>
+    </tbody>
+</table>
+
+<hr/>
+
+<!-- Add New User -->
+<div class="form-container">
+
+<h2>Add New User</h2>
+<form th:action="@{/users/add}" method="post">
+    <label>Nickname:</label>
+    <input type="text" name="nickname" required/>
+    <label>Email:</label>
+    <input type="email" name="email" required/>
+    <label>Role:</label>
+    <select name="role">
+        <option>ADMIN</option>
+        <option>POWER_USER</option>
+        <option>USER</option>
+    </select>
+    <button type="submit">Add</button>
+</form>
+</div>
+</body>
+
+</html>
