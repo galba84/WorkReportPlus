@@ -10,7 +10,12 @@
 
 <!-- Include the header fragment -->
 <div th:insert="~{fragments/header :: body}">
-    <th:block th:with="infoMessage=#{welcome.message}"></th:block>
+    <th:block th:with="infoMessage=#{admin.page.info.message}"></th:block>
+</div>
+
+<!-- Display infoMessage if present -->
+<div th:if="${infoMessage != null}" class="alert alert-info">
+    <p th:text="${infoMessage}"></p>
 </div>
 
 <h1 th:text="#{page.heading.admin}">Welcome to the ADMIN Page</h1>
@@ -19,6 +24,27 @@
 <p th:each="authority : ${#authentication.getAuthorities()}">
     <span th:text="${authority.getAuthority().replace('ROLE_', '')}"></span>
 </p>
+
+<div class="form-container">
+
+    <!-- Button to update contractors -->
+    <form th:action="@{/admin/contractors}" method="post">
+        <button type="submit" th:text="#{button.updateContractors}">Update Contractors from Google Sheets</button>
+    </form>
+
+
+    <!-- Button to update regions -->
+    <form th:action="@{/admin/groups}" method="post">
+        <button type="submit" th:text="#{button.updateGroups}">Update Groups from Google Sheets</button>
+    </form>
+
+    <!-- Button to update regions -->
+    <form th:action="@{/admin/regions}" method="post">
+        <button type="submit" th:text="#{button.updateRegions}">Update Regions from Google Sheets</button>
+    </form>
+
+</div>
+
 
 </body>
 </html>
