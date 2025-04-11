@@ -1,6 +1,5 @@
 package com.example.workreportplus.dto;
 
-import com.example.workreportplus.ENUM.AreaType;
 import com.example.workreportplus.dto.templates.IdDto;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,8 +8,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class PlaceDto extends IdDto {
     String name;
-    AreaType areaType;
+    String areaType;
     String county;
     String district;
     String region;
+    String regionId;
+    String coeficient;
 }

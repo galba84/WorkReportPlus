@@ -18,6 +18,8 @@ import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
 import com.example.workreportplus.request.searchparams.SearchParams;
 import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Result;
@@ -27,7 +29,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,13 +46,20 @@ public class RegionReportService implements ReportService {
     private final RegionService regionService;  // Now properly injected
     private final GroupReportMapper groupReportMapper;
     private final GroupReportService groupReportService;
+    private final ObjectMapper objectMapper;
 
-    public RegionReportService(DSLContext dsl, RegionReportMapper regionReportMapper, RegionService regionService, GroupReportMapper groupReportMapper, GroupReportService groupReportService) {
+    public RegionReportService(DSLContext dsl,
+                               RegionReportMapper regionReportMapper,
+                               RegionService regionService,
+                               GroupReportMapper groupReportMapper,
+                               GroupReportService groupReportService,
+                               ObjectMapper objectMapper) {
         this.dsl = dsl;
         this.regionReportMapper = regionReportMapper;
         this.regionService = regionService;
         this.groupReportMapper = groupReportMapper;
         this.groupReportService = groupReportService;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -175,6 +186,7 @@ public class RegionReportService implements ReportService {
         if (groupReports != null) {
             groupReports.forEach(groupReport -> {
                 GroupReportDto groupReportDto = groupReportMapper.requestToDto(groupReport);
+                groupReportDto.setPlacesWithCoeficcient(groupReport.getPlaceCoefficients());
                 groupReportDto.setRegionReportId(regionReportId);
                 groupReportDto.setReportDate(report.getReportDate());
                 saveGroupReport(groupReportDto);
@@ -235,31 +247,54 @@ public class RegionReportService implements ReportService {
     }
 
     public void saveGroupReport(GroupReportDto groupReportDto) {
-        String currentUser = SecurityUtil.getCurrentUsername(); // ✅ Fetch user from SecurityContextHolder
+        String currentUser = SecurityUtil.getCurrentUsername();
 
         GroupreportRecord record = dsl.newRecord(GROUPREPORT);
-        record.setGroupId(UUID.fromString(groupReportDto.getGroupName())); // ✅ Set the group ID
+        record.setGroupId(UUID.fromString(groupReportDto.getGroupName()));
         record.setRegionReportId(groupReportDto.getRegionReportId());
         record.setReportDate(groupReportDto.getReportDate());
+
         if (groupReportDto.getStatus() != null) {
             record.setStatus(fromInt(groupReportDto.getStatus().getValue()));
         } else {
             record.setStatus(Boolean.TRUE);
         }
+
         record.setIsWorked(groupReportDto.isWorked());
         record.setDescription(groupReportDto.getDescription());
+
         if (groupReportDto.getContractorsIds() != null) {
-            record.setContractorsIds(groupReportDto.getContractorsIds().toArray(new UUID[0])); // ✅ Convert List<UUID> to UUID[]
-        }
-        if (groupReportDto.getPlaceIds() != null) {
-            record.setPlaceIds(groupReportDto.getPlaceIds().toArray(new UUID[0])); // ✅ Convert List<UUID> to UUID[]
+            record.setContractorsIds(groupReportDto.getContractorsIds().toArray(new UUID[0]));
         }
 
-        record.setCreatedBy(currentUser); // ✅ Store the logged-in user
+        if (groupReportDto.getPlaceIds() != null) {
+            record.setPlaceIds(groupReportDto.getPlaceIds().toArray(new UUID[0]));
+        }
+
+        // ✅ Merge standard extra data and place coefficients
+        Map<String, String> extraData = new HashMap<>();
+        if (groupReportDto.getExtraDataGroupReport() != null) {
+            extraData.putAll(groupReportDto.getExtraDataGroupReport());
+        }
+        if (groupReportDto.getPlacesWithCoeficcient() != null) {
+            groupReportDto.getPlacesWithCoeficcient().forEach((placeId, coef) ->
+                    extraData.put("placeCoef_" + placeId, coef)
+            );
+        }
+
+        // ✅ Safely serialize and store JSONB
+        try {
+            String extraJson = objectMapper.writeValueAsString(extraData);
+            record.setExtraDataGroupReport(org.jooq.JSONB.valueOf(extraJson));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize extraDataGroupReport", e);
+        }
+
+        record.setCreatedBy(currentUser);
         record.setUpdatedBy(currentUser);
         record.setCreatedOn(LocalDateTime.now());
         record.setUpdatedOn(LocalDateTime.now());
-        record.store(); // ✅ Saves the record
+        record.store();
     }
 
     public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
@@ -273,4 +308,14 @@ public class RegionReportService implements ReportService {
                 .limit(1)
                 .fetchOneInto(RegionReportDto.class);
     }
+
+    public UUID getLastReportIdByDate(LocalDate reportDate) {
+        return dsl.select(REGIONREPORT.ID)
+                .from(REGIONREPORT)
+                .where(REGIONREPORT.REPORT_DATE.eq(reportDate))
+                .orderBy(REGIONREPORT.CREATED_ON.desc())
+                .limit(1)
+                .fetchOneInto(UUID.class);
+    }
+
 }

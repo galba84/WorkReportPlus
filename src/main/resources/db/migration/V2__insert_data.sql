@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Insert AreaTypes
 INSERT INTO AreaType (id, type_name)
-VALUES (gen_random_uuid(), 'Urban'),
+VALUES ('d53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Urban'),
        (gen_random_uuid(), 'Rural');
 
 -- Insert Units
@@ -23,12 +23,6 @@ VALUES (gen_random_uuid(), 'North America'),
        (gen_random_uuid(), 'Africa')
 ON CONFLICT (region_name) DO NOTHING;
 -- Insert Positions
-INSERT INTO Place (id, name, area_type_id, county, district, region)
-VALUES
-    (gen_random_uuid(), 'Kyiv Center', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Kyiv County', 'Shevchenkivskyi District', 'Kyivska Oblast'),
-    (gen_random_uuid(), 'Lviv Old Town', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Lviv County', 'Halytskyi District', 'Lvivska Oblast'),
-    (gen_random_uuid(), 'Odesa Port', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Odesa County', 'Prymorskyi District', 'Odeska Oblast'),
-    (gen_random_uuid(), 'Kharkiv Science Park', 'd53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Kharkiv County', 'Nemyshlianskyi District', 'Kharkivska Oblast');
 
 INSERT INTO Positions (id, position_name)
 VALUES (gen_random_uuid(), 'Командир роти'),

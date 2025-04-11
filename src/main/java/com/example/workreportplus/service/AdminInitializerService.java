@@ -1,8 +1,10 @@
 package com.example.workreportplus.service;
 
+import com.example.jooq.tables.Users;
+import com.example.jooq.tables.records.UsersRecord;
 import jakarta.annotation.PostConstruct;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.jooq.DSLContext;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -10,45 +12,61 @@ import java.util.UUID;
 @Service
 public class AdminInitializerService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final DSLContext dsl;
+    private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
-    public AdminInitializerService(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+    private static final Users USERS = Users.USERS;
+
+    public AdminInitializerService(DSLContext dsl, PasswordEncoder passwordEncoder,
+                                   AuditLogService auditLogService) {
+        this.dsl = dsl;
+        this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
     }
 
     @PostConstruct
     public void initAdminUser() {
         String adminEmail = "verlenanatoly@gmail.com";
         String adminNickname = "SuperAdmin";
+        String rawPassword = "admin123";
+        String encodedPassword = passwordEncoder.encode(rawPassword);
 
-        // Check if admin user exists in 'users' table
-        Integer adminCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM users WHERE email = ? AND role = 'ADMIN'",
-                Integer.class, adminEmail
+        // 🔍 Перевіряємо, чи такий email вже є
+        boolean exists = dsl.fetchExists(
+                dsl.selectOne()
+                        .from(USERS)
+                        .where(USERS.EMAIL.eq(adminEmail))
         );
 
-        if (adminCount == null || adminCount == 0) {
-            // Generate a UUID for the admin user
-            UUID adminId = UUID.randomUUID();
+        if (!exists) {
+            UsersRecord admin = dsl.newRecord(USERS);
+            admin.setId(UUID.randomUUID());
+            admin.setEmail(adminEmail);
+            admin.setNickname(adminNickname);
+            admin.setPassword(encodedPassword);
+            admin.setRole("ADMIN");
 
-            // Insert into 'users' table
-            jdbcTemplate.update(
-                    "INSERT INTO users (id, nickname, email, role) VALUES (?, ?, ?, ?)",
-                    adminId, adminNickname, adminEmail, "ADMIN"
+            admin.insert();
+
+            auditLogService.log(
+                    "ADMIN_INIT",
+                    "AdminInitializerService",
+                    adminEmail, // entityId
+                    null,       // userId (null because it's system-initiated)
+                    "127.0.0.1", // or fetch from request if available
+                    "Admin user initialized with email: " + adminEmail + " and password: " + rawPassword
             );
-
-            // Hash the email and insert into 'user_roles' table
-            String hashedEmail = passwordEncoder.encode(adminEmail);
-            jdbcTemplate.update(
-                    "INSERT INTO user_roles (user_id, email_hash, role) VALUES (?, ?, ?)",
-                    adminId, hashedEmail, "ADMIN"
-            );
-
-            System.out.println("✅ Admin user initialized.");
         } else {
-            System.out.println("🔹 Admin user already exists, skipping initialization.");
+            auditLogService.log(
+                    "ADMIN_INIT_SKIP",
+                    "AdminInitializerService",
+                    adminEmail,
+                    null,
+                    "127.0.0.1",
+                    "Admin user already exists, skipping initialization."
+            );
         }
     }
+
 }

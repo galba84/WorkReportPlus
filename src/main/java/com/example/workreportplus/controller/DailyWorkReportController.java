@@ -9,10 +9,12 @@ import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
 import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.example.workreportplus.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,7 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Controller
@@ -35,6 +39,8 @@ public class DailyWorkReportController {
     @Autowired
     private RegionReportService regionReportService;
     @Autowired
+    private DescriptionTemplateService descriptionTemplateService;
+    @Autowired
     private RegionService regionService;
     @Autowired
     private ContractorService contractorService;
@@ -42,11 +48,15 @@ public class DailyWorkReportController {
     private PlacesService placeService;
     @Autowired
     private GroupService groupService;
-
+    @Autowired
+    private AuditLogService auditLogService;
+    @Autowired
+    private UserService userService;
     @PostMapping
     public String submitReport(@ModelAttribute @Valid RegionReportRequest request,
                                BindingResult bindingResult,
-                               RedirectAttributes redirectAttributes) {
+                               RedirectAttributes redirectAttributes,
+                               HttpServletRequest httpRequest) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Validation failed.");
             return "redirect:/new_report";
@@ -60,6 +70,17 @@ public class DailyWorkReportController {
         regionReportService.saveReport(request);
 
         redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully!");
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID currentUserId = userService.getUserIdByEmail(currentEmail).orElse(null);
+        auditLogService.log(
+                "REPORT_SUBMIT",
+                "daily-work-report",
+                request.getRegionName() != null ? request.getRegionName() : "unknown",
+                currentUserId,
+                httpRequest.getRemoteAddr(),
+                "Submitted daily region report"
+        );
+
         return "redirect:/api/daily-work-report";
     }
 
@@ -68,14 +89,25 @@ public class DailyWorkReportController {
         model.addAttribute("regionReport", new DailyRegionReportResponse());
         List<RegionDto> regions = regionService.getRegions();
         List<GroupDto> groups = groupService.getAllGroups();
-        List<ContractorDto> contractors = contractorService.getContractors();
-        List<PlaceDto> places = placeService.getAllPlaces();
-        //mock
-        groups.forEach(e->e.setContractors(contractors));
+        Map<UUID,List<ContractorDto>> groupIdToContractorsMap = new HashMap<>();
+        Map<UUID,List<PlaceDto>> groupIdToPlacesMap = new HashMap<>();
+        Map<UUID,String> groupIdToDescriptionMap = new HashMap<>();
+
+        groupService.getAllGroupIds().forEach(groupId -> {
+            groupIdToContractorsMap.put(groupId, contractorService.getContractorsByGroupId(groupId));
+            groupIdToDescriptionMap.put(groupId, descriptionTemplateService.getContentByGroupId(groupId));
+            groupIdToPlacesMap.put(groupId, placeService.getPlaceByRegionId(groupService.getRegionIdByGroupId(groupId)));
+        });
+
+        groups.forEach(e-> e.setContractors(
+                groupIdToContractorsMap.get(UUID.fromString(e.getId()))));
+        groups.forEach(e-> e.setDefaultDescription(
+                groupIdToDescriptionMap.get(UUID.fromString(e.getId()))));
+        groups.forEach(e-> e.setPlaces(
+                groupIdToPlacesMap.get(UUID.fromString(e.getId()))));
+
         model.addAttribute("regions", regions);
         model.addAttribute("groups", groups);
-        model.addAttribute("contractors", contractors);
-        model.addAttribute("places", places);
 
         return "new_report";
     }
@@ -103,7 +135,7 @@ public class DailyWorkReportController {
 
         // Add to the model for display in the template
         model.addAttribute("reports", reports);
-        model.addAttribute("regionNames", regionService.getRegionNames());
+        model.addAttribute(REGION_NAMES, regionService.getRegionNames());
 
         return "search_reports"; // Returns the same template with search results
     }

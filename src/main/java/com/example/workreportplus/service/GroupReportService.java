@@ -255,10 +255,13 @@ public class GroupReportService implements ReportService {
         }
     }
 
-    public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate) {
+    public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate, UUID regionReportId) {
         Condition condition = GROUPREPORT.GROUP_ID.eq(groupId);
         if (reportDate != null) {
             condition = condition.and(GROUPREPORT.REPORT_DATE.eq(reportDate));
+        }
+        if (regionReportId != null) {
+            condition = condition.and(GROUPREPORT.REGION_REPORT_ID.eq(regionReportId));
         }
 
         GroupreportRecord record = dsl.selectFrom(GROUPREPORT)
@@ -286,6 +289,8 @@ public class GroupReportService implements ReportService {
         if (statusValue != null) {
             dto.setStatus(statusValue ? ReportStatus.ACTIVE : ReportStatus.DELETED);
         }
+
+
 
         return dto;
     }

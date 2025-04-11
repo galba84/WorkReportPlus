@@ -8,123 +8,160 @@
 </head>
 <body>
 
-<!-- Include the header fragment -->
 <div th:insert="~{fragments/header :: body}"></div>
 
 <h2 th:text="#{form.heading}">Submit New Region Report</h2>
 
-<!-- Success Message -->
 <div th:if="${successMessage}" style="color: green;">
     <p th:text="${successMessage}"></p>
 </div>
-
-<!-- Error Message -->
 <div th:if="${errorMessage}" style="color: red;">
     <p th:text="${errorMessage}"></p>
 </div>
 
-<form id="regionReportForm" th:action="@{/api/daily-work-report}" method="post">
+<div class="form-container">
+    <form id="regionReportForm" th:action="@{/api/daily-work-report}" method="post">
+        <input type="hidden" name="status" value="true">
 
-    <input type="hidden" name="status" value="true">
+        <label for="reportDate" th:text="#{form.reportDate}">Report Date:</label>
+        <input type="date" id="reportDate" name="reportDate" required>
 
-    <label for="reportDate" th:text="#{form.reportDate}">Report Date:</label>
-    <input type="date" id="reportDate" name="reportDate" required>
+        <label for="regionName" th:text="#{form.region}">Region:</label>
+        <select id="regionName" name="regionName" required>
+            <option th:text="#{form.selectRegion}" value="">-- Select Region --</option>
+            <option th:each="region : ${regions}" th:value="${region.id}" th:text="${region.regionName}"></option>
+        </select>
 
-    <label for="regionName" th:text="#{form.region}">Region:</label>
-    <select id="regionName" name="regionName" required>
-        <option th:text="#{form.selectRegion}" value="">-- Select Region --</option>
-        <option th:each="region : ${regions}" th:value="${region.id}" th:text="${region.regionName}"></option>
-    </select>
+        <label for="regionDescription" th:text="#{form.description}">Description:</label>
+        <textarea id="regionDescription" name="regionDescription" rows="3"></textarea>
 
-    <label for="regionDescription" th:text="#{form.description}">Description:</label>
-    <textarea id="regionDescription" name="regionDescription" rows="3"></textarea>
-
-    <h3 th:text="#{form.additionalData}">Additional Data</h3>
-    <div id="extraDataContainer">
-        <div class="extraDataEntry">
-            <input type="text" name="extraData[key][]" placeholder="Key">
-            <input type="text" name="extraData[value][]" placeholder="Value">
-            <button type="button" class="removeExtraData" th:text="#{form.remove}">Remove</button>
+        <h3 th:text="#{form.additionalData}">Additional Data</h3>
+        <div id="extraDataContainer">
+            <div class="extraDataEntry">
+                <input type="text" name="extraData[key][]" placeholder="Key">
+                <input type="text" name="extraData[value][]" placeholder="Value">
+                <button type="button" class="removeExtraData" th:text="#{form.remove}">Remove</button>
+            </div>
         </div>
-    </div>
-    <button type="button" id="addExtraData" th:text="#{form.addExtraData}">+ Add Extra Data</button>
+        <button type="button" id="addExtraData" th:text="#{form.addExtraData}">+ Add Extra Data</button>
 
-    <h3 th:text="#{form.groupReports}">Group Reports</h3>
-    <div id="groupReportsContainer"></div>
-    <button type="button" id="addGroupReport" th:text="#{form.groupReports}">+ Add Group Report</button>
+        <h3 th:text="#{form.groupReports}">Group Reports</h3>
+        <div id="groupReportsContainer"></div>
+        <button type="button" id="addGroupReport" th:text="#{form.groupReports}">+ Add Group Report</button>
 
-    <button type="submit" th:text="#{form.submit}">Submit Report</button>
-</form>
+        <button type="submit" th:text="#{form.submit}">Submit Report</button>
+    </form>
+</div>
 
-<!-- JavaScript to Handle Dynamic Fields -->
 <script th:inline="javascript">
     /*<![CDATA[*/
     let groups = /*[[${groups}]]*/ [];
-    let contractors = /*[[${contractors}]]*/ [];
-    let places = /*[[${places}]]*/ [];
-
-    let groupOptions = groups.map(group => `<option value="${group.id}">${group.name}</option>`).join('');
-    let contractorOptions = contractors.map(contractor =>
-        `<option value="${contractor.id}">${contractor.firstName} ${contractor.lastName} (${contractor.nickName})</option>`
-    ).join('');
-    let placeOptions = places.map(place => `<option value="${place.id}">${place.name}</option>`).join('');
-
-    // Localized labels
     let labels = {
         groupName: /*[[#{form.groupName}]]*/ 'Group Name:',
         places: /*[[#{form.places}]]*/ 'Places:',
         contractors: /*[[#{form.contractors}]]*/ 'Contractors:',
-        worked: /*[[#{form.worked}]]*/ 'Worked?',
         description: /*[[#{form.groupDescription}]]*/ 'Description:',
         contractorLosses: /*[[#{form.contractorLosses}]]*/ 'Contractor Losses',
         addContractorLoss: /*[[#{form.addContractorLoss}]]*/ '+ Add Contractor Loss',
         extraData: /*[[#{form.groupExtraData}]]*/ 'Extra Data',
         addExtraData: /*[[#{form.addExtraData}]]*/ '+ Add Extra Data',
-        remove: /*[[#{form.remove}]]*/ 'Remove'
+        remove: /*[[#{form.remove}]]*/ 'Remove',
+        selectGroup: /*[[#{form.selectGroup}]]*/ 'Select Group'
     };
 
     $(document).ready(function () {
         let groupIndex = 0;
 
-        $("#addGroupReport").click(function () {
-            let html = `
-                <div class="groupReport" id="groupReport_${groupIndex}">
-                    <h4>Group Report</h4>
+        $("#regionName").change(function () {
+            const regionId = $(this).val();
+            const filteredGroups = groups.filter(g => g.regionId == regionId);
 
-                    <label for="groupName_${groupIndex}">${labels.groupName}</label>
-                    <select id="groupName_${groupIndex}" name="groupReports[${groupIndex}].groupName" required>
-                        <option value="">${/*[[#{form.selectGroup}]]*/'Select Group'}</option>
-                        ${groupOptions}
-                    </select>
+            $("#groupReportsContainer").empty();
+            groupIndex = 0;
 
-                    <label for="placeIds_${groupIndex}">${labels.places}</label>
-                    <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeIds" multiple required>
-                        ${placeOptions}
-                    </select>
+            $("#addGroupReport").off("click").on("click", function () {
+                addGroupReportEntry(filteredGroups);
+            });
 
-                    <label for="contractorsIds_${groupIndex}">${labels.contractors}</label>
-                    <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds" multiple required>
-                        ${contractorOptions}
-                    </select>
+            $("#addGroupReport").click(); // Add one by default
+        });
 
-                    <label for="worked_${groupIndex}">${labels.worked}</label>
-                    <input type="checkbox" id="worked_${groupIndex}" name="groupReports[${groupIndex}].worked" value="true">
+        function addGroupReportEntry(filteredGroups) {
+            const groupOptions = filteredGroups.map(group =>
+                `<option value="${group.id}" data-group='${JSON.stringify(group)}'>${group.name}</option>`
+            ).join('');
 
-                    <label for="groupDescription_${groupIndex}">${labels.description}</label>
-                    <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>
+            const html = `
+            <div class="groupReport" id="groupReport_${groupIndex}">
+                <h4>Group Report</h4>
 
-                    <h4>${labels.contractorLosses}</h4>
-                    <div id="contractorLossesContainer_${groupIndex}"></div>
-                    <button type="button" class="addContractorLoss" data-group-id="${groupIndex}">${labels.addContractorLoss}</button>
+                <label for="groupName_${groupIndex}">${labels.groupName}</label>
+                <select id="groupName_${groupIndex}" name="groupReports[${groupIndex}].groupName" required>
+                    <option value="">${labels.selectGroup}</option>
+                    ${groupOptions}
+                </select>
 
-                    <h4>${labels.extraData}</h4>
-                    <div id="extraDataGroupContainer_${groupIndex}"></div>
-                    <button type="button" class="addExtraDataGroup" data-group-id="${groupIndex}">${labels.addExtraData}</button>
+                <label>${labels.places}</label>
+                <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeCoefficientsDropdown" multiple></select>
 
-                    <button type="button" class="removeGroupReport" data-group-id="groupReport_${groupIndex}">${labels.remove}</button>
-                </div>`;
+                <label for="contractorsIds_${groupIndex}">${labels.contractors}</label>
+                <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds[]" multiple required></select>
+
+                <input type="checkbox" id="worked_${groupIndex}" name="groupReports[${groupIndex}].worked" style="display: none;" value="true">
+
+                <label for="groupDescription_${groupIndex}">${labels.description}</label>
+                <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>
+
+                <h4>${labels.contractorLosses}</h4>
+                <div id="contractorLossesContainer_${groupIndex}"></div>
+                <button type="button" class="addContractorLoss" data-group-id="${groupIndex}">${labels.addContractorLoss}</button>
+
+                <h4>${labels.extraData}</h4>
+                <div id="extraDataGroupContainer_${groupIndex}"></div>
+                <button type="button" class="addExtraDataGroup" data-group-id="${groupIndex}">${labels.addExtraData}</button>
+
+                <button type="button" class="removeGroupReport" data-group-id="groupReport_${groupIndex}">${labels.remove}</button>
+            </div>`;
             $("#groupReportsContainer").append(html);
             groupIndex++;
+        }
+
+        $('#regionReportForm').submit(function () {
+            $('[id^=placeIds_]').each(function () {
+                const idx = this.id.split('_')[1];
+                const selected = $(this).find('option:selected');
+
+                // Remove old hidden fields to prevent duplicates
+                $(`input[name^="groupReports[${idx}].placeCoefficients"]`).remove();
+
+                selected.each(function () {
+                    const placeId = $(this).val();
+                    const coef = $(this).data('coef') || '';
+                    const input = `<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`;
+                    $(`#groupReport_${idx}`).append(input);
+                });
+            });
+        });
+
+
+        $(document).on("change", "select[id^='groupName_']", function () {
+            const groupId = $(this).val();
+            const groupData = groups.find(g => g.id == groupId);
+            const idx = this.id.split("_")[1];
+            // ✅ Places as checkboxes with coefficient values inside a tight wrapper
+            const placeOptions = (groupData.places || []).map(p => {
+                const coef = p.coeficient || "";
+                return `<option value="${p.id}" data-coef="${coef}">${p.name} (${coef})</option>`;
+            }).join('');
+            $(`#placeIds_${idx}`).html(placeOptions);
+
+            const contractorOptions = (groupData.contractors || []).map(c =>
+                `<option value="${c.id}" selected>${c.firstName} ${c.lastName} (${c.nickName})</option>`
+            ).join('');
+
+            $(`#contractorsIds_${idx}`).html(contractorOptions);
+
+            $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
         });
 
         $(document).on("click", ".removeGroupReport", function () {
@@ -134,33 +171,33 @@
 
         $("#addExtraData").click(function () {
             let html = `
-            <div class="extraDataEntry">
-                <input type="text" name="extraData[key][]" placeholder="Key">
-                <input type="text" name="extraData[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData">${labels.remove}</button>
-            </div>`;
+        <div class="extraDataEntry">
+            <input type="text" name="extraData[key][]" placeholder="Key">
+            <input type="text" name="extraData[value][]" placeholder="Value">
+            <button type="button" class="removeExtraData">${labels.remove}</button>
+        </div>`;
             $("#extraDataContainer").append(html);
         });
 
         $(document).on("click", ".addExtraDataGroup", function () {
             let groupId = $(this).data("group-id");
             let html = `
-            <div class="extraDataEntry">
-                <input type="text" name="groupReports[${groupId}].extraDataGroupReport[key][]" placeholder="Key">
-                <input type="text" name="groupReports[${groupId}].extraDataGroupReport[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData">${labels.remove}</button>
-            </div>`;
+        <div class="extraDataEntry">
+            <input type="text" name="groupReports[${groupId}].extraDataGroupReport[key][]" placeholder="Key">
+            <input type="text" name="groupReports[${groupId}].extraDataGroupReport[value][]" placeholder="Value">
+            <button type="button" class="removeExtraData">${labels.remove}</button>
+        </div>`;
             $(`#extraDataGroupContainer_${groupId}`).append(html);
         });
 
         $(document).on("click", ".addContractorLoss", function () {
             let groupId = $(this).data("group-id");
             let html = `
-            <div class="contractorLossEntry">
-                <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[key][]" placeholder="Contractor ID">
-                <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[value][]" placeholder="Loss Type">
-                <button type="button" class="removeContractorLoss">${labels.remove}</button>
-            </div>`;
+        <div class="contractorLossEntry">
+            <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[key][]" placeholder="Contractor ID">
+            <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[value][]" placeholder="Loss Type">
+            <button type="button" class="removeContractorLoss">${labels.remove}</button>
+        </div>`;
             $(`#contractorLossesContainer_${groupId}`).append(html);
         });
 

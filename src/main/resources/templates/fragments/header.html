@@ -45,6 +45,7 @@
     <div class="menu">
 
         <!-- Visible for ALL authenticated users -->
+        <a th:href="@{/index}" th:text="#{menu.home}">HOME</a>
         <a th:href="@{/api/daily-work-report}" th:text="#{menu.newReport}">New Report</a>
         <a th:href="@{/api/daily-work-report/search}" th:text="#{menu.searchReport}">Search Report</a>
         <a th:href="@{/api/daily-work-report/export}" th:text="#{menu.exportReport}">Export Report</a>
@@ -52,6 +53,11 @@
         <!-- ADMIN only link example -->
         <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
             <a th:href="@{/admin}" th:text="#{menu.adminPage}">Admin</a>
+        </div>
+
+        <!-- ADMIN only link example -->
+        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+            <a th:href="@{/audit-log/admin}" th:text="#{menu.auditLog}">AuditLog</a>
         </div>
 
         <!-- ADMIN only link example -->

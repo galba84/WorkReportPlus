@@ -2,6 +2,7 @@ package com.example.workreportplus.service;
 
 import com.example.workreportplus.dto.GroupDto;
 import org.jooq.DSLContext;
+import org.jooq.Record1;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -42,6 +43,12 @@ public class GroupService {
                 .fetchInto(GroupDto.class);
     }
 
+    public List<UUID> getAllGroupIds() {
+        return dsl.select(GROUP.ID)
+                .from(GROUP)
+                .fetchInto(UUID.class);
+    }
+
     public List<String> getGroupNames() {
         return dsl.select(GROUP.NAME)
                 .from(GROUP)
@@ -54,6 +61,15 @@ public class GroupService {
                 .where(GROUP.REGION_ID.eq(regionId))
                 .fetchInto(UUID.class);
     }
+
+    public UUID getRegionIdByGroupId(UUID groupId) {
+        Record1<UUID> result = dsl.select(GROUP.REGION_ID)
+                .from(GROUP)
+                .where(GROUP.ID.eq(groupId))
+                .fetchOne();
+        return result != null ? result.value1() : null;
+    }
+
 
     public String getGroupNameById(String groupId) {
         return dsl.select(GROUP.NAME)
@@ -118,5 +134,6 @@ public class GroupService {
 
         System.out.println("Groups updated successfully from sheet.");
     }
+
 
 }

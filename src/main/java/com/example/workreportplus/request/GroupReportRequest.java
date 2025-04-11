@@ -2,6 +2,7 @@ package com.example.workreportplus.request;
 
 import com.example.workreportplus.ENUM.PersonnelLossesType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.util.List;
@@ -16,8 +17,9 @@ public class GroupReportRequest implements ReportRequest {
     private String regionName;
 
 
-    @NotBlank
-    private List<String> placeIds;
+    @NotEmpty
+    private Map<String, String> placeCoefficients;
+
 
     @NotBlank
     List<String> contractorsIds;
