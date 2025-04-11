@@ -6,15 +6,15 @@ CREATE TABLE IF NOT EXISTS AreaType
 );
 
 -- ✅ Table: Place
-CREATE TABLE IF NOT EXISTS Place
-(
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Changed to UUID
-    name         TEXT NOT NULL,    -- Changed VARCHAR(255) to TEXT
-    area_type_id UUID NOT NULL,    -- Foreign key type must match
-    county       TEXT NOT NULL,
-    district     TEXT NOT NULL,
-    region       TEXT NOT NULL,
-    FOREIGN KEY (area_type_id) REFERENCES AreaType (id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS Place (
+                       id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
+                       name       text        NOT NULL,
+                       county     text        NOT NULL,
+                       district   text        NOT NULL,
+                       region     text        NOT NULL,
+                       area_type  text        NOT NULL,
+                       region_id   uuid        REFERENCES Region(id) ON DELETE SET NULL,
+                       coeficient text
 );
 
 -- ✅ Table: Positions

@@ -1,8 +1,6 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.service.ContractorService;
-import com.example.workreportplus.service.GroupService;
-import com.example.workreportplus.service.RegionService;
+import com.example.workreportplus.service.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,12 +17,16 @@ public class AdminController {
     private final ContractorService contractorService;
     private final GroupService groupService;
     private final RegionService regionService;
+    private final DescriptionTemplateService descriptionTemplateService;
+    private final PlacesService placesService;
 
     public AdminController(ContractorService contractorService, GroupService groupService,
-                           RegionService regionService) {
+                           RegionService regionService, DescriptionTemplateService descriptionTemplateService, PlacesService placesService) {
         this.contractorService = contractorService;
         this.groupService = groupService;
         this.regionService = regionService;
+        this.descriptionTemplateService = descriptionTemplateService;
+        this.placesService = placesService;
     }
 
     @GetMapping
@@ -50,6 +52,20 @@ public class AdminController {
     @PostMapping("/regions")
     public String updateRegionsFromTable(RedirectAttributes redirectAttributes) throws IOException {
         regionService.updateRegionsFromTable();
+        redirectAttributes.addFlashAttribute("infoMessage", "Regions updated successfully!");
+        return "redirect:/admin"; // redirect with flash message
+    }
+
+    @PostMapping("/groups/descriptions")
+    public String updateGroupDescription(RedirectAttributes redirectAttributes) throws IOException {
+        descriptionTemplateService.updateFromTableSource();
+        redirectAttributes.addFlashAttribute("infoMessage", "Шаблони звітів груп updated successfully!");
+        return "redirect:/admin"; // redirect with flash message
+    }
+
+    @PostMapping("/places")
+    public String updatePlacesFromTable(RedirectAttributes redirectAttributes) throws IOException {
+        placesService.updatePlacesFromTable();
         redirectAttributes.addFlashAttribute("infoMessage", "Regions updated successfully!");
         return "redirect:/admin"; // redirect with flash message
     }

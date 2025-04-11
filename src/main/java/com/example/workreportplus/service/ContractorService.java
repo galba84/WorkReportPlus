@@ -40,6 +40,12 @@ public class ContractorService {
                 .fetchInto(ContractorDto.class);
     }
 
+    public List<ContractorDto> getContractorsByGroupId(UUID id) {
+        return dsl.selectFrom(CONTRACTOR)
+                .where(CONTRACTOR.GROUP_ID.eq(id))
+                .fetchInto(ContractorDto.class);
+    }
+
     public void updateContractorsFromTable() throws IOException {
         String range = "NamesList!A2:I"; // adjust if needed
         List<List<Object>> lists = googleSheetsService.readSheet(DOVIDNYK_SHEET_ID, range);
@@ -74,6 +80,7 @@ public class ContractorService {
                                 .set(CONTRACTOR.NATIONALITY, dto.getNationality())
                                 .set(CONTRACTOR.DATE_OF_ARRIVAL_TO_UNIT, dto.getDateOfArrivalToUnit())
                                 .set(CONTRACTOR.CONTRACTOR_STATUS, dto.getContractorStatus())
+                                .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
                                 .set(CONTRACTOR.CREATED_BY, dto.getCreatedBy())
                                 .set(CONTRACTOR.CREATED_ON, dto.getCreatedOn())
                                 .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
@@ -96,6 +103,8 @@ public class ContractorService {
                                 .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
                                 .set(CONTRACTOR.UPDATED_ON, dto.getUpdatedOn())
                                 .set(CONTRACTOR.STATUS, dto.getStatus())
+                                .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
+
                 ).toList()
         ).execute();
     }
@@ -120,6 +129,7 @@ public class ContractorService {
 
         // ✅ Use unit_id directly
         dto.setUnitId(UUID.fromString(row.get(8).toString())); // assuming column 9 = unit_id
+        dto.setGroupId(UUID.fromString(row.get(6).toString())); // assuming column 9 = group_id
 
         // ✅ Use position normally
         String positionName = row.size() > 3 ? row.get(3).toString().trim() : null;
@@ -144,10 +154,14 @@ public class ContractorService {
     }
 
 
+    public List<ContractorDto> getAllContractorByIds(List<UUID> contractorsIds) {
+        if (contractorsIds == null || contractorsIds.isEmpty()) {
+            return List.of();
+        }
 
-
-
-
-
+        return dsl.selectFrom(CONTRACTOR)
+                .where(CONTRACTOR.ID.in(contractorsIds))
+                .fetchInto(ContractorDto.class);
+    }
 
 }

@@ -24,10 +24,13 @@ public class GroupReportDto extends TrackedDto {
     private UUID regionReportId;
 
     private List<UUID> placeIds;
+    private Map<String, String> placesWithCoeficcient;
 
     private List<UUID> contractorsIds;
+    private List<ContractorDto> contractors;
 
     private String description;
+    private String details;
 
     private Map<String, PersonnelLossesType> contractorLoosesIdTypeMap;
 

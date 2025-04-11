@@ -1,6 +1,8 @@
 package com.example.workreportplus.controller;
 
+import com.example.workreportplus.dto.ContractorDto;
 import com.example.workreportplus.dto.GroupReportDto;
+import com.example.workreportplus.dto.PlaceDto;
 import com.example.workreportplus.dto.RegionReportDto;
 import com.example.workreportplus.service.*;
 import jakarta.validation.Valid;
@@ -19,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.time.LocalTime.now;
 
@@ -29,27 +32,34 @@ public class ExportReportController {
     public static final String REGION_REPORT = "Region Report";
     public static final String GROUP_REPORT = "Group Report";
     private final WordTemplateService wordTemplateService;
+    private final DescriptionTemplateService descriptionTemplateService;
     private final RegionService regionService;
     private final GroupService groupService;
     private final GroupReportService groupReportService;
     private final RegionReportService regionReportService;
-    private static final Set<String> reportTypes = Set.of(REGION_REPORT, GROUP_REPORT);
+    private static final Set<String> reportTypes = Set.of(REGION_REPORT);
+    private final ContractorService contractorService;
+    private final PlacesService placesService;
 
     public ExportReportController(WordTemplateService wordTemplateService, RegionService regionService,
                                   GroupService groupService, GroupReportService groupReportService,
-                                  RegionReportService regionReportService
-    ) {
+                                  RegionReportService regionReportService,
+                                  DescriptionTemplateService descriptionTemplateService,
+                                  ContractorService contractorService, PlacesService placesService) {
         this.wordTemplateService = wordTemplateService;
         this.regionService = regionService;
         this.groupService = groupService;
         this.groupReportService = groupReportService;
         this.regionReportService = regionReportService;
+        this.descriptionTemplateService = descriptionTemplateService;
+        this.contractorService = contractorService;
+        this.placesService = placesService;
     }
 
     @GetMapping("/export")
     public String showExportReportPage(Model model) {
         // List available templates
-        List<String> templates = List.of(GROUP_REPORT, REGION_REPORT);
+        List<String> templates = List.of(REGION_REPORT);
         List<String> regionNames = regionService.getRegionNames();
         List<String> groupNames = groupService.getGroupNames();
 
@@ -73,7 +83,7 @@ public class ExportReportController {
             return ResponseEntity.badRequest().build();
         }
         // Define placeholders and their values
-        Map<String, String> variables = enrichTemplateVariables(templateName, regionName, groupName, reportDate);
+        Map<String, String> variables = enrichTemplateVariables(regionName, reportDate);
         byte[] wordBytes = wordTemplateService.generateWordFromRtfTemplate(templateName, variables);
 
         return ResponseEntity.ok()
@@ -98,33 +108,33 @@ public class ExportReportController {
             }
 
         }
-        if (reportDate.isAfter(LocalDate.now().plusDays(1))) {
-            return false;
-        }
-        return true;
+        return reportDate.isAfter(LocalDate.now().plusDays(1));
     }
 
-    private Map<String, String> enrichTemplateVariables(String templateName, String regionName, String groupName,
+    private Map<String, String> enrichTemplateVariables(String regionName,
                                                         LocalDate reportDate) throws IOException {
+        UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
         Map<String, String> variables = new HashMap<>();
-        if (REGION_REPORT.equalsIgnoreCase(templateName)) {
             variables.put("regionName", regionName);
             variables.put("reportDate", formatDate(reportDate));
+            variables.put("signature", "підпис              _______________          О.В. Овчаренко");
             UUID regionId = regionService.getRegionIdByName(regionName);
             List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
             List<GroupReportDto> groupReportDtoList = new ArrayList<>();
             for (UUID groupId : groupIds) {
-                groupReportDtoList.add(groupReportService.getReportByGroupIdAndDate(groupId, reportDate));
+                GroupReportDto dto = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
+                if (dto != null) {
+                    groupReportDtoList.add(dto);
+                }
             }
             List<String> groupReportsString = new ArrayList<>();
             for (GroupReportDto groupReportDto : groupReportDtoList) {
                 Map<String, String> variablesForGroupReport = new HashMap<>();
                 String groupNameLocal = groupService.getGroupNameById(groupReportDto.getGroupName());
-                createGroupReport(groupNameLocal, reportDate, variablesForGroupReport);
+                createGroupReport(groupReportDto, groupNameLocal, reportDate, variablesForGroupReport);
                 byte[] data = wordTemplateService.generateWordFromRtfTemplate(GROUP_REPORT, variablesForGroupReport);
                 groupReportsString.add("\n");
                 groupReportsString.add("___________________________________");
-                groupReportsString.add("GROUP REPORT : " + groupReportDto.getGroupName());
 
 
                 groupReportsString.add(new String(data, StandardCharsets.UTF_8));
@@ -137,9 +147,7 @@ public class ExportReportController {
 
             RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
             variables.put("regionReportDescription", report.getRegionDescription());
-        } else if (GROUP_REPORT.equalsIgnoreCase(templateName)) {
-            createGroupReport(groupName, reportDate, variables);
-        }
+
         return variables;
     }
 
@@ -149,12 +157,34 @@ public class ExportReportController {
     }
 
 
-    private void createGroupReport(String groupName, LocalDate reportDate, Map<String, String> variables) {
+    private void createGroupReport(GroupReportDto groupReportDto,
+                                   String groupName, LocalDate reportDate, Map<String, String> variables) {
+
+        String detailsByGroupId = descriptionTemplateService.getDetailsByGroupId(groupReportDto.getGroupId());
+        UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
+        List <PlaceDto> places = placesService.getPlaceByIds(groupReportDto.getPlaceIds());
         variables.put("groupName", groupName);
+        variables.put("groupDetails", detailsByGroupId);
         variables.put("reportDate", formatDate(reportDate));
+        variables.put("places", formatPlaces(places));
         UUID groupId = groupService.getGroupIdByName(groupName);
-        GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate);
-        variables.put("contractors", String.join("\n", report.getContractorsIds().toString()));
+        GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
+        List<ContractorDto> contractor = contractorService.getAllContractorByIds(report.getContractorsIds());
+        variables.put("contractors",
+                contractor.stream()
+                        .map(e -> "* " + e.getFirstName()+ " " + e.getLastName() +" - "
+                                + e.getC_rank() + " ("+e.getNickName()+")")
+                        .collect(Collectors.joining("\n"))
+        );
         variables.put("groupReportDescription", report.getDescription());
     }
+
+    private String formatPlaces(List<PlaceDto> places) {
+        if (places == null || places.isEmpty()) return "";
+
+        return places.stream()
+                .map(p -> "- " + p.getName() + (p.getDistrict() != null ? " (" + p.getDistrict() + ")" : ""))
+                .collect(Collectors.joining("\n"));
+    }
+
 }

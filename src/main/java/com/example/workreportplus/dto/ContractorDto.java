@@ -36,4 +36,5 @@ public class ContractorDto {
     private LocalDateTime updatedOn; // ✅ Matches DB `timestamp` type
 
     private Boolean status; // ✅ Matches DB `BOOLEAN DEFAULT TRUE`
+    private UUID groupId;
 }

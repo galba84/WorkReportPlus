@@ -10,10 +10,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class GroupDto extends IdDto {
-
-    private String name;
-
-    private UUID regionId;
-
+    String name;
+    UUID regionId;
+    List<PlaceDto> places;
     List<ContractorDto> contractors;
+    String defaultDescription;
 }
+

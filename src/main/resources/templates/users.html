@@ -44,6 +44,7 @@
                     <option th:selected="${user.role == 'ADMIN'}">ADMIN</option>
                     <option th:selected="${user.role == 'POWER_USER'}">POWER_USER</option>
                     <option th:selected="${user.role == 'USER'}">USER</option>
+                    <option th:selected="${user.role == 'GUEST'}">GUEST</option>
                 </select>
             </td>
             <td>
@@ -67,6 +68,8 @@
     <input type="text" name="nickname" required/>
     <label>Email:</label>
     <input type="email" name="email" required/>
+    <label>Password:</label>
+    <input type="text" name="password" required/>
     <label>Role:</label>
     <select name="role">
         <option>ADMIN</option>

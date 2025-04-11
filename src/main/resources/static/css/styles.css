@@ -244,3 +244,14 @@ button {
     width: 100%;
 }
 
+.tight-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px 0;
+    font-size: 14px;
+    line-height: 1.2;
+}
+.tight-list {
+    padding: 4px 0;
+}
