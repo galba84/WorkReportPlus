@@ -78,6 +78,13 @@ public class GroupService {
                 .fetchOne(GROUP.NAME);
     }
 
+    public String getGroupNameById(UUID groupId) {
+        return dsl.select(GROUP.NAME)
+                .from(GROUP)
+                .where(GROUP.ID.eq(groupId))
+                .fetchOne(GROUP.NAME);
+    }
+
     public UUID upsertGroup(UUID id, String groupName, UUID regionId) {
         UUID existingId = dsl.select(GROUP.ID)
                 .from(GROUP)

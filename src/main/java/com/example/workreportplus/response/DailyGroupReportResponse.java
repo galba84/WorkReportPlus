@@ -1,6 +1,7 @@
 package com.example.workreportplus.response;
 
 import com.example.workreportplus.ENUM.ReportStatus;
+import com.example.workreportplus.dto.PlaceDto;
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class DailyGroupReportResponse implements ReportResponse {
     private UUID regionReportId;
 
     private String regionName;
+    private String groupName;
 
     private LocalDate date;
 
@@ -26,7 +28,7 @@ public class DailyGroupReportResponse implements ReportResponse {
     private LocalDate createdOn;
     private LocalDate updatedOn;
 
-    private List<WorkingAreaResponse> workingAreas;
+    private List<PlaceDto> workingAreas;
 
     private List<ContractorResponse> contractors;
 

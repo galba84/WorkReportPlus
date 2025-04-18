@@ -12,4 +12,5 @@ public class WorkingAreaResponse {
     String county;
     String district;
     String region;
+    String coeficient;
 }

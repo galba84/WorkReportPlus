@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.example.jooq.Tables.REGIONREPORT;
@@ -87,10 +88,20 @@ public class RegionReportService implements ReportService {
                 condition = REGIONREPORT.REGION_ID.eq(regionIdByName);
             }
             if (startDate != null) {
-                condition = condition.and(REGIONREPORT.CREATED_ON.ge(startDate.atStartOfDay()));
+                condition = condition.and(REGIONREPORT.REPORT_DATE.ge(LocalDate.from(startDate.atStartOfDay())));
             }
+
+            String statusRequestParam = searchParams.getStatus();
+            if ("ACTIVE".equalsIgnoreCase(statusRequestParam) || "DELETED".equalsIgnoreCase(statusRequestParam)) {
+                boolean statusBool = "ACTIVE".equalsIgnoreCase(statusRequestParam);
+                condition = condition.and(REGIONREPORT.STATUS.eq(statusBool));
+            }
+
+
             if (endDate != null) {
-                condition = condition.and(REGIONREPORT.CREATED_ON.le(endDate.atStartOfDay().plusDays(1).minusSeconds(1)));
+                condition = condition
+                        .and(REGIONREPORT.REPORT_DATE
+                                .le(LocalDate.from(endDate.atStartOfDay().plusDays(1).minusSeconds(1))));
             }
 
             Result<RegionreportRecord> records = dsl.selectFrom(REGIONREPORT)
@@ -114,8 +125,6 @@ public class RegionReportService implements ReportService {
                                 .regionName(regionService.getRegionNameById(record.get(REGIONREPORT.REGION_ID)))
                                 .build();
                     })
-
-
                     .collect(Collectors.toList());
         } catch (NumberFormatException e) {
             // Handle invalid group ID
@@ -164,7 +173,6 @@ public class RegionReportService implements ReportService {
                                         .createdBy(record.get(REGIONREPORT.CREATED_BY))
                                         .updatedBy(record.get(REGIONREPORT.UPDATED_BY))
                                         .groupReports(groupReportService.getReportsByRegionId(record.get(REGIONREPORT.ID)))
-
                                         .build();
                             }
                     );
@@ -200,24 +208,38 @@ public class RegionReportService implements ReportService {
         String currentUser = SecurityUtil.getCurrentUsername(); // Fetch user from SecurityContextHolder
         LocalDate reportDate = regionReportDto.getReportDate();
 
-        RegionreportRecord record = dsl.newRecord(REGIONREPORT);
-        record.setRegionId(regionReportDto.getRegionId()); // Set the group ID
-        record.setReportDate(reportDate);
-        record.setRegionDescription(regionReportDto.getRegionDescription());
-        record.setArrivedContractors(setArrivedContractors(regionReportDto));
-        record.setDepartedContractors(setDepartedContractors(regionReportDto));
-        record.setExtraData(toJsonB(regionReportDto.getExtraData()));
-        record.setCreatedBy(currentUser); // Store the logged-in user
-        record.setUpdatedBy(currentUser);
-        record.setCreatedOn(LocalDateTime.now());
-        record.setUpdatedOn(LocalDateTime.now());
-        record.setStatus(regionReportDto.getStatus());
-        record.store(); // Saves the record
+        return dsl.transactionResult(conf -> {
+            DSLContext tx = DSL.using(conf);
 
-        // Assuming RegionreportRecord has a method to get its ID
-        // If the ID is stored as an Integer in the database, this should work fine
-        return record.getId(); // Return the ID as an Integer
+            RegionreportRecord record = tx.newRecord(REGIONREPORT);
+            record.setRegionId(regionReportDto.getRegionId());
+            record.setReportDate(reportDate);
+            record.setRegionDescription(regionReportDto.getRegionDescription());
+            record.setArrivedContractors(setArrivedContractors(regionReportDto));
+            record.setDepartedContractors(setDepartedContractors(regionReportDto));
+            record.setExtraData(toJsonB(regionReportDto.getExtraData()));
+            record.setCreatedBy(currentUser);
+            record.setUpdatedBy(currentUser);
+            record.setCreatedOn(LocalDateTime.now());
+            record.setUpdatedOn(LocalDateTime.now());
+            record.setStatus(regionReportDto.getStatus());
+
+            record.store(); // Persist the new report
+
+            UUID savedId = record.getId();
+
+            // Mark all other reports for the same date as false
+            tx.update(REGIONREPORT)
+                    .set(REGIONREPORT.STATUS, false)
+                    .where(REGIONREPORT.REPORT_DATE.eq(reportDate))
+                    .and(REGIONREPORT.REGION_ID.eq(regionReportDto.getRegionId()))
+                    .and(REGIONREPORT.ID.ne(savedId))
+                    .execute();
+
+            return savedId;
+        });
     }
+
 
     private static UUID[] setDepartedContractors(RegionReportDto regionReportDto) {
         if (regionReportDto.getDepartedContractors() == null) {
@@ -249,52 +271,95 @@ public class RegionReportService implements ReportService {
     public void saveGroupReport(GroupReportDto groupReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername();
 
-        GroupreportRecord record = dsl.newRecord(GROUPREPORT);
-        record.setGroupId(UUID.fromString(groupReportDto.getGroupName()));
-        record.setRegionReportId(groupReportDto.getRegionReportId());
-        record.setReportDate(groupReportDto.getReportDate());
+        dsl.transaction(configuration -> {
+            DSLContext tx = DSL.using(configuration);
 
-        if (groupReportDto.getStatus() != null) {
-            record.setStatus(fromInt(groupReportDto.getStatus().getValue()));
-        } else {
-            record.setStatus(Boolean.TRUE);
-        }
+            GroupreportRecord record = tx.newRecord(GROUPREPORT);
+            record.setGroupId(UUID.fromString(groupReportDto.getGroupName()));
+            record.setRegionReportId(groupReportDto.getRegionReportId());
+            record.setReportDate(groupReportDto.getReportDate());
 
-        record.setIsWorked(groupReportDto.isWorked());
-        record.setDescription(groupReportDto.getDescription());
+            // Set status default
+            Boolean statusToSet = Boolean.TRUE;
+            if (groupReportDto.getStatus() != null) {
+                statusToSet = fromInt(groupReportDto.getStatus().getValue());
+            }
+            record.setStatus(statusToSet);
 
-        if (groupReportDto.getContractorsIds() != null) {
-            record.setContractorsIds(groupReportDto.getContractorsIds().toArray(new UUID[0]));
-        }
 
-        if (groupReportDto.getPlaceIds() != null) {
-            record.setPlaceIds(groupReportDto.getPlaceIds().toArray(new UUID[0]));
-        }
+            record.setDescription(groupReportDto.getDescription());
 
-        // ✅ Merge standard extra data and place coefficients
-        Map<String, String> extraData = new HashMap<>();
-        if (groupReportDto.getExtraDataGroupReport() != null) {
-            extraData.putAll(groupReportDto.getExtraDataGroupReport());
-        }
-        if (groupReportDto.getPlacesWithCoeficcient() != null) {
-            groupReportDto.getPlacesWithCoeficcient().forEach((placeId, coef) ->
-                    extraData.put("placeCoef_" + placeId, coef)
-            );
-        }
+            if (groupReportDto.getContractorsIds() != null) {
+                record.setContractorsIds(groupReportDto.getContractorsIds().toArray(new UUID[0]));
+            }
 
-        // ✅ Safely serialize and store JSONB
-        try {
-            String extraJson = objectMapper.writeValueAsString(extraData);
-            record.setExtraDataGroupReport(org.jooq.JSONB.valueOf(extraJson));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize extraDataGroupReport", e);
-        }
+            if (groupReportDto.getPlaceIds() != null) {
+                record.setPlaceIds(groupReportDto.getPlaceIds().toArray(new UUID[0]));
+            }
 
-        record.setCreatedBy(currentUser);
-        record.setUpdatedBy(currentUser);
-        record.setCreatedOn(LocalDateTime.now());
-        record.setUpdatedOn(LocalDateTime.now());
-        record.store();
+            if (record.getPlaceIds() == null) {
+                record.setPlaceIds(
+                        groupReportDto.getPlacesWithCoeficcient()
+                                .keySet()
+                                .stream()
+                                .map(UUID::fromString)
+                                .toArray(UUID[]::new)
+                );
+
+            }
+
+            // ✅ Merge extra data and place coefficients
+            Map<String, String> extraData = new HashMap<>();
+            if (groupReportDto.getExtraDataGroupReport() != null) {
+                extraData.putAll(groupReportDto.getExtraDataGroupReport());
+            }
+
+            AtomicBoolean worked = new AtomicBoolean(false);
+            if (groupReportDto.getPlacesWithCoeficcient() != null) {
+                groupReportDto.getPlacesWithCoeficcient().forEach((placeId, coef) -> {
+                            extraData.put("placeCoef_" + placeId, coef);
+                            if ("100".equals(coef)) {
+                                worked.set(true);                            }
+                        }
+                );
+            }
+
+            record.setIsWorked(worked.get());
+
+            try {
+                String extraJson = objectMapper.writeValueAsString(extraData);
+                record.setExtraDataGroupReport(org.jooq.JSONB.valueOf(extraJson));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize extraDataGroupReport", e);
+            }
+
+            record.setCreatedBy(currentUser);
+            record.setUpdatedBy(currentUser);
+            record.setCreatedOn(LocalDateTime.now());
+            record.setUpdatedOn(LocalDateTime.now());
+
+            // Save current group report
+            record.store();
+
+            UUID savedId = record.getId();
+            LocalDate reportDate = groupReportDto.getReportDate();
+            UUID regionReportId = groupReportDto.getRegionReportId();
+
+            // ✅ Check parent region report status
+            Boolean regionStatus = tx.select(REGIONREPORT.STATUS)
+                    .from(REGIONREPORT)
+                    .where(REGIONREPORT.ID.eq(regionReportId))
+                    .fetchOne(REGIONREPORT.STATUS);
+
+            // ✅ If region report is false, disable all group reports for same reportDate except the new one
+            if (Boolean.FALSE.equals(regionStatus)) {
+                tx.update(GROUPREPORT)
+                        .set(GROUPREPORT.STATUS, false)
+                        .where(GROUPREPORT.REPORT_DATE.eq(reportDate))
+                        .and(GROUPREPORT.ID.ne(savedId))
+                        .execute();
+            }
+        });
     }
 
     public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
@@ -316,6 +381,24 @@ public class RegionReportService implements ReportService {
                 .orderBy(REGIONREPORT.CREATED_ON.desc())
                 .limit(1)
                 .fetchOneInto(UUID.class);
+    }
+
+    @Override
+    public List<UUID> getReportIdsByRegionAndPeriod(UUID regionId, LocalDate fromDate, LocalDate toDate) {
+        Condition condition = REGIONREPORT.REGION_ID.eq(regionId);
+        condition = condition.and(REGIONREPORT.STATUS.eq(true));
+        if (fromDate != null) {
+            condition = condition.and(REGIONREPORT.REPORT_DATE.ge(fromDate));
+        }
+
+        if (toDate != null) {
+            condition = condition.and(REGIONREPORT.REPORT_DATE.le(toDate));
+        }
+
+        return dsl.select(REGIONREPORT.ID)
+                .from(REGIONREPORT)
+                .where(condition)
+                .fetchInto(UUID.class);
     }
 
 }

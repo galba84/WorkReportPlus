@@ -10,27 +10,23 @@ import java.util.Map;
 
 @Data
 public class GroupReportRequest implements ReportRequest {
+
     @NotBlank
     private String groupName;
-
-    @NotBlank
-    private String regionName;
-
 
     @NotEmpty
     private Map<String, String> placeCoefficients;
 
-
-    @NotBlank
-    List<String> contractorsIds;
+    @NotEmpty
+    private List<@NotBlank String> contractorsIds;
 
     @NotBlank
     private String description;
 
-    @NotBlank
     private Map<String, PersonnelLossesType> contractorLoosesIdTypeMap;
 
     private boolean worked;
 
-    private Map<String,String> extraDataGroupReport;
+    private Map<String, String> extraDataGroupReport;
 }
+

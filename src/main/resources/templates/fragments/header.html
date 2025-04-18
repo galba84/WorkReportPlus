@@ -44,38 +44,34 @@
     <!-- Navigation Menu -->
     <div class="menu">
 
-        <!-- Visible for ALL authenticated users -->
-        <a th:href="@{/index}" th:text="#{menu.home}">HOME</a>
-        <a th:href="@{/api/daily-work-report}" th:text="#{menu.newReport}">New Report</a>
-        <a th:href="@{/api/daily-work-report/search}" th:text="#{menu.searchReport}">Search Report</a>
-        <a th:href="@{/api/daily-work-report/export}" th:text="#{menu.exportReport}">Export Report</a>
-
-        <!-- ADMIN only link example -->
-        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-            <a th:href="@{/admin}" th:text="#{menu.adminPage}">Admin</a>
+        <!-- Row 1: Common navigation -->
+        <div class="menu-row">
+            <a th:href="@{/index}" th:text="#{menu.home}">HOME</a>
+            <a th:href="@{/api/daily-work-report}" th:text="#{menu.newReport}">New Report</a>
+            <a th:href="@{/api/daily-work-report/search}" th:text="#{menu.searchReport}">Search Report</a>
+            <a th:href="@{/api/daily-work-report/export}" th:text="#{menu.exportReport}">Export Report</a>
+            <a th:href="@{/api/report100}" th:text="#{menu.report100}">Report100</a>
+            <!-- Logout button -->
+            <div class="menu-row logout-button">
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                    <button type="submit" th:text="#{menu.logout}">Logout</button>
+                </form>
+            </div>
         </div>
 
-        <!-- ADMIN only link example -->
-        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-            <a th:href="@{/audit-log/admin}" th:text="#{menu.auditLog}">AuditLog</a>
+        <!-- Row 2: ADMIN-only buttons -->
+        <div class="menu-row admin-menu" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+            <a th:href="@{/admin}" th:text="#{menu.adminPage}">Admin Page</a>
+            <a th:href="@{/audit-log/admin}" th:text="#{menu.auditLog}">Logs</a>
+            <a th:href="@{/users}" th:text="#{menu.usersPage}">Users Page</a>
+            <a th:href="@{/sheets-viewer.html}" th:text="#{menu.sheetsViewer}">Viewer</a>
         </div>
 
-        <!-- ADMIN only link example -->
-        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-            <a th:href="@{/users}" th:text="#{menu.usersPage}">Users</a>
-        </div>
 
-        <!-- ADMIN only link example -->
-        <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-            <a th:href="@{/sheets-viewer.html}" th:text="#{menu.sheetsViewer}">Sheets Viever</a>
-        </div>
-
-        <!-- Logout -->
-        <form th:action="@{/logout}" method="post">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
-            <button type="submit" th:text="#{menu.logout}">Logout</button>
-        </form>
     </div>
+
+
 </div>
 
 </body>

@@ -6,7 +6,6 @@ import com.example.workreportplus.dto.PlaceDto;
 import com.example.workreportplus.dto.RegionDto;
 import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
-import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.example.workreportplus.service.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,16 +51,17 @@ public class DailyWorkReportController {
     private AuditLogService auditLogService;
     @Autowired
     private UserService userService;
+
     @PostMapping
     public String submitReport(@ModelAttribute @Valid RegionReportRequest request,
                                BindingResult bindingResult,
                                RedirectAttributes redirectAttributes,
-                               HttpServletRequest httpRequest) {
+                               HttpServletRequest httpRequest
+    ) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed.");
-            return "redirect:/new_report";
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed. Errors: " + bindingResult.getAllErrors());
+            return "redirect:/api/daily-work-report";
         }
-
         logger.info("Received Region Report: {}", request);
         if (request.getGroupReports() != null) {
             request.getGroupReports().forEach(group -> logger.info("Group Report: {}", group));
@@ -86,12 +86,12 @@ public class DailyWorkReportController {
 
     @GetMapping
     public String showReportForm(Model model) {
-        model.addAttribute("regionReport", new DailyRegionReportResponse());
+        model.addAttribute("regionReportRequest", new RegionReportRequest());
         List<RegionDto> regions = regionService.getRegions();
         List<GroupDto> groups = groupService.getAllGroups();
-        Map<UUID,List<ContractorDto>> groupIdToContractorsMap = new HashMap<>();
-        Map<UUID,List<PlaceDto>> groupIdToPlacesMap = new HashMap<>();
-        Map<UUID,String> groupIdToDescriptionMap = new HashMap<>();
+        Map<UUID, List<ContractorDto>> groupIdToContractorsMap = new HashMap<>();
+        Map<UUID, List<PlaceDto>> groupIdToPlacesMap = new HashMap<>();
+        Map<UUID, String> groupIdToDescriptionMap = new HashMap<>();
 
         groupService.getAllGroupIds().forEach(groupId -> {
             groupIdToContractorsMap.put(groupId, contractorService.getContractorsByGroupId(groupId));
@@ -99,11 +99,11 @@ public class DailyWorkReportController {
             groupIdToPlacesMap.put(groupId, placeService.getPlaceByRegionId(groupService.getRegionIdByGroupId(groupId)));
         });
 
-        groups.forEach(e-> e.setContractors(
+        groups.forEach(e -> e.setContractors(
                 groupIdToContractorsMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e-> e.setDefaultDescription(
+        groups.forEach(e -> e.setDefaultDescription(
                 groupIdToDescriptionMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e-> e.setPlaces(
+        groups.forEach(e -> e.setPlaces(
                 groupIdToPlacesMap.get(UUID.fromString(e.getId()))));
 
         model.addAttribute("regions", regions);
@@ -116,6 +116,7 @@ public class DailyWorkReportController {
     public String searchReports(@RequestParam(value = "startDate", required = false) String startDate,
                                 @RequestParam(value = "endDate", required = false) String endDate,
                                 @RequestParam(value = "region", required = false) String regionName,
+                                @RequestParam(value = "status", required = false) String status,
                                 Model model) {
         // Date formatter (adjust format based on your input format)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -129,6 +130,7 @@ public class DailyWorkReportController {
         searchParams.setStartDate(startLocalDate);
         searchParams.setEndDate(endLocalDate);
         searchParams.setRegionName(regionName);
+        searchParams.setStatus(status);
 
         // Fetch reports with filters applied
         List<ReportResponse> reports = regionReportService.getReports(searchParams);
@@ -152,7 +154,6 @@ public class DailyWorkReportController {
             return null;
         }
     }
-
 
 
     @GetMapping("/view/{id}") // ✅ Fixed PathVariable Mapping

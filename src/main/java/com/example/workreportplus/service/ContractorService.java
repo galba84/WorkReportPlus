@@ -128,8 +128,8 @@ public class ContractorService {
         dto.setNickName(row.size() > 4 ? row.get(4).toString() : "N/A");
 
         // ✅ Use unit_id directly
-        dto.setUnitId(UUID.fromString(row.get(8).toString())); // assuming column 9 = unit_id
-        dto.setGroupId(UUID.fromString(row.get(6).toString())); // assuming column 9 = group_id
+        dto.setUnitId(UUID.fromString(row.get(8).toString()));
+        dto.setGroupId(UUID.fromString(row.get(6).toString()));
 
         // ✅ Use position normally
         String positionName = row.size() > 3 ? row.get(3).toString().trim() : null;
