@@ -10,5 +10,6 @@ public class RegionReportSearchParams extends SearchParams {
     LocalDate  startDate;
     LocalDate endDate;
     String regionName;
+    String status;
 
 }

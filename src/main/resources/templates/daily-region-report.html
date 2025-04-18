@@ -51,7 +51,8 @@
     <table class="full-width-table">
         <thead>
         <tr>
-            <th th:text="#{groupReport.id}">Group ID</th>
+            <th th:text="#{groupReport.groupName}">Group ID</th>
+            <th th:text="#{groupReport.worked}">Worked</th>
             <th th:text="#{groupReport.createdOn}">Created On</th>
             <th th:text="#{groupReport.createdBy}">Created By</th>
             <th th:text="#{groupReport.status}">Status</th>
@@ -61,15 +62,16 @@
         </thead>
         <tbody>
         <tr th:each="groupReport : ${report.groupReports}">
-            <td th:text="${groupReport.id}"></td>
+            <td th:text="${groupReport.groupName}"></td>
+            <td th:text="${groupReport.worked}"></td>
             <td th:text="${groupReport.createdOn}"></td>
             <td th:text="${groupReport.createdBy}"></td>
             <td th:text="${groupReport.status}"></td>
             <td th:text="${groupReport.description}"></td>
             <td>
-                <a th:href="@{/api/daily-work-report/view/{id}(id=${groupReport.id})}"
-                   th:text="#{groupReport.open}" class="button">Open</a>
+                <button type="button" class="button" disabled th:text="#{groupReport.open}">Open</button>
             </td>
+
         </tr>
         </tbody>
     </table>
@@ -82,14 +84,14 @@
 
 <h3 th:text="#{section.contractors}">Contractors</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="#{contractors.forGroup} + ${groupReport.id}">Contractors for Group</h4>
+    <h4 th:text="#{contractors.forGroup} + ${groupReport.groupName}">Contractors for Group</h4>
     <th:block th:if="${groupReport.contractors != null and not #lists.isEmpty(groupReport.contractors)}">
         <table class="full-width-table">
             <thead>
             <tr>
-                <th>Contractor Name</th>
-                <th>Rank</th>
-                <th>Position</th>
+                <th>Імя</th>
+                <th>Звання</th>
+                <th>Посада</th>
                 <th>Nickname</th>
             </tr>
             </thead>
@@ -110,9 +112,41 @@
 
 <hr>
 
+<h3 th:text="#{section.places}">Places</h3>
+<th:block th:each="groupReport : ${report.groupReports}">
+    <h4 th:text="#{workingAreas.forGroup} + ${groupReport.groupName}">Населені пункти</h4>
+    <th:block th:if="${groupReport.workingAreas != null and not #lists.isEmpty(groupReport.workingAreas)}">
+        <table class="full-width-table">
+            <thead>
+            <tr>
+                <th>name</th>
+                <th>areaType</th>
+                <th>county</th>
+                <th>district</th>
+                <th>coeficient</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="area : ${groupReport.workingAreas}">
+                <td th:text="${area.name}"></td>
+                <td th:text="${area.areaType}"></td>
+                <td th:text="${area.county}"></td>
+                <td th:text="${area.district}"></td>
+                <td th:text="${area.coeficient}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+    <th:block th:if="${groupReport.workingAreas == null or #lists.isEmpty(groupReport.workingAreas)}">
+        <p th:text="#{workingAreas.none}">No places available for this group report.</p>
+    </th:block>
+</th:block>
+
+<hr>
+
 <h3 th:text="#{section.contractorLosses}">Contractor Losses</h3>
 <th:block th:each="groupReport : ${report.groupReports}">
-    <h4 th:text="#{losses.forGroup} + ${groupReport.id}">Contractor Losses for Group</h4>
+    <h4 th:text="#{losses.forGroup} + ${groupReport.groupName}">Contractor Losses for Group</h4>
     <th:block th:if="${groupReport.contractorLooses != null and not #lists.isEmpty(groupReport.contractorLooses)}">
         <table class="full-width-table">
             <thead>

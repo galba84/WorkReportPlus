@@ -3,8 +3,7 @@ package com.example.workreportplus.dto;
 import com.example.workreportplus.ENUM.PersonnelLossesType;
 import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.dto.templates.TrackedDto;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,6 +12,9 @@ import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GroupReportDto extends TrackedDto {
 
     private UUID groupId;

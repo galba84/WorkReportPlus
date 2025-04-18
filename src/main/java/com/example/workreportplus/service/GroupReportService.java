@@ -4,7 +4,9 @@ package com.example.workreportplus.service;
 import com.example.jooq.tables.records.GroupreportRecord;
 import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.Utils.SecurityUtil;
+import com.example.workreportplus.dto.ContractorWorkReportDtoRecord;
 import com.example.workreportplus.dto.GroupReportDto;
+import com.example.workreportplus.dto.PlaceDto;
 import com.example.workreportplus.exception.DatabaseAccessException;
 import com.example.workreportplus.exception.ReportNotFoundException;
 import com.example.workreportplus.mapper.GroupReportMapper;
@@ -30,6 +32,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.example.jooq.tables.Groupreport.GROUPREPORT;
 
@@ -39,15 +42,20 @@ public class GroupReportService implements ReportService {
     private final GroupReportMapper groupReportMapper;
     private final ContractorService contractorService;
     private final PositionService positionService;
+    private final PlacesService placeService;
+    private final GroupService groupService;
     ObjectMapper objectMapper = new ObjectMapper();
 
     public GroupReportService(DSLContext dsl, RegionReportMapper regionReportMapper,
                               GroupReportMapper groupReportMapper, ContractorService contractorService,
-                              PositionService positionService) {
+                              PositionService positionService, PlacesService placeService,
+                              GroupService groupService) {
         this.dsl = dsl;
         this.groupReportMapper = groupReportMapper;
         this.contractorService = contractorService;
         this.positionService = positionService;
+        this.placeService = placeService;
+        this.groupService = groupService;
     }
 
 
@@ -116,22 +124,16 @@ public class GroupReportService implements ReportService {
     }
 
     public List<DailyGroupReportResponse> getReportsByRegionId(UUID regionReportId) {
-
         try {
-
             // Fetch reports
             Condition condition = GROUPREPORT.REGION_REPORT_ID.eq(regionReportId);
-
-
             Result<GroupreportRecord> records = dsl.selectFrom(GROUPREPORT)
                     .where(condition)
                     .fetch();
-
             // Convert records to ReportResponse objects
             return records.stream()
                     .map(this::mapRecordToResponse)
                     .toList();
-
         } catch (NumberFormatException e) {
             // Handle invalid group ID
             throw new DatabaseAccessException("Invalid region report ID: " + regionReportId, e);
@@ -166,23 +168,23 @@ public class GroupReportService implements ReportService {
     @Override
     public ReportResponse getReportById(UUID id) {
         try {
-            // Fetch a single record into DailyGroupReportResponse
             DailyGroupReportResponse record = dsl.selectFrom(GROUPREPORT)
                     .where(GROUPREPORT.ID.eq(id))
                     .fetchOneInto(DailyGroupReportResponse.class); // Use fetchOneInto() for a single result
-
             if (record == null) {
                 throw new ReportNotFoundException("Report with ID " + id + " not found");
             }
-
             return record; // Assuming DailyGroupReportResponse extends ReportResponse or is compatible
-
         } catch (DataAccessException e) {
             // Handle database access exceptions
             throw new DatabaseAccessException("Failed to fetch report with ID " + id, e);
         }
     }
 
+    @Override
+    public List<UUID> getReportIdsByRegionAndPeriod(UUID regionId, LocalDate fromDate, LocalDate toDate) {
+        return List.of();
+    }
 
     //save report
     public DailyRegionReportResponse saveReport(RegionReportRequest report) {
@@ -196,7 +198,6 @@ public class GroupReportService implements ReportService {
 
     public void saveGroupReport(GroupReportDto groupReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername(); // ✅ Fetch user from SecurityContextHolder
-
         GroupreportRecord groupReportRecord = dsl.newRecord(GROUPREPORT);
         groupReportRecord.setGroupId(groupReportDto.getGroupId()); // ✅ Set the group ID
         groupReportRecord.setDescription(groupReportDto.getDescription());
@@ -215,22 +216,32 @@ public class GroupReportService implements ReportService {
             status = ReportStatus.fromBoolean(b);
         }
 
+        // 🔹 Fetch working areas (places)
+        List<PlaceDto> workingAreas = List.of();
+        UUID[] placeIds = record.get(GROUPREPORT.PLACE_IDS); // Replace with correct field
+        if (placeIds != null && placeIds.length > 0) {
+            workingAreas = placeService.getPlacesByIds(List.of(placeIds));
+        }
 
         return DailyGroupReportResponse.builder()
                 .id(record.getId())
-                .regionReportId(record.get(GROUPREPORT.ID))
+                .groupName(groupService.getGroupNameById(record.get(GROUPREPORT.GROUP_ID).toString()))
+                .regionReportId(record.get(GROUPREPORT.REGION_REPORT_ID))
                 .date(record.get(GROUPREPORT.REPORT_DATE))
                 .description(record.get(GROUPREPORT.DESCRIPTION))
                 .status(status)
+                .worked(record.get(GROUPREPORT.IS_WORKED))
                 .contractors(getContractorResponses(record))
                 .extraData(getExtraDataGroupReport(record))
                 .contractorLooses(getContractorLooses(record))
+                .workingAreas(workingAreas)
                 .createdBy(record.get(GROUPREPORT.CREATED_BY))
                 .createdOn(record.get(GROUPREPORT.CREATED_ON).toLocalDate())
-                .createdBy(record.get(GROUPREPORT.UPDATED_BY))
-                .createdOn(record.get(GROUPREPORT.UPDATED_ON).toLocalDate())
+                .updatedBy(record.get(GROUPREPORT.UPDATED_BY))
+                .updatedOn(record.get(GROUPREPORT.UPDATED_ON).toLocalDate())
                 .build();
     }
+
 
     private static List<UUID> getContractorLooses(GroupreportRecord record) {
         UUID[] elements = record.get(GROUPREPORT.LOOSES);
@@ -295,4 +306,25 @@ public class GroupReportService implements ReportService {
         return dto;
     }
 
+    public List<ContractorWorkReportDtoRecord> getContractorWorkDataByPeriodAndReportIds(LocalDate fromDate, LocalDate toDate,
+                                                                              List<UUID> regionReportIds) {
+        return dsl.selectFrom(GROUPREPORT)
+                .where(GROUPREPORT.REPORT_DATE.between(fromDate, toDate))
+                .and(GROUPREPORT.REGION_REPORT_ID.in(regionReportIds))
+                .and(GROUPREPORT.STATUS.eq(true))
+                .fetch()
+                .stream()
+                .flatMap(record -> {
+                    UUID[] contractorIds = record.getContractorsIds();
+                    LocalDate date = record.getReportDate();
+                    Boolean isWorked = record.getIsWorked();
+                    String groupName =groupService.getGroupNameById(record.getGroupId());
+
+                    if (contractorIds == null) return Stream.empty();
+
+                    return Arrays.stream(contractorIds)
+                            .map(id -> new ContractorWorkReportDtoRecord(id, date, isWorked, groupName));
+                })
+                .collect(Collectors.toList());
+    }
 }

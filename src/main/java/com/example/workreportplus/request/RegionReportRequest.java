@@ -1,6 +1,7 @@
 package com.example.workreportplus.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -23,7 +24,10 @@ public class RegionReportRequest implements ReportRequest {
 
     private String regionDescription;
 
-    private List<GroupReportRequest> groupReports;
+    @Valid
+    @NotNull
+    private List<@Valid GroupReportRequest> groupReports;
+
 
     private Map<String, String> extraData;
     private String status;

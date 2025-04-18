@@ -27,15 +27,23 @@
             <option th:each="region : ${regionNames}" th:value="${region}" th:text="${region}"></option>
         </select>
 
+        <label for="status" th:text="#{form.status}">Status:</label>
+        <select id="status" name="status">
+            <option value="ACTIVE" th:text="#{form.status.active}" selected>ACTIVE</option>
+            <option value="ALL" th:text="#{form.status.all}">ALL</option>
+            <option value="DELETED" th:text="#{form.status.deleted}">DELETED</option>
+        </select>
+
         <button type="submit" th:text="#{form.button.search}">Search</button>
     </form>
 </div>
-<div id="results">
-<!--    <h3 th:text="#{table.header.results}">Search Results</h3>-->
+<div id="results" th:if="${reports != null and !reports.isEmpty()}">
+    <h3 th:text="#{table.header.results}">Search Results</h3>
     <table class="full-width-table">
         <thead>
         <tr>
             <th th:text="#{table.header.id}">ID</th>
+            <th th:text="#{table.header.status}">Status</th>
             <th th:text="#{table.header.date}">Report Date</th>
             <th th:text="#{table.header.region}">Region</th>
             <th th:text="#{table.header.description}">Description</th>
@@ -45,6 +53,7 @@
         <tbody>
         <tr th:each="report : ${reports}">
             <td th:text="${report.id}"></td>
+            <td th:text="${report.status}"></td>
             <td th:text="${report.date}"></td>
             <td th:text="${report.regionName}"></td>
             <td th:text="${report.description}"></td>

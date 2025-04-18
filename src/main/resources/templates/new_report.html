@@ -33,16 +33,23 @@
         </select>
 
         <label for="regionDescription" th:text="#{form.description}">Description:</label>
-        <textarea id="regionDescription" name="regionDescription" rows="3"></textarea>
+        <textarea id="regionDescription" name="regionDescription" rows="1" style="resize: vertical; min-height: 1.5em;"></textarea>
 
         <h3 th:text="#{form.additionalData}">Additional Data</h3>
-        <div id="extraDataContainer">
+
+        <!-- Container where extraData entries will be added -->
+        <div id="extraDataContainer"></div>
+
+        <!-- Hidden template for new entries -->
+        <template id="extraDataTemplate">
             <div class="extraDataEntry">
                 <input type="text" name="extraData[key][]" placeholder="Key">
                 <input type="text" name="extraData[value][]" placeholder="Value">
                 <button type="button" class="removeExtraData" th:text="#{form.remove}">Remove</button>
             </div>
-        </div>
+        </template>
+
+        <!-- Only this is visible by default -->
         <button type="button" id="addExtraData" th:text="#{form.addExtraData}">+ Add Extra Data</button>
 
         <h3 th:text="#{form.groupReports}">Group Reports</h3>
@@ -102,7 +109,7 @@
                 </select>
 
                 <label>${labels.places}</label>
-                <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeCoefficientsDropdown" multiple></select>
+                <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeCoefficientsDropdown" multiple required></select>
 
                 <label for="contractorsIds_${groupIndex}">${labels.contractors}</label>
                 <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds[]" multiple required></select>

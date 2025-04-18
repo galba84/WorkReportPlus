@@ -139,4 +139,19 @@ public class PlacesService {
                 });
     }
 
+
+    public List<PlaceDto> getPlacesByIds(List<UUID> placeIds) {
+        return dsl.selectFrom(PLACE)
+                .where(PLACE.ID.in(placeIds))
+                .fetch()
+                .map(record -> PlaceDto.builder()
+                        .name(record.getName())
+                        .areaType(record.getAreaType())
+                        .county(record.getCounty())
+                        .district(record.getDistrict())
+                        .region(record.getRegion()) // if applicable
+                        .coeficient(record.getCoeficient()) // if applicable
+                        .build());
+    }
+
 }
