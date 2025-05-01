@@ -2,6 +2,7 @@ package com.example.workreportplus.service;
 
 import com.example.workreportplus.dto.PlaceDto;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -43,45 +44,49 @@ public class PlacesService {
             System.out.println("No data found in Places sheet");
             return;
         }
+        dsl.transaction(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
 
-        dsl.batch(
-                rows.stream()
-                        .filter(row -> row.size() >= 8)
-                        .filter(row -> !row.get(1).toString().isBlank()) // name must not be blank
-                        .map(row -> {
-                            UUID id = safeParseUuid(row.get(0));
-                            if (id == null) id = UUID.randomUUID();
+            ctx.deleteFrom(PLACE).execute();
 
-                            String name = row.get(1).toString().trim();
-                            String areaType = row.get(2).toString().trim();
-                            String county = row.get(3).toString().trim(); // ✅ fix
-                            String district = row.get(4).toString().trim();
-                            String region = row.get(5).toString().trim();
-                            String coefficient = row.get(6).toString().trim();
-                            UUID regionId = safeParseUuid(row.get(7)); // can be null
+            ctx.batch(
+                    rows.stream()
+                            .filter(row -> row.size() >= 8)
+                            .filter(row -> !row.get(1).toString().isBlank()) // name must not be blank
+                            .map(row -> {
+                                UUID id = safeParseUuid(row.get(0));
+                                if (id == null) id = UUID.randomUUID();
 
-                            return dsl.insertInto(PLACE)
-                                    .set(PLACE.ID, id)
-                                    .set(PLACE.NAME, name)
-                                    .set(PLACE.AREA_TYPE, areaType)
-                                    .set(PLACE.COUNTY, county) // ✅ now included
-                                    .set(PLACE.DISTRICT, district)
-                                    .set(PLACE.REGION, region)
-                                    .set(PLACE.COEFICIENT, coefficient)
-                                    .set(PLACE.REGION_ID, regionId)
-                                    .onConflict(PLACE.ID)
-                                    .doUpdate()
-                                    .set(PLACE.NAME, name)
-                                    .set(PLACE.AREA_TYPE, areaType)
-                                    .set(PLACE.COUNTY, county) // ✅ now included
-                                    .set(PLACE.DISTRICT, district)
-                                    .set(PLACE.REGION, region)
-                                    .set(PLACE.COEFICIENT, coefficient)
-                                    .set(PLACE.REGION_ID, regionId);
-                        })
-                        .toList()
-        ).execute();
+                                String name = row.get(1).toString().trim();
+                                String areaType = row.get(2).toString().trim();
+                                String county = row.get(3).toString().trim(); // ✅ fix
+                                String district = row.get(4).toString().trim();
+                                String region = row.get(5).toString().trim();
+                                String coefficient = row.get(6).toString().trim();
+                                UUID regionId = safeParseUuid(row.get(7)); // can be null
 
+                                return ctx.insertInto(PLACE)
+                                        .set(PLACE.ID, id)
+                                        .set(PLACE.NAME, name)
+                                        .set(PLACE.AREA_TYPE, areaType)
+                                        .set(PLACE.COUNTY, county) // ✅ now included
+                                        .set(PLACE.DISTRICT, district)
+                                        .set(PLACE.REGION, region)
+                                        .set(PLACE.COEFICIENT, coefficient)
+                                        .set(PLACE.REGION_ID, regionId)
+                                        .onConflict(PLACE.ID)
+                                        .doUpdate()
+                                        .set(PLACE.NAME, name)
+                                        .set(PLACE.AREA_TYPE, areaType)
+                                        .set(PLACE.COUNTY, county) // ✅ now included
+                                        .set(PLACE.DISTRICT, district)
+                                        .set(PLACE.REGION, region)
+                                        .set(PLACE.COEFICIENT, coefficient)
+                                        .set(PLACE.REGION_ID, regionId);
+                            })
+                            .toList()
+            ).execute();
+        });
         System.out.println("Places updated successfully from sheet.");
     }
 
@@ -95,7 +100,6 @@ public class PlacesService {
             return null;
         }
     }
-
 
 
     public List<PlaceDto> getPlaceByRegionId(UUID regionId) {

@@ -5,6 +5,7 @@ import com.example.jooq.tables.Positions;
 import com.example.workreportplus.Utils.SecurityUtil;
 import com.example.workreportplus.dto.ContractorDto;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class ContractorService {
     public List<ContractorDto> getContractorsByGroupId(UUID id) {
         return dsl.selectFrom(CONTRACTOR)
                 .where(CONTRACTOR.GROUP_ID.eq(id))
+                .and(CONTRACTOR.STATUS.isTrue())
                 .fetchInto(ContractorDto.class);
     }
 
@@ -63,56 +65,59 @@ public class ContractorService {
                 .map(row -> mapRowToDto(row, currentUser, positionNameToIds)) // remove groupNameToId param
                 .toList();
 
-        // Batch UPSERT stays unchanged
-        dsl.batch(
-                contractors.stream().map(dto ->
-                        dsl.insertInto(CONTRACTOR)
-                                .set(CONTRACTOR.ID, dto.getId())
-                                .set(CONTRACTOR.FIRST_NAME, dto.getFirstName())
-                                .set(CONTRACTOR.LAST_NAME, dto.getLastName())
-                                .set(CONTRACTOR.MIDDLE_NAME, dto.getMiddleName())
-                                .set(CONTRACTOR.NICK_NAME, dto.getNickName())
-                                .set(CONTRACTOR.C_RANK, dto.getC_rank())
-                                .set(CONTRACTOR.UNIT_ID, dto.getUnitId())
-                                .set(CONTRACTOR.POSITION_ID, dto.getPositionId())
-                                .set(CONTRACTOR.GENDER, dto.getGender())
-                                .set(CONTRACTOR.BIRTH_DATE, dto.getBirthDate())
-                                .set(CONTRACTOR.NATIONALITY, dto.getNationality())
-                                .set(CONTRACTOR.DATE_OF_ARRIVAL_TO_UNIT, dto.getDateOfArrivalToUnit())
-                                .set(CONTRACTOR.CONTRACTOR_STATUS, dto.getContractorStatus())
-                                .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
-                                .set(CONTRACTOR.CREATED_BY, dto.getCreatedBy())
-                                .set(CONTRACTOR.CREATED_ON, dto.getCreatedOn())
-                                .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
-                                .set(CONTRACTOR.UPDATED_ON, dto.getUpdatedOn())
-                                .set(CONTRACTOR.STATUS, dto.getStatus())
-                                .onConflict(CONTRACTOR.ID)
-                                .doUpdate()
-                                .set(CONTRACTOR.FIRST_NAME, dto.getFirstName())
-                                .set(CONTRACTOR.LAST_NAME, dto.getLastName())
-                                .set(CONTRACTOR.MIDDLE_NAME, dto.getMiddleName())
-                                .set(CONTRACTOR.NICK_NAME, dto.getNickName())
-                                .set(CONTRACTOR.C_RANK, dto.getC_rank())
-                                .set(CONTRACTOR.UNIT_ID, dto.getUnitId())
-                                .set(CONTRACTOR.POSITION_ID, dto.getPositionId())
-                                .set(CONTRACTOR.GENDER, dto.getGender())
-                                .set(CONTRACTOR.BIRTH_DATE, dto.getBirthDate())
-                                .set(CONTRACTOR.NATIONALITY, dto.getNationality())
-                                .set(CONTRACTOR.DATE_OF_ARRIVAL_TO_UNIT, dto.getDateOfArrivalToUnit())
-                                .set(CONTRACTOR.CONTRACTOR_STATUS, dto.getContractorStatus())
-                                .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
-                                .set(CONTRACTOR.UPDATED_ON, dto.getUpdatedOn())
-                                .set(CONTRACTOR.STATUS, dto.getStatus())
-                                .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
+        dsl.transaction(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
 
-                ).toList()
-        ).execute();
+            ctx.update(CONTRACTOR)
+                    .set(CONTRACTOR.STATUS, false)
+                    .execute();
+
+            // Batch UPSERT stays unchanged
+            ctx.batch(
+                    contractors.stream().map(dto ->
+                            ctx.insertInto(CONTRACTOR)
+                                    .set(CONTRACTOR.ID, dto.getId())
+                                    .set(CONTRACTOR.FIRST_NAME, dto.getFirstName())
+                                    .set(CONTRACTOR.LAST_NAME, dto.getLastName())
+                                    .set(CONTRACTOR.MIDDLE_NAME, dto.getMiddleName())
+                                    .set(CONTRACTOR.NICK_NAME, dto.getNickName())
+                                    .set(CONTRACTOR.C_RANK, dto.getC_rank())
+                                    .set(CONTRACTOR.UNIT_ID, dto.getUnitId())
+                                    .set(CONTRACTOR.POSITION_ID, dto.getPositionId())
+                                    .set(CONTRACTOR.GENDER, dto.getGender())
+                                    .set(CONTRACTOR.BIRTH_DATE, dto.getBirthDate())
+                                    .set(CONTRACTOR.NATIONALITY, dto.getNationality())
+                                    .set(CONTRACTOR.DATE_OF_ARRIVAL_TO_UNIT, dto.getDateOfArrivalToUnit())
+                                    .set(CONTRACTOR.CONTRACTOR_STATUS, dto.getContractorStatus())
+                                    .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
+                                    .set(CONTRACTOR.CREATED_BY, dto.getCreatedBy())
+                                    .set(CONTRACTOR.CREATED_ON, dto.getCreatedOn())
+                                    .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
+                                    .set(CONTRACTOR.UPDATED_ON, dto.getUpdatedOn())
+                                    .set(CONTRACTOR.STATUS, dto.getStatus())
+                                    .onConflict(CONTRACTOR.ID)
+                                    .doUpdate()
+                                    .set(CONTRACTOR.FIRST_NAME, dto.getFirstName())
+                                    .set(CONTRACTOR.LAST_NAME, dto.getLastName())
+                                    .set(CONTRACTOR.MIDDLE_NAME, dto.getMiddleName())
+                                    .set(CONTRACTOR.NICK_NAME, dto.getNickName())
+                                    .set(CONTRACTOR.C_RANK, dto.getC_rank())
+                                    .set(CONTRACTOR.UNIT_ID, dto.getUnitId())
+                                    .set(CONTRACTOR.POSITION_ID, dto.getPositionId())
+                                    .set(CONTRACTOR.GENDER, dto.getGender())
+                                    .set(CONTRACTOR.BIRTH_DATE, dto.getBirthDate())
+                                    .set(CONTRACTOR.NATIONALITY, dto.getNationality())
+                                    .set(CONTRACTOR.DATE_OF_ARRIVAL_TO_UNIT, dto.getDateOfArrivalToUnit())
+                                    .set(CONTRACTOR.CONTRACTOR_STATUS, dto.getContractorStatus())
+                                    .set(CONTRACTOR.UPDATED_BY, dto.getUpdatedBy())
+                                    .set(CONTRACTOR.UPDATED_ON, dto.getUpdatedOn())
+                                    .set(CONTRACTOR.STATUS, dto.getStatus())
+                                    .set(CONTRACTOR.GROUP_ID, dto.getGroupId())
+
+                    ).toList()
+            ).execute();
+        });
     }
-
-
-
-
-
 
 
     private ContractorDto mapRowToDto(List<Object> row, String currentUser, Map<String, List<UUID>> positionNameToIds) {

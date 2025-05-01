@@ -34,6 +34,9 @@ public class Report100Controller {
     @GetMapping
     public String loadReport100Page(Model model) {
         List<RegionDto> regions = regionService.getRegions();
+        String defaultMonth = YearMonth.from(LocalDate.now()).toString();
+        model.addAttribute("monthLabel", defaultMonth);
+
         model.addAttribute("regions", regions);
         return "report100";
     }
@@ -75,5 +78,4 @@ public class Report100Controller {
                 .body(excelBytes);
     }
 
-    record DayCoeficient(LocalDate date, Integer coeficient) {}
 }

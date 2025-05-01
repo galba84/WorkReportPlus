@@ -19,14 +19,22 @@ public class AdminController {
     private final RegionService regionService;
     private final DescriptionTemplateService descriptionTemplateService;
     private final PlacesService placesService;
+    private final RankService rankService;
+    private final PositionService positionService;
+    private final UnitService unitService;
 
     public AdminController(ContractorService contractorService, GroupService groupService,
-                           RegionService regionService, DescriptionTemplateService descriptionTemplateService, PlacesService placesService) {
+                           RegionService regionService, DescriptionTemplateService descriptionTemplateService,
+                           PlacesService placesService, RankService rankService, PositionService positionService,
+                           UnitService unitService) {
         this.contractorService = contractorService;
         this.groupService = groupService;
         this.regionService = regionService;
         this.descriptionTemplateService = descriptionTemplateService;
         this.placesService = placesService;
+        this.rankService = rankService;
+        this.positionService = positionService;
+        this.unitService = unitService;
     }
 
     @GetMapping
@@ -66,7 +74,28 @@ public class AdminController {
     @PostMapping("/places")
     public String updatePlacesFromTable(RedirectAttributes redirectAttributes) throws IOException {
         placesService.updatePlacesFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "Regions updated successfully!");
+        redirectAttributes.addFlashAttribute("infoMessage", "places updated successfully!");
+        return "redirect:/admin"; // redirect with flash message
+    }
+
+    @PostMapping("/ranks")
+    public String updateRanksFromTable(RedirectAttributes redirectAttributes) throws IOException {
+        rankService.updateRanksFromTable();
+        redirectAttributes.addFlashAttribute("infoMessage", "ranks updated successfully!");
+        return "redirect:/admin"; // redirect with flash message
+    }
+
+    @PostMapping("/positions")
+    public String updatePositionsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+        positionService.updatePositionsFromTable();
+        redirectAttributes.addFlashAttribute("infoMessage", "positions updated successfully!");
+        return "redirect:/admin"; // redirect with flash message
+    }
+
+    @PostMapping("/units")
+    public String updateUnitsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+        unitService.updateUnitsFromTable();
+        redirectAttributes.addFlashAttribute("infoMessage", "units updated successfully!");
         return "redirect:/admin"; // redirect with flash message
     }
 

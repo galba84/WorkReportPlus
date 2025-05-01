@@ -4,6 +4,7 @@ import com.example.jooq.tables.Descriptiontemplate;
 import com.example.jooq.tables.Group;
 import com.example.jooq.tables.records.DescriptiontemplateRecord;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class DescriptionTemplateService {
                 .execute();
     }
 
-    public  void updateFromTableSource() throws IOException {
+    public void updateFromTableSource() throws IOException {
         String sheetId = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss"; // or inject as a property
         String range = "GroupReportText!A2:D"; // id, name
 
@@ -90,35 +91,40 @@ public class DescriptionTemplateService {
             System.out.println("No data found in RegionList sheet");
             return;
         }
+        dsl.transaction(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
 
-        dsl.deleteFrom(DESCRIPTIONTEMPLATE).execute();
+            ctx.deleteFrom(DESCRIPTIONTEMPLATE).execute();
 
-        dsl.batch(
-                rows.stream()
-                        .filter(row -> row.size() >= 2) // minimal required columns
-                        .map(row -> {
-                            UUID groupId = !row.get(0).toString().isEmpty()
-                                    ? UUID.fromString(row.get(0).toString())
-                                    : UUID.randomUUID();
+            ctx.batch(
+                    rows.stream()
+                            .filter(row -> row.size() >= 2) // minimal required columns
+                            .filter(row -> !row.get(0).toString().isEmpty()) // minimal required columns
+                            .filter(row -> !row.get(1).toString().isEmpty()) // minimal required columns
+                            .filter(row -> !row.get(2).toString().isEmpty()) // minimal required columns
+                            .map(row -> {
+                                UUID groupId = !row.get(0).toString().isEmpty()
+                                        ? UUID.fromString(row.get(0).toString())
+                                        : UUID.randomUUID();
 
-                            String description = row.size() > 2 ? row.get(2).toString().trim() : "";
-                            String details = row.size() > 3 ? row.get(3).toString().trim() : "";
+                                String description = row.size() > 2 ? row.get(2).toString().trim() : "";
+                                String details = row.size() > 3 ? row.get(3).toString().trim() : "";
 
-                            return dsl.insertInto(DESCRIPTIONTEMPLATE)
-                                    .set(DESCRIPTIONTEMPLATE.GROUP_ID, groupId)
-                                    .set(DESCRIPTIONTEMPLATE.CONTENT, description)
-                                    .set(DESCRIPTIONTEMPLATE.DETAILS, details)
-                                    .set(DESCRIPTIONTEMPLATE.UPDATED_BY, getCurrentUsername())
-                                    .set(DESCRIPTIONTEMPLATE.CREATED_BY, getCurrentUsername())
-                                    .set(DESCRIPTIONTEMPLATE.CREATED_ON, OffsetDateTime.now())
-                                    .set(DESCRIPTIONTEMPLATE.UPDATED_ON, OffsetDateTime.now())
-                                    .onConflict(DESCRIPTIONTEMPLATE.GROUP_ID)
-                                    .doUpdate()
-                                    .set(DESCRIPTIONTEMPLATE.CONTENT, description);
-                        })
-                        .toList()
-        ).execute();
-
+                                return ctx.insertInto(DESCRIPTIONTEMPLATE)
+                                        .set(DESCRIPTIONTEMPLATE.GROUP_ID, groupId)
+                                        .set(DESCRIPTIONTEMPLATE.CONTENT, description)
+                                        .set(DESCRIPTIONTEMPLATE.DETAILS, details)
+                                        .set(DESCRIPTIONTEMPLATE.UPDATED_BY, getCurrentUsername())
+                                        .set(DESCRIPTIONTEMPLATE.CREATED_BY, getCurrentUsername())
+                                        .set(DESCRIPTIONTEMPLATE.CREATED_ON, OffsetDateTime.now())
+                                        .set(DESCRIPTIONTEMPLATE.UPDATED_ON, OffsetDateTime.now())
+                                        .onConflict(DESCRIPTIONTEMPLATE.GROUP_ID)
+                                        .doUpdate()
+                                        .set(DESCRIPTIONTEMPLATE.CONTENT, description);
+                            })
+                            .toList()
+            ).execute();
+        });
         System.out.println("Description updated successfully from sheet.");
     }
 }

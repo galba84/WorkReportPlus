@@ -113,33 +113,39 @@ public class DailyWorkReportController {
     }
 
     @GetMapping("/search")
-    public String searchReports(@RequestParam(value = "startDate", required = false) String startDate,
-                                @RequestParam(value = "endDate", required = false) String endDate,
-                                @RequestParam(value = "region", required = false) String regionName,
-                                @RequestParam(value = "status", required = false) String status,
-                                Model model) {
-        // Date formatter (adjust format based on your input format)
+    public String searchReports(
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate",   required = false) String endDate,
+            @RequestParam(value = "region",    required = false) String regionName,
+            @RequestParam(value = "status",    required = false, defaultValue = "ACTIVE") String status,
+            Model model) {
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate today = LocalDate.now();
 
-        // Convert Strings to LocalDate safely
-        LocalDate startLocalDate = parseDate(startDate, formatter);
-        LocalDate endLocalDate = parseDate(endDate, formatter);
+        // Default start = first day of this month, end = today
+        LocalDate startLocalDate = (startDate == null || startDate.isBlank())
+                ? today.withDayOfMonth(1)
+                : LocalDate.parse(startDate, formatter);
 
-        // Create and populate search parameters
+        LocalDate endLocalDate = (endDate == null || endDate.isBlank())
+                ? today
+                : LocalDate.parse(endDate, formatter);
+
         RegionReportSearchParams searchParams = new RegionReportSearchParams();
         searchParams.setStartDate(startLocalDate);
         searchParams.setEndDate(endLocalDate);
         searchParams.setRegionName(regionName);
         searchParams.setStatus(status);
 
-        // Fetch reports with filters applied
         List<ReportResponse> reports = regionReportService.getReports(searchParams);
 
-        // Add to the model for display in the template
         model.addAttribute("reports", reports);
         model.addAttribute(REGION_NAMES, regionService.getRegionNames());
+        model.addAttribute("startDate", startLocalDate.format(formatter));
+        model.addAttribute("endDate",   endLocalDate.format(formatter));
 
-        return "search_reports"; // Returns the same template with search results
+        return "search_reports";
     }
 
     /**

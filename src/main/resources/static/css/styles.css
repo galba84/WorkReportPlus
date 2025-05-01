@@ -310,7 +310,7 @@ tbody tr:nth-child(even) {
 }
 
 body {
-    background-image: url('/img/Banner2.png'); /* adjust the path if needed */
+    background-image: url('/img/banner2.png'); /* adjust the path if needed */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

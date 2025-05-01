@@ -12,6 +12,4 @@ DO $$
         END IF;
     END $$;
 
--- Optional: make sure the owner is set correctly (safe to run multiple times)
-ALTER TABLE "Group"
-    OWNER TO workreport_user;
+
