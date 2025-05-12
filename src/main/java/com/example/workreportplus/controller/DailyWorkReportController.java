@@ -1,9 +1,6 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.dto.ContractorDto;
-import com.example.workreportplus.dto.GroupDto;
-import com.example.workreportplus.dto.PlaceDto;
-import com.example.workreportplus.dto.RegionDto;
+import com.example.workreportplus.dto.*;
 import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
 import com.example.workreportplus.response.ReportResponse;
@@ -20,13 +17,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping("/api/daily-work-report")
@@ -51,6 +46,8 @@ public class DailyWorkReportController {
     private AuditLogService auditLogService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ShpsService shpsService;
 
     @PostMapping
     public String submitReport(@ModelAttribute @Valid RegionReportRequest request,
@@ -59,7 +56,8 @@ public class DailyWorkReportController {
                                HttpServletRequest httpRequest
     ) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed. Errors: " + bindingResult.getAllErrors());
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed. Errors: "
+                    + bindingResult.getAllErrors());
             return "redirect:/api/daily-work-report";
         }
         logger.info("Received Region Report: {}", request);
@@ -84,27 +82,64 @@ public class DailyWorkReportController {
         return "redirect:/api/daily-work-report";
     }
 
+    @GetMapping("/contractors")
+    @ResponseBody
+    public Map<String, Map<String, List<ContractorDto>>> contractors(@RequestParam String date) throws IOException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate searchDate = LocalDate.parse(date, formatter);
+
+        List<ContractorRelocation> arrivedContractors = shpsService.getArrivedContractors(searchDate);
+        List<ContractorRelocation> departedContractors = shpsService.getDeparturedContractors(searchDate);
+        List<ContractorDto> contractorDtos = contractorService.getContractors();
+        Map<String, List<ContractorDto>> arrivedMap = new HashMap<>();
+        Map<String, List<ContractorDto>> departedMap = new HashMap<>();
+        Map<String, List<ContractorDto>> contractors = new HashMap<>();
+        contractors.put("all", contractorDtos);
+        for (ContractorRelocation relocation : arrivedContractors) {
+            String regionId = relocation.getRegion().getId();
+            arrivedMap.computeIfAbsent(regionId, k -> new ArrayList<>()).add(relocation.getContractor());
+        }
+
+        for (ContractorRelocation relocation : departedContractors) {
+            String regionId = relocation.getRegion().getId();
+            departedMap.computeIfAbsent(regionId, k -> new ArrayList<>()).add(relocation.getContractor());
+        }
+
+        return Map.of(
+                "arrived", arrivedMap,
+                "departed", departedMap,
+                "contractorsAll", contractors // e.g. Map<String, List<ContractorDto>>
+        );
+    }
+
+
+
     @GetMapping
     public String showReportForm(Model model) {
         model.addAttribute("regionReportRequest", new RegionReportRequest());
         List<RegionDto> regions = regionService.getRegions();
         List<GroupDto> groups = groupService.getAllGroups();
+
         Map<UUID, List<ContractorDto>> groupIdToContractorsMap = new HashMap<>();
-        Map<UUID, List<PlaceDto>> groupIdToPlacesMap = new HashMap<>();
         Map<UUID, String> groupIdToDescriptionMap = new HashMap<>();
 
-        groupService.getAllGroupIds().forEach(groupId -> {
+        for (GroupDto group : groups) {
+            UUID groupId = UUID.fromString(group.getId());
+
+            // Fetch and assign contractors and descriptions
             groupIdToContractorsMap.put(groupId, contractorService.getContractorsByGroupId(groupId));
             groupIdToDescriptionMap.put(groupId, descriptionTemplateService.getContentByGroupId(groupId));
-            groupIdToPlacesMap.put(groupId, placeService.getPlaceByRegionId(groupService.getRegionIdByGroupId(groupId)));
-        });
+        }
 
-        groups.forEach(e -> e.setContractors(
-                groupIdToContractorsMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e -> e.setDefaultDescription(
-                groupIdToDescriptionMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e -> e.setPlaces(
-                groupIdToPlacesMap.get(UUID.fromString(e.getId()))));
+        // Populate group fields directly
+        for (GroupDto group : groups) {
+            UUID groupId = UUID.fromString(group.getId());
+            group.setContractors(groupIdToContractorsMap.get(groupId));
+            group.setDefaultDescription(groupIdToDescriptionMap.get(groupId));
+
+            // ✅ Fetch places using the regionId from the group itself
+            group.setPlaces(placeService.getPlaceByRegionId(group.getRegionId()));
+        }
 
         model.addAttribute("regions", regions);
         model.addAttribute("groups", groups);
@@ -113,33 +148,39 @@ public class DailyWorkReportController {
     }
 
     @GetMapping("/search")
-    public String searchReports(@RequestParam(value = "startDate", required = false) String startDate,
-                                @RequestParam(value = "endDate", required = false) String endDate,
-                                @RequestParam(value = "region", required = false) String regionName,
-                                @RequestParam(value = "status", required = false) String status,
-                                Model model) {
-        // Date formatter (adjust format based on your input format)
+    public String searchReports(
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate",   required = false) String endDate,
+            @RequestParam(value = "region",    required = false) String regionName,
+            @RequestParam(value = "status",    required = false, defaultValue = "ACTIVE") String status,
+            Model model) {
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate today = LocalDate.now();
 
-        // Convert Strings to LocalDate safely
-        LocalDate startLocalDate = parseDate(startDate, formatter);
-        LocalDate endLocalDate = parseDate(endDate, formatter);
+        // Default start = first day of this month, end = today
+        LocalDate startLocalDate = (startDate == null || startDate.isBlank())
+                ? today.withDayOfMonth(1)
+                : LocalDate.parse(startDate, formatter);
 
-        // Create and populate search parameters
+        LocalDate endLocalDate = (endDate == null || endDate.isBlank())
+                ? today
+                : LocalDate.parse(endDate, formatter);
+
         RegionReportSearchParams searchParams = new RegionReportSearchParams();
         searchParams.setStartDate(startLocalDate);
         searchParams.setEndDate(endLocalDate);
         searchParams.setRegionName(regionName);
         searchParams.setStatus(status);
 
-        // Fetch reports with filters applied
         List<ReportResponse> reports = regionReportService.getReports(searchParams);
 
-        // Add to the model for display in the template
         model.addAttribute("reports", reports);
         model.addAttribute(REGION_NAMES, regionService.getRegionNames());
+        model.addAttribute("startDate", startLocalDate.format(formatter));
+        model.addAttribute("endDate",   endLocalDate.format(formatter));
 
-        return "search_reports"; // Returns the same template with search results
+        return "search_reports";
     }
 
     /**

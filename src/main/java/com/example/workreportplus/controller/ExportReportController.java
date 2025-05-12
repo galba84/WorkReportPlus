@@ -97,18 +97,13 @@ public class ExportReportController {
             return false;
         }
 
-        if (GROUP_REPORT.equalsIgnoreCase(templateName)) {
-            if (!StringUtils.hasText(groupName) || !groupService.groupExistsByName(groupName)) {
-                return false;
-            }
-
-        } else if (REGION_REPORT.equalsIgnoreCase(templateName)) {
+         else if (REGION_REPORT.equalsIgnoreCase(templateName)) {
             if (!StringUtils.hasText(regionName) || !regionService.regionExistsByName(regionName)) {
                 return false;
             }
 
         }
-        return reportDate.isAfter(LocalDate.now().plusDays(1));
+        return reportDate.isBefore(LocalDate.now().plusDays(1));
     }
 
     private Map<String, String> enrichTemplateVariables(String regionName,

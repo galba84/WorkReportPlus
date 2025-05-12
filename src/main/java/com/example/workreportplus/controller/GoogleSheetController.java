@@ -24,10 +24,10 @@ public class GoogleSheetController {
     public List<List<Object>> readSheets(@RequestParam String sheetId,
                                          @RequestParam String upperBound, @RequestParam String lowerBound)
             throws IOException, GeneralSecurityException {
-        String spreadsheetId = "1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA"; // <-- put your real ID here
+
         String range = "ID!A1:B20"; // <-- adjust to your sheet range
         range = sheetId+upperBound+lowerBound;
-        List<List<Object>> data = sheetsService.readSheet(spreadsheetId, range);
+        List<List<Object>> data = sheetsService.readSheet(GoogleSheetsService.SHPS_TABLE_ID, range);
 
         if (data == null || data.isEmpty()) {
             return List.of();

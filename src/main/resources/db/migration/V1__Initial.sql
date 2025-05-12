@@ -5,6 +5,13 @@ CREATE TABLE IF NOT EXISTS AreaType
     type_name TEXT NOT NULL     -- Changed VARCHAR(255) to TEXT
 );
 
+-- ✅ Table: Region
+CREATE TABLE IF NOT EXISTS Region
+(
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    region_name TEXT NOT NULL UNIQUE -- Added UNIQUE constraint
+);
+
 -- ✅ Table: Place
 CREATE TABLE IF NOT EXISTS Place (
                        id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -22,13 +29,6 @@ CREATE TABLE IF NOT EXISTS Positions
 (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     position_name TEXT NOT NULL
-);
-
--- ✅ Table: Region
-CREATE TABLE IF NOT EXISTS Region
-(
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    region_name TEXT NOT NULL UNIQUE -- Added UNIQUE constraint
 );
 
 -- ✅ Table: Group (Quoted to avoid reserved keyword conflict)

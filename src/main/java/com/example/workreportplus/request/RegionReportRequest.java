@@ -31,5 +31,7 @@ public class RegionReportRequest implements ReportRequest {
 
     private Map<String, String> extraData;
     private String status;
+    private List<String> arrivedContractorIds;
+    private List<String> departedContractorIds;
 
 }

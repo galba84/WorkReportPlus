@@ -5,6 +5,43 @@
     <title th:text="#{page.title.newReport}">New Report</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        select option:disabled {
+            color: #aaa;
+            background-color: #eee;
+        }
+        .contractor-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: black;
+        }
+        .contractor-entry span {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .contractor-entry button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+        .contractor-entry button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
 
@@ -12,9 +49,10 @@
 
 <h2 th:text="#{form.heading}">Submit New Region Report</h2>
 
-<div th:if="${successMessage}" style="color: green;">
+<div th:if="${successMessage}" class="message-center success-message">
     <p th:text="${successMessage}"></p>
 </div>
+
 <div th:if="${errorMessage}" style="color: red;">
     <p th:text="${errorMessage}"></p>
 </div>
@@ -33,28 +71,42 @@
         </select>
 
         <label for="regionDescription" th:text="#{form.description}">Description:</label>
-        <textarea id="regionDescription" name="regionDescription" rows="1" style="resize: vertical; min-height: 1.5em;"></textarea>
+        <textarea id="regionDescription" name="regionDescription" rows="1"
+                  style="resize: vertical; min-height: 1.5em;"></textarea>
+
+        <div class="frame">
+            <h3 th:text="#{form.arrivedContractors}">Arrived</h3>
+            <div id="arrivedContractorsContainer"></div>
+        </div>
+
+        <div class="frame">
+            <h3 th:text="#{form.departedContractors}">Departed</h3>
+            <div id="departedContractorsContainer"></div>
+        </div>
+
+        <div class="frame">
+            <h4>Additional Contractors</h4>
+            <div>
+                <select id="manualContractorSelect"></select>
+                <button type="button" id="addToArrived">+ To Arrived</button>
+                <button type="button" id="addToDeparted">+ To Departed</button>
+            </div>
+        </div>
 
         <h3 th:text="#{form.additionalData}">Additional Data</h3>
-
-        <!-- Container where extraData entries will be added -->
         <div id="extraDataContainer"></div>
-
-        <!-- Hidden template for new entries -->
         <template id="extraDataTemplate">
             <div class="extraDataEntry">
                 <input type="text" name="extraData[key][]" placeholder="Key">
                 <input type="text" name="extraData[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData" th:text="#{form.remove}">Remove</button>
+                <button type="button" class="removeExtraData">Remove</button>
             </div>
         </template>
-
-        <!-- Only this is visible by default -->
-        <button type="button" id="addExtraData" th:text="#{form.addExtraData}">+ Add Extra Data</button>
+        <button type="button" id="addExtraData">+ Add Extra Data</button>
 
         <h3 th:text="#{form.groupReports}">Group Reports</h3>
         <div id="groupReportsContainer"></div>
-        <button type="button" id="addGroupReport" th:text="#{form.groupReports}">+ Add Group Report</button>
+        <button type="button" id="addGroupReport">+ Add Group Report</button>
 
         <button type="submit" th:text="#{form.submit}">Submit Report</button>
     </form>
@@ -63,24 +115,199 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     let groups = /*[[${groups}]]*/ [];
+    let groupIndex = 0;
+
     let labels = {
-        groupName: /*[[#{form.groupName}]]*/ 'Group Name:',
-        places: /*[[#{form.places}]]*/ 'Places:',
-        contractors: /*[[#{form.contractors}]]*/ 'Contractors:',
-        description: /*[[#{form.groupDescription}]]*/ 'Description:',
-        contractorLosses: /*[[#{form.contractorLosses}]]*/ 'Contractor Losses',
-        addContractorLoss: /*[[#{form.addContractorLoss}]]*/ '+ Add Contractor Loss',
-        extraData: /*[[#{form.groupExtraData}]]*/ 'Extra Data',
-        addExtraData: /*[[#{form.addExtraData}]]*/ '+ Add Extra Data',
         remove: /*[[#{form.remove}]]*/ 'Remove',
+        groupName: /*[[#{form.groupName}]]*/ 'Group Name',
+        description: /*[[#{form.description}]]*/ 'Description',
         selectGroup: /*[[#{form.selectGroup}]]*/ 'Select Group'
     };
 
-    $(document).ready(function () {
-        let groupIndex = 0;
+    function contractorLabel(c) {
+        const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
+        const nickname = c.nickName?.trim();
+        return nickname ? `${fullName} (${nickname})` : fullName;
+    }
 
-        $("#regionName").change(function () {
-            const regionId = $(this).val();
+    function createContractorInput(name, id, label) {
+        return `<div class="contractor-entry">
+                <input type="hidden" name="${name}" value="${id}" />
+                <span>${label}</span>
+                <button type="button" class="removeContractor">✖</button>
+            </div>`;
+    }
+
+    function loadContractorsForSelectedDateAndRegion() {
+        const date = $("#reportDate").val();
+        const regionId = $("#regionName").val();
+        if (!date || !regionId) return;
+
+        fetch(`/api/daily-work-report/contractors?date=${date}`)
+            .then(res => res.json())
+            .then(data => {
+                const usedIds = new Set();
+                const arrived = data.arrived?.[regionId] || [];
+                const departed = data.departed?.[regionId] || [];
+                const additional = data.contractorsAll?.all || [];
+
+                $("#arrivedContractorsContainer").empty();
+                $("#departedContractorsContainer").empty();
+                $("#manualContractorSelect").empty();
+
+                arrived.forEach(c => {
+                    const label = contractorLabel(c);
+                    usedIds.add(c.id);
+                    $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", c.id, label));
+                });
+
+                departed.forEach(c => {
+                    const label = contractorLabel(c);
+                    usedIds.add(c.id);
+                    $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", c.id, label));
+                });
+
+                additional.filter(c => !usedIds.has(c.id)).forEach(c => {
+                    $("#manualContractorSelect").append(`<option value="${c.id}">${contractorLabel(c)}</option>`);
+                });
+            })
+            .catch(err => console.error("Failed to load contractors:", err));
+    }
+
+    function bindMutualExclusion(fightId, restId) {
+        const fightSelect = $(`#${fightId}`);
+        const restSelect = $(`#${restId}`);
+
+        function updateOptions(source, target) {
+            const selected = new Set(source.val() || []);
+            target.find("option").each(function () {
+                $(this).prop("disabled", selected.has($(this).val()));
+            });
+        }
+
+        fightSelect.on("change", () => updateOptions(fightSelect, restSelect));
+        restSelect.on("change", () => updateOptions(restSelect, fightSelect));
+        fightSelect.trigger("change");
+        restSelect.trigger("change");
+    }
+
+    function addGroupReportEntry(filteredGroups) {
+        const localGroupIndex = groupIndex;
+        const groupOptions = filteredGroups.map(group =>
+            `<option value="${group.id}" data-group='${JSON.stringify(group)}'>${group.name}</option>`
+        ).join('');
+
+        const html = `<div class="groupReport" id="groupReport_${localGroupIndex}">
+        <h4>Group Report</h4>
+        <label for="groupName_${localGroupIndex}">${labels.groupName}</label>
+        <select id="groupName_${localGroupIndex}" name="groupReports[${localGroupIndex}].groupName" required>
+            <option value="">${labels.selectGroup}</option>
+            ${groupOptions}
+        </select>
+
+        <div class="frame">
+            <h5>Combat</h5>
+            <label>Places:</label>
+            <select id="fightingPlaceIds_${localGroupIndex}" multiple></select>
+            <label>Contractors:</label>
+            <select id="fightingContractorsIds_${localGroupIndex}" multiple></select>
+        </div>
+
+        <div class="frame">
+            <h5>Rest</h5>
+            <label>Places:</label>
+            <select id="restPlaceIds_${localGroupIndex}" multiple></select>
+            <label>Contractors:</label>
+            <select id="restContractorsIds_${localGroupIndex}" multiple></select>
+        </div>
+
+        <label for="groupDescription_${localGroupIndex}">${labels.description}</label>
+        <textarea id="groupDescription_${localGroupIndex}" name="groupReports[${localGroupIndex}].description" rows="2"></textarea>
+
+        <input type="hidden" name="groupReports[${localGroupIndex}].worked" value="true" />
+
+        <div id="hiddenInputsContainer_${localGroupIndex}"></div>
+
+        <button type="button" class="removeGroupReport" data-group-id="groupReport_${localGroupIndex}">${labels.remove}</button>
+    </div>`;
+
+        $("#groupReportsContainer").append(html);
+        bindMutualExclusion(`fightingPlaceIds_${localGroupIndex}`, `restPlaceIds_${localGroupIndex}`);
+        bindMutualExclusion(`fightingContractorsIds_${localGroupIndex}`, `restContractorsIds_${localGroupIndex}`);
+
+        $(`#groupName_${localGroupIndex}`).trigger("change");
+        groupIndex++;
+    }
+
+    $(document).on("change", "select[id^='groupName_']", function () {
+        const $this = $(this);
+        const idx = $this.attr("id").split("_")[1];
+        const selectedOption = $this.find("option:selected");
+        const groupData = selectedOption.data("group");
+        if (!groupData) return;
+
+        const fightingPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 100)
+            .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+        $(`#fightingPlaceIds_${idx}`).html(fightingPlaceOptions);
+
+        const restPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 30)
+            .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+        $(`#restPlaceIds_${idx}`).html(restPlaceOptions);
+
+        const contractorOptions = (groupData.contractors || []).map(c =>
+            `<option value="${c.id}">${contractorLabel(c)}</option>`).join('');
+        $(`#fightingContractorsIds_${idx}`).html(contractorOptions);
+        $(`#restContractorsIds_${idx}`).html(contractorOptions);
+
+        $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
+    });
+
+    $("#regionReportForm").on("submit", function () {
+        $("[id^='groupReport_']").each(function () {
+            const idx = this.id.split('_')[1];
+            const container = $(`#hiddenInputsContainer_${idx}`).empty();
+
+            const allPlaces = {};
+            $(`#fightingPlaceIds_${idx} option:selected, #restPlaceIds_${idx} option:selected`).each(function () {
+                const coef = $(this).data("coef") || 0;
+                allPlaces[$(this).val()] = coef;
+            });
+
+            for (const [placeId, coef] of Object.entries(allPlaces)) {
+                container.append(`<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`);
+            }
+
+            const appendMap = (contractors, places) => {
+                contractors.forEach(cid => {
+                    places.forEach(pid => {
+                        container.append(`<input type="hidden" name="groupReports[${idx}].contractorPlaceMap[${cid}][]" value="${pid}"/>`);
+                    });
+                });
+            };
+
+            const fightC = $(`#fightingContractorsIds_${idx}`).val() || [];
+            const restC = $(`#restContractorsIds_${idx}`).val() || [];
+            const fightP = $(`#fightingPlaceIds_${idx}`).val() || [];
+            const restP = $(`#restPlaceIds_${idx}`).val() || [];
+
+            appendMap(fightC, fightP);
+            appendMap(restC, restP);
+
+            const allContractorIds = new Set([...fightC, ...restC]);
+            for (const contractorId of allContractorIds) {
+                container.append(`<input type="hidden" name="groupReports[${idx}].contractorsIds" value="${contractorId}" />`);
+            }
+        });
+    });
+
+
+
+
+    $(document).ready(function () {
+        $("#regionName, #reportDate").on("change", function () {
+            loadContractorsForSelectedDateAndRegion();
+
+            const regionId = $("#regionName").val();
             const filteredGroups = groups.filter(g => g.regionId == regionId);
 
             $("#groupReportsContainer").empty();
@@ -90,134 +317,55 @@
                 addGroupReportEntry(filteredGroups);
             });
 
-            $("#addGroupReport").click(); // Add one by default
-        });
-
-        function addGroupReportEntry(filteredGroups) {
-            const groupOptions = filteredGroups.map(group =>
-                `<option value="${group.id}" data-group='${JSON.stringify(group)}'>${group.name}</option>`
-            ).join('');
-
-            const html = `
-            <div class="groupReport" id="groupReport_${groupIndex}">
-                <h4>Group Report</h4>
-
-                <label for="groupName_${groupIndex}">${labels.groupName}</label>
-                <select id="groupName_${groupIndex}" name="groupReports[${groupIndex}].groupName" required>
-                    <option value="">${labels.selectGroup}</option>
-                    ${groupOptions}
-                </select>
-
-                <label>${labels.places}</label>
-                <select id="placeIds_${groupIndex}" name="groupReports[${groupIndex}].placeCoefficientsDropdown" multiple required></select>
-
-                <label for="contractorsIds_${groupIndex}">${labels.contractors}</label>
-                <select id="contractorsIds_${groupIndex}" name="groupReports[${groupIndex}].contractorsIds[]" multiple required></select>
-
-                <input type="checkbox" id="worked_${groupIndex}" name="groupReports[${groupIndex}].worked" style="display: none;" value="true">
-
-                <label for="groupDescription_${groupIndex}">${labels.description}</label>
-                <textarea id="groupDescription_${groupIndex}" name="groupReports[${groupIndex}].description" rows="2"></textarea>
-
-                <h4>${labels.contractorLosses}</h4>
-                <div id="contractorLossesContainer_${groupIndex}"></div>
-                <button type="button" class="addContractorLoss" data-group-id="${groupIndex}">${labels.addContractorLoss}</button>
-
-                <h4>${labels.extraData}</h4>
-                <div id="extraDataGroupContainer_${groupIndex}"></div>
-                <button type="button" class="addExtraDataGroup" data-group-id="${groupIndex}">${labels.addExtraData}</button>
-
-                <button type="button" class="removeGroupReport" data-group-id="groupReport_${groupIndex}">${labels.remove}</button>
-            </div>`;
-            $("#groupReportsContainer").append(html);
-            groupIndex++;
-        }
-
-        $('#regionReportForm').submit(function () {
-            $('[id^=placeIds_]').each(function () {
-                const idx = this.id.split('_')[1];
-                const selected = $(this).find('option:selected');
-
-                // Remove old hidden fields to prevent duplicates
-                $(`input[name^="groupReports[${idx}].placeCoefficients"]`).remove();
-
-                selected.each(function () {
-                    const placeId = $(this).val();
-                    const coef = $(this).data('coef') || '';
-                    const input = `<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`;
-                    $(`#groupReport_${idx}`).append(input);
-                });
-            });
+            $("#addGroupReport").click();
         });
 
 
-        $(document).on("change", "select[id^='groupName_']", function () {
-            const groupId = $(this).val();
-            const groupData = groups.find(g => g.id == groupId);
-            const idx = this.id.split("_")[1];
-            // ✅ Places as checkboxes with coefficient values inside a tight wrapper
-            const placeOptions = (groupData.places || []).map(p => {
-                const coef = p.coeficient || "";
-                return `<option value="${p.id}" data-coef="${coef}">${p.name} (${coef})</option>`;
-            }).join('');
-            $(`#placeIds_${idx}`).html(placeOptions);
 
-            const contractorOptions = (groupData.contractors || []).map(c =>
-                `<option value="${c.id}" selected>${c.firstName} ${c.lastName} (${c.nickName})</option>`
-            ).join('');
 
-            $(`#contractorsIds_${idx}`).html(contractorOptions);
-
-            $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
-        });
-
-        $(document).on("click", ".removeGroupReport", function () {
-            let groupId = $(this).data("group-id");
-            $("#" + groupId).remove();
-        });
-
-        $("#addExtraData").click(function () {
-            let html = `
-        <div class="extraDataEntry">
-            <input type="text" name="extraData[key][]" placeholder="Key">
-            <input type="text" name="extraData[value][]" placeholder="Value">
-            <button type="button" class="removeExtraData">${labels.remove}</button>
-        </div>`;
-            $("#extraDataContainer").append(html);
-        });
-
-        $(document).on("click", ".addExtraDataGroup", function () {
-            let groupId = $(this).data("group-id");
-            let html = `
-        <div class="extraDataEntry">
-            <input type="text" name="groupReports[${groupId}].extraDataGroupReport[key][]" placeholder="Key">
-            <input type="text" name="groupReports[${groupId}].extraDataGroupReport[value][]" placeholder="Value">
-            <button type="button" class="removeExtraData">${labels.remove}</button>
-        </div>`;
-            $(`#extraDataGroupContainer_${groupId}`).append(html);
-        });
-
-        $(document).on("click", ".addContractorLoss", function () {
-            let groupId = $(this).data("group-id");
-            let html = `
-        <div class="contractorLossEntry">
-            <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[key][]" placeholder="Contractor ID">
-            <input type="text" name="groupReports[${groupId}].contractorLoosesIdTypeMap[value][]" placeholder="Loss Type">
-            <button type="button" class="removeContractorLoss">${labels.remove}</button>
-        </div>`;
-            $(`#contractorLossesContainer_${groupId}`).append(html);
+        $(document).on("click", ".removeContractor", function () {
+            const $entry = $(this).closest(".contractor-entry");
+            const id = $entry.find("input").val();
+            const label = $entry.find("span").text();
+            if (!$("#manualContractorSelect option[value='" + id + "']").length) {
+                $("#manualContractorSelect").append(`<option value="${id}">${label}</option>`);
+            }
+            $entry.remove();
         });
 
         $(document).on("click", ".removeExtraData", function () {
             $(this).parent().remove();
         });
 
-        $(document).on("click", ".removeContractorLoss", function () {
-            $(this).parent().remove();
+        $(document).on("click", ".removeGroupReport", function () {
+            $("#" + $(this).data("group-id")).remove();
+        });
+
+        $("#addToArrived").click(() => {
+            const $sel = $("#manualContractorSelect");
+            const id = $sel.val();
+            const label = $sel.find("option:selected").text();
+            if (!id) return;
+            $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", id, label));
+            $sel.find(`option[value="${id}"]`).remove();
+        });
+
+        $("#addToDeparted").click(() => {
+            const $sel = $("#manualContractorSelect");
+            const id = $sel.val();
+            const label = $sel.find("option:selected").text();
+            if (!id) return;
+            $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", id, label));
+            $sel.find(`option[value="${id}"]`).remove();
+        });
+
+        $("#addExtraData").click(function () {
+            $("#extraDataContainer").append($("#extraDataTemplate").html());
         });
     });
     /*]]>*/
 </script>
+
 
 </body>
 </html>

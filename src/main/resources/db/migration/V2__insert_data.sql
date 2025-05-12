@@ -1,79 +1,79 @@
--- Enable UUID extension if not enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Insert AreaTypes
-INSERT INTO AreaType (id, type_name)
-VALUES ('d53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Urban'),
-       (gen_random_uuid(), 'Rural');
-
--- Insert Units
-INSERT INTO Unit (id, unit_name)
-VALUES (gen_random_uuid(), 'REB'),
-       (gen_random_uuid(), 'BPLA'),
-       (gen_random_uuid(), 'Logistik'),
-       (gen_random_uuid(), 'SoftwareDev'),
-       (gen_random_uuid(), 'IT');
-
--- Insert Regions
-INSERT INTO Region (id, region_name)
-VALUES (gen_random_uuid(), 'North America'),
-       (gen_random_uuid(), 'Europe'),
-       (gen_random_uuid(), 'Asia'),
-       (gen_random_uuid(), 'South America'),
-       (gen_random_uuid(), 'Africa')
-ON CONFLICT (region_name) DO NOTHING;
--- Insert Positions
-
-INSERT INTO Positions (id, position_name)
-VALUES (gen_random_uuid(), 'Командир роти'),
-       (gen_random_uuid(), 'Командир взводу'),
-       (gen_random_uuid(), 'Командир відділення'),
-       (gen_random_uuid(), 'Оператор звязку'),
-       (gen_random_uuid(), 'Оператор радіолокаційної станції'),
-       (gen_random_uuid(), 'Оператор БПЛА'),
-       (gen_random_uuid(), 'Водій автомобіля'),
-       (gen_random_uuid(), 'Водій танка'),
-       (gen_random_uuid(), 'Водій БТР'),
-       (gen_random_uuid(), 'Механік'),
-       (gen_random_uuid(), 'Технік'),
-       (gen_random_uuid(), 'Сержант'),
-       (gen_random_uuid(), 'Старший сержант'),
-       (gen_random_uuid(), 'Молодший лейтенант'),
-       (gen_random_uuid(), 'Лейтенант'),
-       (gen_random_uuid(), 'Старший лейтенант'),
-       (gen_random_uuid(), 'Капітан'),
-       (gen_random_uuid(), 'Майор'),
-       (gen_random_uuid(), 'Підполковник'),
-       (gen_random_uuid(), 'Полковник'),
-       (gen_random_uuid(), 'Бригадний генерал'),
-       (gen_random_uuid(), 'Генерал-майор'),
-       (gen_random_uuid(), 'Генерал-лейтенант'),
-       (gen_random_uuid(), 'Генерал-полковник');
-
--- Insert Contractors
-INSERT INTO Contractor (id, first_name, last_name, middle_name, nick_name, gender, birth_date, nationality,
-                        date_of_arrival_to_unit, contractor_status, c_rank, position_id, unit_id, created_by,
-                        updated_by)
-VALUES (gen_random_uuid(), 'John', 'Doe', 'Middle', 'JD', 'M', '1990-01-01', 'American',
-        '2020-01-01', 'Service', 'Private',
-        (SELECT id FROM Positions ORDER BY random() LIMIT 1),
-        (SELECT id FROM Unit ORDER BY random() LIMIT 1),
-        'Admin', 'Admin');
-
--- Insert More Regions
-INSERT INTO Region (id, region_name)
-VALUES (gen_random_uuid(), 'Київська область'),
-       (gen_random_uuid(), 'Харківська область'),
-       (gen_random_uuid(), 'Одеська область'),
-       (gen_random_uuid(), 'Львівська область')
-ON CONFLICT (region_name) DO NOTHING;
-
--- Insert Groups
-INSERT INTO "Group" (id, name, region_id)
-VALUES (gen_random_uuid(), 'Sales Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
-       (gen_random_uuid(), 'Marketing Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
-       (gen_random_uuid(), 'Support Team', (SELECT id FROM Region ORDER BY random() LIMIT 1))
-ON CONFLICT (name) DO NOTHING;
+-- -- Enable UUID extension if not enabled
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--
+-- -- Insert AreaTypes
+-- INSERT INTO AreaType (id, type_name)
+-- VALUES ('d53cf49e-4ece-4f93-ae68-b97edac9d6b8', 'Urban'),
+--        (gen_random_uuid(), 'Rural');
+--
+-- -- Insert Units
+-- INSERT INTO Unit (id, unit_name)
+-- VALUES (gen_random_uuid(), 'REB'),
+--        (gen_random_uuid(), 'BPLA'),
+--        (gen_random_uuid(), 'Logistik'),
+--        (gen_random_uuid(), 'SoftwareDev'),
+--        (gen_random_uuid(), 'IT');
+--
+-- -- Insert Regions
+-- INSERT INTO Region (id, region_name)
+-- VALUES (gen_random_uuid(), 'North America'),
+--        (gen_random_uuid(), 'Europe'),
+--        (gen_random_uuid(), 'Asia'),
+--        (gen_random_uuid(), 'South America'),
+--        (gen_random_uuid(), 'Africa')
+-- ON CONFLICT (region_name) DO NOTHING;
+-- -- Insert Positions
+--
+-- INSERT INTO Positions (id, position_name)
+-- VALUES (gen_random_uuid(), 'Командир роти'),
+--        (gen_random_uuid(), 'Командир взводу'),
+--        (gen_random_uuid(), 'Командир відділення'),
+--        (gen_random_uuid(), 'Оператор звязку'),
+--        (gen_random_uuid(), 'Оператор радіолокаційної станції'),
+--        (gen_random_uuid(), 'Оператор БПЛА'),
+--        (gen_random_uuid(), 'Водій автомобіля'),
+--        (gen_random_uuid(), 'Водій танка'),
+--        (gen_random_uuid(), 'Водій БТР'),
+--        (gen_random_uuid(), 'Механік'),
+--        (gen_random_uuid(), 'Технік'),
+--        (gen_random_uuid(), 'Сержант'),
+--        (gen_random_uuid(), 'Старший сержант'),
+--        (gen_random_uuid(), 'Молодший лейтенант'),
+--        (gen_random_uuid(), 'Лейтенант'),
+--        (gen_random_uuid(), 'Старший лейтенант'),
+--        (gen_random_uuid(), 'Капітан'),
+--        (gen_random_uuid(), 'Майор'),
+--        (gen_random_uuid(), 'Підполковник'),
+--        (gen_random_uuid(), 'Полковник'),
+--        (gen_random_uuid(), 'Бригадний генерал'),
+--        (gen_random_uuid(), 'Генерал-майор'),
+--        (gen_random_uuid(), 'Генерал-лейтенант'),
+--        (gen_random_uuid(), 'Генерал-полковник');
+--
+-- -- Insert Contractors
+-- INSERT INTO Contractor (id, first_name, last_name, middle_name, nick_name, gender, birth_date, nationality,
+--                         date_of_arrival_to_unit, contractor_status, c_rank, position_id, unit_id, created_by,
+--                         updated_by)
+-- VALUES (gen_random_uuid(), 'John', 'Doe', 'Middle', 'JD', 'M', '1990-01-01', 'American',
+--         '2020-01-01', 'Service', 'Private',
+--         (SELECT id FROM Positions ORDER BY random() LIMIT 1),
+--         (SELECT id FROM Unit ORDER BY random() LIMIT 1),
+--         'Admin', 'Admin');
+--
+-- -- Insert More Regions
+-- INSERT INTO Region (id, region_name)
+-- VALUES (gen_random_uuid(), 'Київська область'),
+--        (gen_random_uuid(), 'Харківська область'),
+--        (gen_random_uuid(), 'Одеська область'),
+--        (gen_random_uuid(), 'Львівська область')
+-- ON CONFLICT (region_name) DO NOTHING;
+--
+-- -- Insert Groups
+-- INSERT INTO "Group" (id, name, region_id)
+-- VALUES (gen_random_uuid(), 'Sales Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
+--        (gen_random_uuid(), 'Marketing Team', (SELECT id FROM Region ORDER BY random() LIMIT 1)),
+--        (gen_random_uuid(), 'Support Team', (SELECT id FROM Region ORDER BY random() LIMIT 1))
+-- ON CONFLICT (name) DO NOTHING;
 
 --
 -- -- Insert Group Reports

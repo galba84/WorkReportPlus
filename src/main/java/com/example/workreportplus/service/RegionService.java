@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.example.jooq.Tables.REGION;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class RegionService {
@@ -56,10 +58,9 @@ public class RegionService {
     }
 
     public void updateRegionsFromTable() throws IOException {
-        String sheetId = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss"; // or inject as a property
         String range = "RegionList!A2:B"; // id, name
 
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
         if (rows.isEmpty()) {
             System.out.println("No data found in RegionList sheet");
@@ -87,6 +88,12 @@ public class RegionService {
         ).execute();
 
         System.out.println("Regions updated successfully from sheet.");
+    }
+
+    public Optional<RegionDto> getByName(String regionName) {
+        return dsl.selectFrom(REGION)
+                .where(REGION.REGION_NAME.eq(regionName))
+                .fetchOptionalInto(RegionDto.class);
     }
 
 }

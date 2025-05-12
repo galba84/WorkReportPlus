@@ -1,0 +1,27 @@
+[Unit]
+Description=WorkReportPlus Spring Boot App
+After=network.target
+
+[Service]
+# run as your unix user, and in the jar’s folder
+User=your_unix_user
+WorkingDirectory=/path/to/your/jar
+Environment=SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/postgres
+Environment=SPRING_DATASOURCE_USERNAME=workreport_user
+Environment=SPRING_DATASOURCE_PASSWORD=userpass
+Environment=SPRING_FLYWAY_URL=jdbc:postgresql://localhost:5432/postgres
+Environment=SPRING_FLYWAY_USER=workreport_user
+Environment=SPRING_FLYWAY_PASSWORD=userpass
+
+# the command to launch
+ExecStart=/usr/bin/java -jar WorkReportPlus-0.0.1-SNAPSHOT.jar
+
+# restart on failure
+Restart=on-failure
+
+# send stdout+stderr into the journal
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

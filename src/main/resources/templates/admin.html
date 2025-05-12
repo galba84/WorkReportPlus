@@ -53,11 +53,34 @@
         <button type="submit" th:text="#{button.Places}">Update Places from Google Sheets</button>
     </form>
 
+    <!-- Button to group places -->
+    <form th:action="@{/admin/ranks}" method="post">
+        <button type="submit" th:text="#{button.Ranks}">Update Ranks from Google Sheets</button>
+    </form>
+
+    <!-- Button to group places -->
+    <form th:action="@{/admin/positions}" method="post">
+        <button type="submit" th:text="#{button.Positions}">Update Positions from Google Sheets</button>
+    </form>
+
+    <!-- Button to group places -->
+    <form th:action="@{/admin/units}" method="post">
+        <button type="submit" th:text="#{button.Units}">Update Units from Google Sheets</button>
+    </form>
+
     <div>
         <p>
             🔗 Перевірте <a href="https://docs.google.com/spreadsheets/d/1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss/edit?gid=197991214#gid=197991214"
                            target="_blank"
                            rel="noopener noreferrer">таблицю звітів у Google Sheets</a> перед поданням.
+        </p>
+    </div>
+
+    <div>
+        <p>
+            🔗 Перевірте <a href="https://docs.google.com/spreadsheets/d/1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA/edit?gid=1453816151#gid=1453816151"
+                           target="_blank"
+                           rel="noopener noreferrer">таблицю ШПС у Google Sheets</a> перед поданням.
         </p>
     </div>
 

@@ -11,12 +11,10 @@ import com.example.workreportplus.exception.DatabaseAccessException;
 import com.example.workreportplus.exception.ReportNotFoundException;
 import com.example.workreportplus.mapper.GroupReportMapper;
 import com.example.workreportplus.mapper.RegionReportMapper;
-import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.GroupReportSearchParams;
 import com.example.workreportplus.request.searchparams.SearchParams;
 import com.example.workreportplus.response.ContractorResponse;
 import com.example.workreportplus.response.DailyGroupReportResponse;
-import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -187,14 +185,14 @@ public class GroupReportService implements ReportService {
     }
 
     //save report
-    public DailyRegionReportResponse saveReport(RegionReportRequest report) {
-        report.getGroupReports().forEach(groupReport -> {
-            groupReport.getGroupName();
-            GroupReportDto groupReportDto = groupReportMapper.requestToDto(groupReport);
-            saveGroupReport(groupReportDto);
-        });
-        return new DailyRegionReportResponse();
-    }
+//    public DailyRegionReportResponse saveReport(RegionReportRequest report) {
+//        report.getGroupReports().forEach(groupReport -> {
+//            groupService.getGroupIdByName(groupReport.getGroupName());
+//            GroupReportDto groupReportDto = groupReportMapper.requestToDto(groupReport);
+//            saveGroupReport(groupReportDto);
+//        });
+//        return new DailyRegionReportResponse();
+//    }
 
     public void saveGroupReport(GroupReportDto groupReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername(); // ✅ Fetch user from SecurityContextHolder
@@ -251,20 +249,29 @@ public class GroupReportService implements ReportService {
         return List.of(elements);
     }
 
+
     public Map<String, String> getExtraDataGroupReport(GroupreportRecord record) {
         JSONB jsonb = record.get(GROUPREPORT.EXTRA_DATA_GROUP_REPORT);
-
         if (jsonb == null) {
-            return Collections.emptyMap(); // Return an empty map if JSONB is null
+            return Collections.emptyMap();
         }
 
         try {
-            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {
-            });
+            Map<String, List<String>> raw = objectMapper.readValue(
+                    jsonb.data(), new TypeReference<>() {}
+            );
+
+            return raw.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> String.join(",", e.getValue())
+                    ));
         } catch (IOException e) {
             throw new RuntimeException("Error converting JSONB to Map", e);
         }
     }
+
+
 
     public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate, UUID regionReportId) {
         Condition condition = GROUPREPORT.GROUP_ID.eq(groupId);
