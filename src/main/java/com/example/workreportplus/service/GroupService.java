@@ -16,6 +16,7 @@ import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TA
 @Service
 public class GroupService {
 
+    public static final String SHEEDT_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
     private final DSLContext dsl;
     private final GoogleSheetsService googleSheetsService;
 

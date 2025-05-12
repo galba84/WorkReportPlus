@@ -4,7 +4,6 @@ import com.example.jooq.tables.Descriptiontemplate;
 import com.example.jooq.tables.Group;
 import com.example.jooq.tables.records.DescriptiontemplateRecord;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.util.UUID;
 
 import static com.example.jooq.Tables.DESCRIPTIONTEMPLATE;
 import static com.example.workreportplus.Utils.SecurityUtil.getCurrentUsername;
-import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class DescriptionTemplateService {
