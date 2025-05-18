@@ -1,6 +1,7 @@
 package com.example.workreportplus.response;
 
 import com.example.workreportplus.ENUM.ReportStatus;
+import com.example.workreportplus.dto.AmmunitionDto;
 import com.example.workreportplus.dto.PlaceDto;
 import lombok.Builder;
 import lombok.Data;
@@ -43,5 +44,7 @@ public class DailyGroupReportResponse implements ReportResponse {
     private Map<String, String> extraData;
 
     private String groupReportId;
+
+    private List<AmmunitionDto> ammunition;
 
 }

@@ -6,6 +6,8 @@ import com.example.jooq.tables.records.RegionreportRecord;
 import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.Utils.JsonUtils;
 import com.example.workreportplus.Utils.SecurityUtil;
+import com.example.workreportplus.dto.AmmunitionDto;
+import com.example.workreportplus.dto.ContractorDto;
 import com.example.workreportplus.dto.GroupReportDto;
 import com.example.workreportplus.dto.RegionReportDto;
 import com.example.workreportplus.exception.DatabaseAccessException;
@@ -20,6 +22,8 @@ import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
@@ -32,6 +36,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.example.jooq.Tables.REGIONREPORT;
@@ -47,13 +52,14 @@ public class RegionReportService implements ReportService {
     private final GroupReportService groupReportService;
     private final ObjectMapper objectMapper;
     private final GroupService groupService;
+    private final ContractorService contractorService;
 
     public RegionReportService(DSLContext dsl,
                                RegionReportMapper regionReportMapper,
                                RegionService regionService,
                                GroupReportMapper groupReportMapper,
                                GroupReportService groupReportService,
-                               ObjectMapper objectMapper, GroupService groupService) {
+                               ObjectMapper objectMapper, GroupService groupService, ContractorService contractorService) {
         this.dsl = dsl;
         this.regionReportMapper = regionReportMapper;
         this.regionService = regionService;
@@ -61,6 +67,7 @@ public class RegionReportService implements ReportService {
         this.groupReportService = groupReportService;
         this.objectMapper = objectMapper;
         this.groupService = groupService;
+        this.contractorService = contractorService;
     }
 
 
@@ -166,6 +173,8 @@ public class RegionReportService implements ReportService {
                                         .description(record.get(REGIONREPORT.REGION_DESCRIPTION))
                                         .status(status)
                                         .extraData(JsonUtils.jsonbToMap(record.get(REGIONREPORT.EXTRA_DATA)))
+                                        .arrivedContractors(populateContractorData(record.get(REGIONREPORT.ARRIVED_CONTRACTORS)))
+                                        .departedContractors(populateContractorData(record.get(REGIONREPORT.DEPARTED_CONTRACTORS)))
                                         .date(record.get(REGIONREPORT.REPORT_DATE))
                                         .regionName(regionService.getRegionNameById(record.get(REGIONREPORT.REGION_ID)))
                                         .createdOn(record.get(REGIONREPORT.CREATED_ON).toLocalDate())
@@ -182,6 +191,16 @@ public class RegionReportService implements ReportService {
             throw new DatabaseAccessException("Failed to fetch report with ID " + id, e);
         }
     }
+
+    private Map<UUID, ContractorDto> populateContractorData(UUID[] contractorIds) {
+        if (contractorIds == null || contractorIds.length == 0) return Map.of();
+
+        List<ContractorDto> contractorList = contractorService.getContractorsByIds(List.of(contractorIds));
+
+        return contractorList.stream()
+                .collect(Collectors.toMap(ContractorDto::getId, Function.identity()));
+    }
+
 
 
     //save report
@@ -210,13 +229,45 @@ public class RegionReportService implements ReportService {
                 dto.setPlacesWithCoeficcient(groupReport.getPlaceCoefficients());
                 dto.setRegionReportId(regionReportId);
                 dto.setReportDate(regionReportRequest.getReportDate());
-
+                dto.setReportDate(regionReportRequest.getReportDate());
+                dto.setAmmunition(parseAmmunition(groupReport.getAmmunition()));
                 saveGroupReport(dto);
             });
         }
 
         return new DailyRegionReportResponse();
     }
+
+    private List<AmmunitionDto> parseAmmunition(String raw) {
+        if (raw == null || raw.isBlank()) return List.of();
+
+        return Arrays.stream(raw.split("\\r?\\n"))
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .map(line -> {
+                    String[] parts = line.split("\\s*:\\s*");
+                    AmmunitionDto dto = new AmmunitionDto();
+
+                    dto.setName(parts[0].trim());
+
+                    if (parts.length >= 2) {
+                        try {
+                            dto.setAmount(Integer.parseInt(parts[1].trim()));
+                        } catch (NumberFormatException e) {
+                            dto.setAmount(0);
+                        }
+                    }
+
+                    if (parts.length >= 3) {
+                        dto.setUnit(parts[2].trim());
+                    }
+
+                    return dto;
+                })
+                .toList();
+    }
+
+
 
     public UUID saveRegionReport(RegionReportDto regionReportDto) {
         String currentUser = SecurityUtil.getCurrentUsername(); // Fetch user from SecurityContextHolder
@@ -302,7 +353,7 @@ public class RegionReportService implements ReportService {
 
             record.setDescription(groupReportDto.getDescription());
 
-            if (groupReportDto.getContractorsIds() != null && groupReportDto.getContractorToPlacesMap()!=null) {
+            if (groupReportDto.getContractorsIds() != null && groupReportDto.getContractorToPlacesMap() != null) {
                 record.setContractorsIds(groupReportDto.getContractorToPlacesMap().keySet().toArray(new UUID[0]));
             }
 
@@ -381,17 +432,22 @@ public class RegionReportService implements ReportService {
 
                     String extraJson = objectMapper.writeValueAsString(contractorToCoefficientMap);
                     record.setCoefficient(org.jooq.JSONB.valueOf(extraJson));
+                    if (!groupReportDto.getAmmunition().isEmpty()) {
+
+                        setAmmunition(groupReportDto, record);
+                    }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException("Failed to serialize contractorTocoeficient map", e);
                 }
             }
+
 
             record.setCreatedBy(currentUser);
             record.setUpdatedBy(currentUser);
             record.setCreatedOn(LocalDateTime.now());
             record.setUpdatedOn(LocalDateTime.now());
 
-            if (groupReportDto.getContractorToPlacesMap()!=null) {
+            if (groupReportDto.getContractorToPlacesMap() != null) {
                 Map<UUID, List<UUID>> contractorToPlacesMap = groupReportDto.getContractorToPlacesMap();// or getContractorToPlacesMap()
                 String jsonString = objectMapper.writeValueAsString(contractorToPlacesMap);
                 record.setExtraDataGroupReport(JSONB.valueOf(jsonString));
@@ -420,6 +476,37 @@ public class RegionReportService implements ReportService {
             }
         });
     }
+
+    private void setAmmunition(GroupReportDto groupReportDto, GroupreportRecord record) throws JsonProcessingException {
+        List<AmmunitionDto> ammunitionList = groupReportDto.getAmmunition();
+        if (ammunitionList == null || ammunitionList.isEmpty()) {
+            record.setAmmunition(JSONB.valueOf("[]"));
+            return;
+        }
+
+        ArrayNode jsonArray = objectMapper.createArrayNode();
+
+        for (AmmunitionDto ammo : ammunitionList) {
+            if (ammo.getName() == null || ammo.getName().trim().isEmpty()) continue;
+
+            ObjectNode entry = objectMapper.createObjectNode();
+            entry.put("name", ammo.getName().trim());
+
+            if (ammo.getAmount() != 0) {
+                entry.put("amount", ammo.getAmount());
+            }
+
+            if (ammo.getUnit() != null && !ammo.getUnit().isBlank()) {
+                entry.put("unit", ammo.getUnit().trim());
+            }
+
+            jsonArray.add(entry);
+        }
+
+        String ammoJson = objectMapper.writeValueAsString(jsonArray);
+        record.setAmmunition(JSONB.valueOf(ammoJson));
+    }
+
 
     public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
         Condition condition = REGIONREPORT.REGION_ID.eq(regionId);

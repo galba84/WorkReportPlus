@@ -47,4 +47,5 @@ public class GroupReportDto extends TrackedDto {
 
     private Map<String, String> extraData;
 
+    private List<AmmunitionDto> ammunition;
 }

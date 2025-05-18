@@ -6,7 +6,8 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-
+<div class="blur-overlay"></div>
+<div class="main-content">
 <!-- Include header -->
 <div th:insert="~{fragments/header :: body}"></div>
 
@@ -19,6 +20,26 @@
     <p><strong th:text="#{report.createdBy}">Created By:</strong> <span th:text="${report.createdBy}"></span></p>
     <p><strong th:text="#{report.status}">Status:</strong> <span th:text="${report.status}"></span></p>
     <p><strong th:text="#{report.description}">Description:</strong> <span th:text="${report.description}"></span></p>
+
+
+    <!-- Arrived Contractors -->
+    <p><strong th:text="#{report.arrived}">Arrived Contractors:</strong></p>
+    <ul>
+        <li th:each="entry : ${report.arrivedContractors}">
+            <span th:text="${entry.value.lastName + ' ' + entry.value.firstName + ' (' + entry.value.nickName + ')'}"></span>
+        </li>
+    </ul>
+
+    <!-- Departed Contractors -->
+    <p><strong th:text="#{report.departed}">Departed Contractors:</strong></p>
+    <ul>
+        <li th:each="entry : ${report.departedContractors}">
+            <span th:text="${entry.value.lastName + ' ' + entry.value.firstName + ' (' + entry.value.nickName + ')'}"></span>
+        </li>
+    </ul>
+
+
+
 </div>
 
 <hr>
@@ -57,6 +78,7 @@
             <th th:text="#{groupReport.createdBy}">Created By</th>
             <th th:text="#{groupReport.status}">Status</th>
             <th th:text="#{groupReport.description}">Description</th>
+            <th th:text="#{groupReport.ammunition}">Ammunition</th>
             <th th:text="#{groupReport.action}">Action</th>
         </tr>
         </thead>
@@ -68,6 +90,14 @@
             <td th:text="${groupReport.createdBy}"></td>
             <td th:text="${groupReport.status}"></td>
             <td th:text="${groupReport.description}"></td>
+            <td>
+                <ul>
+                    <li th:each="ammo : ${groupReport.ammunition}">
+                        <span th:text="${ammo.name + ' — ' + ammo.amount + ' — ' + ammo.unit}"></span>
+                    </li>
+                </ul>
+            </td>
+
             <td>
                 <button type="button" class="button" disabled th:text="#{groupReport.open}">Open</button>
             </td>
@@ -167,6 +197,6 @@
         <p th:text="#{losses.none}">No contractor losses reported for this group report.</p>
     </th:block>
 </th:block>
-
+</div>
 </body>
 </html>

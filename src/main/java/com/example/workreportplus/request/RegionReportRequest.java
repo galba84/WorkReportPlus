@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -31,7 +32,7 @@ public class RegionReportRequest implements ReportRequest {
 
     private Map<String, String> extraData;
     private String status;
-    private List<String> arrivedContractorIds;
-    private List<String> departedContractorIds;
+    private List<UUID> arrivedContractorIds;
+    private List<UUID> departedContractorIds;
 
 }

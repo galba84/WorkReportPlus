@@ -58,7 +58,7 @@ public class Report100Controller {
         model.addAttribute("selectedRegion", regionName);
         model.addAttribute("monthLabel", reportDate);
         model.addAttribute("daysInMonth", days);
-        model.addAttribute("table", result); // new table matrix
+        model.addAttribute("table", result);
 
         return "report100";
     }
@@ -69,7 +69,7 @@ public class Report100Controller {
     public ResponseEntity<byte[]> exportExcel(@RequestParam String regionName,
                                               @RequestParam @Valid LocalDate reportDate) {
 
-        byte[] excelBytes = report100Service.exportToExcel(regionName, reportDate); // TODO: implement this method
+        byte[] excelBytes = report100Service.exportToExcel(regionName, reportDate);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

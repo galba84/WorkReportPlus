@@ -1,6 +1,7 @@
 package com.example.workreportplus.response;
 
 import com.example.workreportplus.ENUM.ReportStatus;
+import com.example.workreportplus.dto.ContractorDto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,8 @@ public class DailyRegionReportResponse implements ReportResponse {
     private LocalDate updatedOn;
     private ReportStatus status;
     private Map<String, String> extraData;
+    private Map<UUID, ContractorDto> arrivedContractors;
+    private Map<UUID, ContractorDto> departedContractors;
 
     List<DailyGroupReportResponse> groupReports;
 }

@@ -24,6 +24,9 @@ public class GroupReportRequest implements ReportRequest {
     @NotBlank
     private String description;
 
+    private String ammunition; // ✅ Also correct
+
+
     private Map<String, PersonnelLossesType> contractorLoosesIdTypeMap;
 
     private boolean worked;

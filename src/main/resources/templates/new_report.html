@@ -10,6 +10,7 @@
             color: #aaa;
             background-color: #eee;
         }
+
         .contractor-entry {
             display: flex;
             justify-content: space-between;
@@ -21,12 +22,14 @@
             font-weight: bold;
             color: black;
         }
+
         .contractor-entry span {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .contractor-entry button {
             background-color: #007bff;
             border: none;
@@ -38,13 +41,16 @@
             transition: background-color 0.3s ease;
             margin-left: 10px;
         }
+
         .contractor-entry button:hover {
             background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-
+<div class="blur-overlay"></div>
+<div class="main-content">
+    <!-- your existing page content -->
 <div th:insert="~{fragments/header :: body}"></div>
 
 <h2 th:text="#{form.heading}">Submit New Region Report</h2>
@@ -228,7 +234,26 @@
 
         <div id="hiddenInputsContainer_${localGroupIndex}"></div>
 
-        <button type="button" class="removeGroupReport" data-group-id="groupReport_${localGroupIndex}">${labels.remove}</button>
+        <div class="frame">
+        <label>Ammunition:</label>
+        <div class="align-right">
+            <button type="button" onclick="toggleAmmunition('${localGroupIndex}')">Show/Hide Ammo</button>
+        </div>
+        <div id="ammunitionContainer_${localGroupIndex}" style="display:none; margin-top: 5px;">
+            <textarea name="groupReports[${localGroupIndex}].ammunition" rows="2" placeholder="Enter ammunition details..."></textarea>
+        </div>
+        </div>
+
+        <input type="hidden" name="groupReports[${localGroupIndex}].worked" value="true" />
+        <div id="hiddenInputsContainer_${localGroupIndex}"></div>
+
+
+
+        <div class="flex-buttons">
+            <button type="button" class="removeGroupReport" data-group-id="groupReport_${localGroupIndex}">${labels.remove}</button>
+        </div>
+
+
     </div>`;
 
         $("#groupReportsContainer").append(html);
@@ -238,6 +263,28 @@
         $(`#groupName_${localGroupIndex}`).trigger("change");
         groupIndex++;
     }
+
+    function updateManualContractorSelect() {
+        const usedIds = new Set();
+
+        $("#arrivedContractorsContainer input[name='arrivedContractorIds']").each(function () {
+            usedIds.add($(this).val());
+        });
+
+        $("#departedContractorsContainer input[name='departedContractorIds']").each(function () {
+            usedIds.add($(this).val());
+        });
+
+        $("#manualContractorSelect option").each(function () {
+            const id = $(this).val();
+            $(this).prop("disabled", usedIds.has(id));
+        });
+    }
+
+    // Call after adding/removing contractor
+    $("#addToArrived, #addToDeparted").click(updateManualContractorSelect);
+    $(document).on("click", ".removeContractor", updateManualContractorSelect);
+
 
     $(document).on("change", "select[id^='groupName_']", function () {
         const $this = $(this);
@@ -300,7 +347,12 @@
         });
     });
 
-
+    function toggleAmmunition(index) {
+        const container = document.getElementById(`ammunitionContainer_${index}`);
+        if (container) {
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+    }
 
 
     $(document).ready(function () {
@@ -320,7 +372,25 @@
             $("#addGroupReport").click();
         });
 
+        $("#regionReportForm").on("submit", function (e) {
+            const arrived = new Set();
+            const departed = new Set();
 
+            $("#arrivedContractorsContainer input[name='arrivedContractorIds']").each(function () {
+                arrived.add($(this).val());
+            });
+            $("#departedContractorsContainer input[name='departedContractorIds']").each(function () {
+                departed.add($(this).val());
+            });
+
+            for (let id of arrived) {
+                if (departed.has(id)) {
+                    alert("❗ Contractor cannot be both arrived and departed: " + id);
+                    e.preventDefault(); // block form submission
+                    return false;
+                }
+            }
+        });
 
 
         $(document).on("click", ".removeContractor", function () {
@@ -366,6 +436,6 @@
     /*]]>*/
 </script>
 
-
+</div>
 </body>
 </html>
