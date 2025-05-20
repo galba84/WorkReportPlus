@@ -46,14 +46,14 @@ public class AdminController {
     public String updateContractorsFromTable(RedirectAttributes redirectAttributes) throws IOException {
         contractorService.updateContractorsFromTable();
         redirectAttributes.addFlashAttribute("infoMessage", "Contractors updated successfully!");
-        return "redirect:/admin"; // return to admin page after update
+        return "redirect:/admin";
     }
 
     @PostMapping("/groups")
     public String updateGroupsFromTable(RedirectAttributes redirectAttributes) throws IOException {
         groupService.updateGroupsFromTable();
         redirectAttributes.addFlashAttribute("infoMessage", "Groups updated successfully!");
-        return "redirect:/admin"; // return to admin page after update
+        return "redirect:/admin";
     }
 
 
@@ -61,21 +61,21 @@ public class AdminController {
     public String updateRegionsFromTable(RedirectAttributes redirectAttributes) throws IOException {
         regionService.updateRegionsFromTable();
         redirectAttributes.addFlashAttribute("infoMessage", "Regions updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return "redirect:/admin";
     }
 
     @PostMapping("/groups/descriptions")
     public String updateGroupDescription(RedirectAttributes redirectAttributes) throws IOException {
         descriptionTemplateService.updateFromTableSource();
         redirectAttributes.addFlashAttribute("infoMessage", "Шаблони звітів груп updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return "redirect:/admin";
     }
 
     @PostMapping("/places")
     public String updatePlacesFromTable(RedirectAttributes redirectAttributes) throws IOException {
         placesService.updatePlacesFromTable();
         redirectAttributes.addFlashAttribute("infoMessage", "places updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return "redirect:/admin";
     }
 
     @PostMapping("/ranks")

@@ -3,6 +3,7 @@ package com.example.workreportplus.controller;
 import com.example.workreportplus.dto.*;
 import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
+import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.example.workreportplus.service.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,9 +66,9 @@ public class DailyWorkReportController {
             request.getGroupReports().forEach(group -> logger.info("Group Report: {}", group));
         }
 
-        regionReportService.saveReport(request);
+        DailyRegionReportResponse dailyRegionReportResponse = regionReportService.saveReport(request);
 
-        redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully!");
+        redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully for : " + dailyRegionReportResponse.getDate() + " id:" + dailyRegionReportResponse.getId());
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID currentUserId = userService.getUserIdByEmail(currentEmail).orElse(null);
         auditLogService.log(

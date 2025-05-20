@@ -229,7 +229,6 @@ public class RegionReportService implements ReportService {
                 dto.setPlacesWithCoeficcient(groupReport.getPlaceCoefficients());
                 dto.setRegionReportId(regionReportId);
                 dto.setReportDate(regionReportRequest.getReportDate());
-                dto.setReportDate(regionReportRequest.getReportDate());
                 dto.setAmmunition(parseAmmunition(groupReport.getAmmunition()));
                 saveGroupReport(dto);
             });
@@ -307,10 +306,10 @@ public class RegionReportService implements ReportService {
 
 
     private static UUID[] setDepartedContractors(RegionReportDto regionReportDto) {
-        if (regionReportDto.getDepartedContractors() == null) {
+        if (regionReportDto.getDepartedContractorIds() == null) {
             return new UUID[0];
         }
-        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
+        return regionReportDto.getDepartedContractorIds().toArray(new UUID[0]);
     }
 
     private static UUID[] getValue(RegionReportDto regionReportDto) {
@@ -318,14 +317,14 @@ public class RegionReportService implements ReportService {
     }
 
     private static UUID[] getArray(RegionReportDto regionReportDto) {
-        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
+        return regionReportDto.getDepartedContractorIds().toArray(new UUID[0]);
     }
 
     private static UUID[] setArrivedContractors(RegionReportDto regionReportDto) {
-        if (regionReportDto.getArrivedContractors() == null) {
+        if (regionReportDto.getArrivedContractorIds() == null) {
             return new UUID[0];
         }
-        return regionReportDto.getArrivedContractors().toArray(new UUID[0]);
+        return regionReportDto.getArrivedContractorIds().toArray(new UUID[0]);
     }
 
 

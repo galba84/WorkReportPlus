@@ -135,8 +135,8 @@ public class ExportReportController {
         variables.put("groupReports", String.join("\n", groupReportsString));
 
         RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
-        List<ContractorDto> arrivedContractors = contractorService.getContractorsByIds(report.getArrivedContractors());
-        List<ContractorDto> departedContractors = contractorService.getContractorsByIds(report.getDepartedContractors());
+        List<ContractorDto> arrivedContractors = contractorService.getContractorsByIds(report.getArrivedContractorIds());
+        List<ContractorDto> departedContractors = contractorService.getContractorsByIds(report.getDepartedContractorIds());
         variables.put("arrivedContractors", printContractors(arrivedContractors));
         variables.put("departedContractors", printContractors(departedContractors));
         variables.put("regionReportDescription", report.getRegionDescription());
