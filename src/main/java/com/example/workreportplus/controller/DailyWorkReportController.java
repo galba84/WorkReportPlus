@@ -1,11 +1,9 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.dto.ContractorDto;
-import com.example.workreportplus.dto.GroupDto;
-import com.example.workreportplus.dto.PlaceDto;
-import com.example.workreportplus.dto.RegionDto;
+import com.example.workreportplus.dto.*;
 import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.RegionReportSearchParams;
+import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.example.workreportplus.service.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,13 +18,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping("/api/daily-work-report")
@@ -51,6 +47,8 @@ public class DailyWorkReportController {
     private AuditLogService auditLogService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ShpsService shpsService;
 
     @PostMapping
     public String submitReport(@ModelAttribute @Valid RegionReportRequest request,
@@ -59,7 +57,8 @@ public class DailyWorkReportController {
                                HttpServletRequest httpRequest
     ) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed. Errors: " + bindingResult.getAllErrors());
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation failed. Errors: "
+                    + bindingResult.getAllErrors());
             return "redirect:/api/daily-work-report";
         }
         logger.info("Received Region Report: {}", request);
@@ -67,9 +66,9 @@ public class DailyWorkReportController {
             request.getGroupReports().forEach(group -> logger.info("Group Report: {}", group));
         }
 
-        regionReportService.saveReport(request);
+        DailyRegionReportResponse dailyRegionReportResponse = regionReportService.saveReport(request);
 
-        redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully!");
+        redirectAttributes.addFlashAttribute("successMessage", "Report submitted successfully for : " + dailyRegionReportResponse.getDate() + " id:" + dailyRegionReportResponse.getId());
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         UUID currentUserId = userService.getUserIdByEmail(currentEmail).orElse(null);
         auditLogService.log(
@@ -84,27 +83,64 @@ public class DailyWorkReportController {
         return "redirect:/api/daily-work-report";
     }
 
+    @GetMapping("/contractors")
+    @ResponseBody
+    public Map<String, Map<String, List<ContractorDto>>> contractors(@RequestParam String date) throws IOException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate searchDate = LocalDate.parse(date, formatter);
+
+        List<ContractorRelocation> arrivedContractors = shpsService.getArrivedContractors(searchDate);
+        List<ContractorRelocation> departedContractors = shpsService.getDeparturedContractors(searchDate);
+        List<ContractorDto> contractorDtos = contractorService.getContractors();
+        Map<String, List<ContractorDto>> arrivedMap = new HashMap<>();
+        Map<String, List<ContractorDto>> departedMap = new HashMap<>();
+        Map<String, List<ContractorDto>> contractors = new HashMap<>();
+        contractors.put("all", contractorDtos);
+        for (ContractorRelocation relocation : arrivedContractors) {
+            String regionId = relocation.getRegion().getId();
+            arrivedMap.computeIfAbsent(regionId, k -> new ArrayList<>()).add(relocation.getContractor());
+        }
+
+        for (ContractorRelocation relocation : departedContractors) {
+            String regionId = relocation.getRegion().getId();
+            departedMap.computeIfAbsent(regionId, k -> new ArrayList<>()).add(relocation.getContractor());
+        }
+
+        return Map.of(
+                "arrived", arrivedMap,
+                "departed", departedMap,
+                "contractorsAll", contractors
+        );
+    }
+
+
+
     @GetMapping
     public String showReportForm(Model model) {
         model.addAttribute("regionReportRequest", new RegionReportRequest());
         List<RegionDto> regions = regionService.getRegions();
         List<GroupDto> groups = groupService.getAllGroups();
+
         Map<UUID, List<ContractorDto>> groupIdToContractorsMap = new HashMap<>();
-        Map<UUID, List<PlaceDto>> groupIdToPlacesMap = new HashMap<>();
         Map<UUID, String> groupIdToDescriptionMap = new HashMap<>();
 
-        groupService.getAllGroupIds().forEach(groupId -> {
+        for (GroupDto group : groups) {
+            UUID groupId = UUID.fromString(group.getId());
+
+            // Fetch and assign contractors and descriptions
             groupIdToContractorsMap.put(groupId, contractorService.getContractorsByGroupId(groupId));
             groupIdToDescriptionMap.put(groupId, descriptionTemplateService.getContentByGroupId(groupId));
-            groupIdToPlacesMap.put(groupId, placeService.getPlaceByRegionId(groupService.getRegionIdByGroupId(groupId)));
-        });
+        }
 
-        groups.forEach(e -> e.setContractors(
-                groupIdToContractorsMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e -> e.setDefaultDescription(
-                groupIdToDescriptionMap.get(UUID.fromString(e.getId()))));
-        groups.forEach(e -> e.setPlaces(
-                groupIdToPlacesMap.get(UUID.fromString(e.getId()))));
+        // Populate group fields directly
+        for (GroupDto group : groups) {
+            UUID groupId = UUID.fromString(group.getId());
+            group.setContractors(groupIdToContractorsMap.get(groupId));
+            group.setDefaultDescription(groupIdToDescriptionMap.get(groupId));
+
+            // ✅ Fetch places using the regionId from the group itself
+            group.setPlaces(placeService.getPlaceByRegionId(group.getRegionId()));
+        }
 
         model.addAttribute("regions", regions);
         model.addAttribute("groups", groups);

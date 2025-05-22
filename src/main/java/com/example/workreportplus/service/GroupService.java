@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.example.jooq.tables.Group.GROUP;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class GroupService {
@@ -112,10 +113,9 @@ public class GroupService {
 
 
     public void updateGroupsFromTable() throws IOException {
-        String sheetId = SHEEDT_ID; // or make it configurable
         String range = "GroupList!A2:D"; // assuming A = id, B = name, C = region, D = regionId
 
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
         if (rows.isEmpty()) {
             System.out.println("No data found in GroupList sheet");

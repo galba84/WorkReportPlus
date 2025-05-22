@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.example.jooq.Tables.PLACE;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class PlacesService {
@@ -35,10 +36,9 @@ public class PlacesService {
 
 
     public void updatePlacesFromTable() throws IOException {
-        String sheetId = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
         String range = "Places!A2:I";
 
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
         if (rows.isEmpty()) {
             System.out.println("No data found in Places sheet");

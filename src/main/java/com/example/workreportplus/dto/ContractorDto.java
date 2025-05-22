@@ -37,4 +37,8 @@ public class ContractorDto {
 
     private Boolean status; // ✅ Matches DB `BOOLEAN DEFAULT TRUE`
     private UUID groupId;
+    private boolean arrived;
+    private boolean departed;
+    private String orderNumber;
+    private String orderDate;
 }

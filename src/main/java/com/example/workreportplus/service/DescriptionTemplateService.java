@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static com.example.jooq.Tables.DESCRIPTIONTEMPLATE;
 import static com.example.workreportplus.Utils.SecurityUtil.getCurrentUsername;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class DescriptionTemplateService {
@@ -82,10 +83,9 @@ public class DescriptionTemplateService {
     }
 
     public void updateFromTableSource() throws IOException {
-        String sheetId = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss"; // or inject as a property
         String range = "GroupReportText!A2:D"; // id, name
 
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
         if (rows.isEmpty()) {
             System.out.println("No data found in RegionList sheet");

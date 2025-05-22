@@ -16,8 +16,22 @@
 /* Navigation Menu */
 .menu {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    align-items: center;
+}
+
+.menu-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     justify-content: center;
-    gap: 15px;
+}
+
+.menu a, .menu form {
+    display: inline-block;
 }
 
 .menu a {
@@ -33,10 +47,25 @@
     background-color: #0056b3;
 }
 
+.admin-menu {
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dotted #ccc;
+}
+
+.logout-button {
+    justify-content: center;
+}
+
 /* General Styling */
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: black;
 }
 
 h2, h3, h4 {
@@ -46,167 +75,35 @@ h2, h3, h4 {
 label {
     display: block;
     margin-top: 10px;
+    font-weight: bold;
 }
 
 input, select, textarea {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
 }
-
-/* General button styling */
-button, .menu a {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    text-align: center;
-    text-decoration: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-/* Button hover effect */
-button:hover, .menu a:hover {
-    background-color: #0056b3;
-}
-
-/* Ensure form buttons match */
-.menu form {
-    display: inline-block;
-}
-
-/* Remove default button styles */
-button {
-    appearance: none;
-    -webkit-appearance: none;
-}
-
-
-/* Report Group Styling */
-.groupReport {
-    background-color: #f9f9f9;
-    padding: 15px;
-    margin-top: 10px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-}
-
-/* Remove Report Button */
-.removeGroupReport {
-    background-color: red;
-}
-
-/* Table Styling */
-.full-width-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.full-width-table th, .full-width-table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.full-width-table th {
-    background-color: #f4f4f4;
-}
-
-.report-details {
-    background-color: #f9f9f9;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 20px;
-}
-
-.full-width-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.full-width-table th, .full-width-table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.full-width-table th {
-    background-color: #f4f4f4;
-}
-.full-width-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.full-width-table th, .full-width-table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-.full-width-table th {
-    background-color: #f4f4f4;
-}
-
-/* Button Style */
-.button {
-    display: inline-block;
-    padding: 8px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    text-align: center;
-    text-decoration: none;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-.button:hover {
-    background-color: #0056b3;
-}
-
 
 /* Form Container */
 .form-container {
-    max-width: 600px;
-    /* also adds bottom space before table */
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background: #f9f9f9;
-    /* or any value you like */
-    margin: 30px auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 900px;
+    margin: 40px auto;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+    color: white;
 }
 
-/* Uniform spacing for all inputs */
-.form-container label {
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-.form-container input,
-.form-container select {
-    margin-top: 5px;
-    margin-bottom: 15px;
-    padding: 8px;
-    box-sizing: border-box;
+/* Submit Button */
+#regionReportForm button[type="submit"] {
+    margin-top: 20px;
     width: 100%;
 }
 
-/* Space for the button */
-.form-container button {
-    margin-top: 15px;
-    padding: 10px;
-}
-
-/* General spacing for form elements */
+/* Uniform Spacing for Form */
 #regionReportForm label {
     display: block;
     margin-top: 15px;
@@ -224,12 +121,34 @@ button {
     box-sizing: border-box;
 }
 
-/* ExtraData section */
-#extraDataContainer .extraDataEntry {
-    margin-bottom: 10px;
+/* Button Styling */
+button, .button, .menu a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
 }
 
-/* Spacing for Add / Remove buttons */
+button:hover, .button:hover, .menu a:hover {
+    background-color: #0056b3;
+}
+
+button {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.removeGroupReport {
+    background-color: red;
+}
+
 #addExtraData,
 #addGroupReport,
 .removeExtraData {
@@ -238,121 +157,51 @@ button {
     display: inline-block;
 }
 
-/* Submit button */
-#regionReportForm button[type="submit"] {
-    margin-top: 20px;
+/* ExtraData Entries */
+#extraDataContainer .extraDataEntry {
+    margin-bottom: 10px;
+}
+
+/* Contractor Loss and ExtraData inside group */
+.contractorLossEntry, .extraDataEntry {
+    margin-bottom: 10px;
+}
+
+/* Report Group */
+.groupReport {
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+/* Table Styling */
+table, .full-width-table {
     width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(255, 255, 255, 0.85);
+    margin-top: 20px;
 }
-
-.tight-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin: 2px 0;
-    font-size: 14px;
-    line-height: 1.2;
-}
-.tight-list {
-    padding: 4px 0;
-}
-.menu {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    align-items: center; /* centers rows horizontally */
-}
-
-.menu-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center; /* centers buttons within each row */
-}
-
-.admin-menu {
-    margin-top: 5px;
-    padding-top: 5px;
-    border-top: 1px dotted #ccc;
-}
-
-.logout-button {
-    justify-content: center;
-}
-
-
-table {
-     border-collapse: collapse;
-     width: 100%;
- }
 
 th, td {
+    padding: 10px;
     border: 1px solid #ccc;
-    padding: 5px 10px;
     text-align: center;
+    background-color: rgba(255, 255, 255, 0.85);
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
     font-weight: bold;
 }
+
 tbody tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-.banner-header {
-    background-image: url('/img/banner_1.png');
-    background-size: cover;
-    background-position: center;
-    height: 200px; /* adjust height as needed */
-    width: 100%;
-}
-
-body {
-    background-image: url('/img/banner2.png'); /* adjust the path if needed */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed; /* Optional: makes it stay fixed on scroll */
-    color: black; /* optional for contrast */
-}
-
-.form-container {
-    background-color: rgba(0, 0, 0, 0.6); /* optional for readability */
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 800px;
-    margin: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: rgba(255, 255, 255, 0.85); /* Light background with opacity */
-}
-
-th, td {
-    padding: 10px;
-    border: 1px solid #ccc;
-    text-align: left;
-    background-color: rgba(255, 255, 255, 0.85); /* consistent background for readability */
-}
-
-th {
-    background-color: rgba(0, 0, 0, 0.7); /* darker header */
-    color: white;
-}
-
-a {
-    color: #330099;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
+/* Table Wrapper */
 .table-wrapper {
     margin: 30px auto;
     padding: 20px;
@@ -362,16 +211,136 @@ a:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-.form-container {
-    background-color: rgba(0, 0, 0, 0.5); /* 50% transparent black */
-    padding: 30px;
-    border-radius: 12px;
-    max-width: 900px;
-    margin: 40px auto;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-    color: white;
+/* Banner Header */
+.banner-header {
+    background-image: url('/img/banner_1.png');
+    background-size: cover;
+    background-position: center;
+    height: 200px;
+    width: 100%;
 }
 
+/* Links */
+a {
+    color: #330099;
+    text-decoration: none;
+}
 
+a:hover {
+    text-decoration: underline;
+}
+
+/* Tight Checkbox and List */
+.tight-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px 0;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.tight-list {
+    padding: 4px 0;
+}
+
+/* Frame Blocks: Fighting / Rest */
+.frame {
+    color: black;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+}
+
+.frame h5 {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+select option:disabled {
+    color: #aaa;
+    background-color: #eee;
+}
+
+/* Contractor Entry Styling */
+.contractor-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: black;
+}
+
+.contractor-entry span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contractor-entry button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+.contractor-entry button:hover {
+    background-color: #0056b3;
+}
+
+.message-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.success-message p {
+    color: green;
+    font-weight: bold;
+    background-color: #e6ffed;
+    border: 1px solid #b6e0c1;
+    padding: 10px 20px;
+    border-radius: 6px;
+}
+.flex-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.align-right {
+    text-align: right;
+    margin-bottom: 6px;
+}
+.blur-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    background-color: rgba(255, 255, 255, 0.3); /* optional soft white overlay */
+}
+
+.main-content {
+    position: relative;
+    z-index: 1;
+}
 
 

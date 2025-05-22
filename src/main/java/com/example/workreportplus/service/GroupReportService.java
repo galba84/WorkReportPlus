@@ -3,7 +3,7 @@ package com.example.workreportplus.service;
 
 import com.example.jooq.tables.records.GroupreportRecord;
 import com.example.workreportplus.ENUM.ReportStatus;
-import com.example.workreportplus.Utils.SecurityUtil;
+import com.example.workreportplus.dto.AmmunitionDto;
 import com.example.workreportplus.dto.ContractorWorkReportDtoRecord;
 import com.example.workreportplus.dto.GroupReportDto;
 import com.example.workreportplus.dto.PlaceDto;
@@ -11,12 +11,10 @@ import com.example.workreportplus.exception.DatabaseAccessException;
 import com.example.workreportplus.exception.ReportNotFoundException;
 import com.example.workreportplus.mapper.GroupReportMapper;
 import com.example.workreportplus.mapper.RegionReportMapper;
-import com.example.workreportplus.request.RegionReportRequest;
 import com.example.workreportplus.request.searchparams.GroupReportSearchParams;
 import com.example.workreportplus.request.searchparams.SearchParams;
 import com.example.workreportplus.response.ContractorResponse;
 import com.example.workreportplus.response.DailyGroupReportResponse;
-import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -186,28 +183,6 @@ public class GroupReportService implements ReportService {
         return List.of();
     }
 
-    //save report
-    public DailyRegionReportResponse saveReport(RegionReportRequest report) {
-        report.getGroupReports().forEach(groupReport -> {
-            groupReport.getGroupName();
-            GroupReportDto groupReportDto = groupReportMapper.requestToDto(groupReport);
-            saveGroupReport(groupReportDto);
-        });
-        return new DailyRegionReportResponse();
-    }
-
-    public void saveGroupReport(GroupReportDto groupReportDto) {
-        String currentUser = SecurityUtil.getCurrentUsername(); // ✅ Fetch user from SecurityContextHolder
-        GroupreportRecord groupReportRecord = dsl.newRecord(GROUPREPORT);
-        groupReportRecord.setGroupId(groupReportDto.getGroupId()); // ✅ Set the group ID
-        groupReportRecord.setDescription(groupReportDto.getDescription());
-        groupReportRecord.setCreatedBy(currentUser); // ✅ Store the logged-in user
-        groupReportRecord.setUpdatedBy(currentUser);
-        groupReportRecord.setCreatedOn(LocalDateTime.now());
-        groupReportRecord.setUpdatedOn(LocalDateTime.now());
-        groupReportRecord.store(); // ✅ Saves the record
-    }
-
     private DailyGroupReportResponse mapRecordToResponse(GroupreportRecord record) {
 
         Boolean b = record.get(GROUPREPORT.STATUS);
@@ -216,11 +191,21 @@ public class GroupReportService implements ReportService {
             status = ReportStatus.fromBoolean(b);
         }
 
-        // 🔹 Fetch working areas (places)
+        // 🔹 Working Areas
         List<PlaceDto> workingAreas = List.of();
-        UUID[] placeIds = record.get(GROUPREPORT.PLACE_IDS); // Replace with correct field
+        UUID[] placeIds = record.get(GROUPREPORT.PLACE_IDS);
         if (placeIds != null && placeIds.length > 0) {
             workingAreas = placeService.getPlacesByIds(List.of(placeIds));
+        }
+
+        // 🔹 Ammunition
+        List<AmmunitionDto> parsedAmmo = List.of();
+        String ammunitionJson = String.valueOf(record.get(GROUPREPORT.AMMUNITION));
+        if (ammunitionJson != null && !ammunitionJson.isBlank()) {
+            try {
+                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {});
+            } catch (Exception ignored) {
+            }
         }
 
         return DailyGroupReportResponse.builder()
@@ -235,12 +220,14 @@ public class GroupReportService implements ReportService {
                 .extraData(getExtraDataGroupReport(record))
                 .contractorLooses(getContractorLooses(record))
                 .workingAreas(workingAreas)
+                .ammunition(parsedAmmo) // ✅ pass parsed list
                 .createdBy(record.get(GROUPREPORT.CREATED_BY))
                 .createdOn(record.get(GROUPREPORT.CREATED_ON).toLocalDate())
                 .updatedBy(record.get(GROUPREPORT.UPDATED_BY))
                 .updatedOn(record.get(GROUPREPORT.UPDATED_ON).toLocalDate())
                 .build();
     }
+
 
 
     private static List<UUID> getContractorLooses(GroupreportRecord record) {
@@ -251,20 +238,29 @@ public class GroupReportService implements ReportService {
         return List.of(elements);
     }
 
+
     public Map<String, String> getExtraDataGroupReport(GroupreportRecord record) {
         JSONB jsonb = record.get(GROUPREPORT.EXTRA_DATA_GROUP_REPORT);
-
         if (jsonb == null) {
-            return Collections.emptyMap(); // Return an empty map if JSONB is null
+            return Collections.emptyMap();
         }
 
         try {
-            return objectMapper.readValue(jsonb.data(), new TypeReference<Map<String, String>>() {
-            });
+            Map<String, List<String>> raw = objectMapper.readValue(
+                    jsonb.data(), new TypeReference<>() {}
+            );
+
+            return raw.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> String.join(",", e.getValue())
+                    ));
         } catch (IOException e) {
             throw new RuntimeException("Error converting JSONB to Map", e);
         }
     }
+
+
 
     public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate, UUID regionReportId) {
         Condition condition = GROUPREPORT.GROUP_ID.eq(groupId);
@@ -284,6 +280,16 @@ public class GroupReportService implements ReportService {
             return null; // or throw exception if you prefer
         }
 
+        // 🔹 Ammunition
+        List<AmmunitionDto> parsedAmmo = List.of();
+        String ammunitionJson = String.valueOf(record.get(GROUPREPORT.AMMUNITION));
+        if (ammunitionJson != null && !ammunitionJson.isBlank()) {
+            try {
+                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {});
+            } catch (Exception ignored) {
+            }
+        }
+
         // === Manual mapping ===
         GroupReportDto dto = new GroupReportDto();
         dto.setGroupId(record.get(GROUPREPORT.GROUP_ID));
@@ -294,6 +300,7 @@ public class GroupReportService implements ReportService {
         dto.setDescription(record.get(GROUPREPORT.DESCRIPTION));
         dto.setWorked(record.get(GROUPREPORT.IS_WORKED));
         dto.setReportDate(record.get(GROUPREPORT.REPORT_DATE));
+        dto.setAmmunition(parsedAmmo);
 
         // 👇 Handle status manually if it's Boolean in DB but Enum in code
         Boolean statusValue = record.get(GROUPREPORT.STATUS);

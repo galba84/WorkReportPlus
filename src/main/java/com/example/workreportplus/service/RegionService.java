@@ -2,13 +2,17 @@ package com.example.workreportplus.service;
 
 import com.example.workreportplus.dto.RegionDto;
 import org.jooq.DSLContext;
+import org.jooq.Query;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.example.jooq.Tables.REGION;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class RegionService {
@@ -40,11 +44,13 @@ public class RegionService {
     public List<String> getRegionNames() {
         return dsl.select(REGION.REGION_NAME)
                 .from(REGION)
+                .where(REGION.STATUS.isTrue())
                 .fetchInto(String.class);
     }
 
     public List<RegionDto> getRegions() {
         return dsl.selectFrom(REGION)
+                .where(REGION.STATUS.isTrue())
                 .fetchInto(RegionDto.class);
     }
 
@@ -56,37 +62,56 @@ public class RegionService {
     }
 
     public void updateRegionsFromTable() throws IOException {
-        String sheetId = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss"; // or inject as a property
         String range = "RegionList!A2:B"; // id, name
 
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
         if (rows.isEmpty()) {
             System.out.println("No data found in RegionList sheet");
             return;
         }
 
-        dsl.batch(
-                rows.stream()
-                        .filter(row -> row.size() >= 2) // minimal required columns
-                        .map(row -> {
-                            UUID regionId = !row.get(0).toString().isEmpty()
-                                    ? UUID.fromString(row.get(0).toString())
-                                    : UUID.randomUUID();
+        dsl.transaction(cfg -> {
+            DSLContext ctx = DSL.using(cfg);
 
-                            String regionName = row.get(1).toString().trim();
+            // Step 1: Set all existing region statuses to false
+            ctx.update(REGION)
+                    .set(REGION.STATUS, false)
+                    .execute();
 
-                            return dsl.insertInto(REGION)
-                                    .set(REGION.ID, regionId)
-                                    .set(REGION.REGION_NAME, regionName)
-                                    .onConflict(REGION.ID)
-                                    .doUpdate()
-                                    .set(REGION.REGION_NAME, regionName);
-                        })
-                        .toList()
-        ).execute();
+            // Step 2: Upsert all rows from sheet
+            List<Query> upserts = rows.stream()
+                    .filter(row -> row.size() >= 2)
+                    .map(row -> {
+                        UUID regionId = !row.get(0).toString().isEmpty()
+                                ? UUID.fromString(row.get(0).toString())
+                                : UUID.randomUUID();
 
-        System.out.println("Regions updated successfully from sheet.");
+                        String regionName = row.get(1).toString().trim();
+
+                        return (Query) ctx.insertInto(REGION)
+                                .set(REGION.ID, regionId)
+                                .set(REGION.REGION_NAME, regionName)
+                                .set(REGION.STATUS, true)
+                                .onConflict(REGION.ID)
+                                .doUpdate()
+                                .set(REGION.REGION_NAME, regionName)
+                                .set(REGION.STATUS, true);
+                    })
+                    .toList();
+
+
+            ctx.batch(upserts).execute();
+        });
+
+        System.out.println("✅ Regions updated successfully from sheet.");
+    }
+
+
+    public Optional<RegionDto> getByName(String regionName) {
+        return dsl.selectFrom(REGION)
+                .where(REGION.REGION_NAME.eq(regionName))
+                .fetchOptionalInto(RegionDto.class);
     }
 
 }

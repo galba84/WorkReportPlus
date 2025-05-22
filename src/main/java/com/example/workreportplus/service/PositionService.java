@@ -2,6 +2,7 @@ package com.example.workreportplus.service;
 
 import com.example.jooq.tables.Positions;
 import org.jooq.DSLContext;
+import org.jooq.Query;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.example.jooq.Tables.POSITIONS;
 
@@ -29,47 +31,48 @@ public class PositionService {
     }
 
     public void updatePositionsFromTable() throws IOException {
-        String sheetId = "1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA";
-        String range   = "Відмінки Посад!A2:A648";
+        String range = "Штатка!S2:S648"; // Only column S is needed
 
-        // 1) Read the sheet
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(GoogleSheetsService.SHPS_TABLE_ID, range);
         if (rows.isEmpty()) {
             System.out.println("No data found in Positions sheet; skipping update.");
             return;
         }
 
-        // 2) Do everything in a transaction
         dsl.transaction(cfg -> {
             DSLContext ctx = DSL.using(cfg);
 
-            // Load existing names into a Set for quick lookup
             Set<String> existingNames = ctx
                     .select(POSITIONS.POSITION_NAME)
                     .from(POSITIONS)
                     .fetchSet(POSITIONS.POSITION_NAME);
 
-            // Prepare only those INSERTs whose names aren’t in existingNames
-            var inserts = rows.stream()
+            Set<String> newNames = rows.stream()
                     .map(row -> row.get(0).toString().trim())
-                    .filter(name -> !name.isBlank())               // skip blanks
-                    .filter(name -> !existingNames.contains(name)) // only new names
-                    .map(name ->
-                            ctx.insertInto(POSITIONS)
-                                    .columns(POSITIONS.ID, POSITIONS.POSITION_NAME)
-                                    .values(UUID.randomUUID(), name)
-                    )
+                    .filter(name -> !name.isBlank())
+                    .collect(Collectors.toSet());
+
+            Set<String> missingNames = newNames.stream()
+                    .filter(name -> !existingNames.contains(name))
+                    .collect(Collectors.toSet());
+
+            List<Query> inserts = missingNames.stream()
+                    .map(name -> (Query) ctx.insertInto(POSITIONS)
+                            .columns(POSITIONS.ID, POSITIONS.POSITION_NAME)
+                            .values(UUID.randomUUID(), name))
                     .toList();
+
 
             if (!inserts.isEmpty()) {
                 ctx.batch(inserts).execute();
-                System.out.printf("Inserted %d new positions.%n", inserts.size());
+                System.out.printf("✅ Inserted %d new positions.%n", inserts.size());
             } else {
                 System.out.println("All positions are already up to date; no inserts needed.");
             }
         });
 
-        System.out.println("Positions update complete.");
+        System.out.println("✅ Positions update complete.");
     }
+
 
 }

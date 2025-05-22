@@ -1,9 +1,6 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.dto.ContractorDto;
-import com.example.workreportplus.dto.GroupReportDto;
-import com.example.workreportplus.dto.PlaceDto;
-import com.example.workreportplus.dto.RegionReportDto;
+import com.example.workreportplus.dto.*;
 import com.example.workreportplus.service.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -95,9 +92,7 @@ public class ExportReportController {
     private boolean validateRequest(String templateName, String regionName, String groupName, LocalDate reportDate) {
         if (!StringUtils.hasText(templateName) || !reportTypes.contains(templateName)) {
             return false;
-        }
-
-         else if (REGION_REPORT.equalsIgnoreCase(templateName)) {
+        } else if (REGION_REPORT.equalsIgnoreCase(templateName)) {
             if (!StringUtils.hasText(regionName) || !regionService.regionExistsByName(regionName)) {
                 return false;
             }
@@ -110,38 +105,41 @@ public class ExportReportController {
                                                         LocalDate reportDate) throws IOException {
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
         Map<String, String> variables = new HashMap<>();
-            variables.put("regionName", regionName);
-            variables.put("reportDate", formatDate(reportDate));
-            variables.put("signature", "підпис              _______________          О.В. Овчаренко");
-            UUID regionId = regionService.getRegionIdByName(regionName);
-            List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
-            List<GroupReportDto> groupReportDtoList = new ArrayList<>();
-            for (UUID groupId : groupIds) {
-                GroupReportDto dto = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
-                if (dto != null) {
-                    groupReportDtoList.add(dto);
-                }
+        variables.put("regionName", regionName);
+
+        variables.put("reportDate", formatDate(reportDate));
+        variables.put("signature", "підпис              _______________          О.В. Овчаренко");
+        UUID regionId = regionService.getRegionIdByName(regionName);
+        List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
+        List<GroupReportDto> groupReportDtoList = new ArrayList<>();
+        for (UUID groupId : groupIds) {
+            GroupReportDto dto = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
+            if (dto != null) {
+                groupReportDtoList.add(dto);
             }
-            List<String> groupReportsString = new ArrayList<>();
-            for (GroupReportDto groupReportDto : groupReportDtoList) {
-                Map<String, String> variablesForGroupReport = new HashMap<>();
-                String groupNameLocal = groupService.getGroupNameById(groupReportDto.getGroupName());
-                createGroupReport(groupReportDto, groupNameLocal, reportDate, variablesForGroupReport);
-                byte[] data = wordTemplateService.generateWordFromRtfTemplate(GROUP_REPORT, variablesForGroupReport);
-                groupReportsString.add("\n");
-                groupReportsString.add("___________________________________");
+        }
+        List<String> groupReportsString = new ArrayList<>();
+        for (GroupReportDto groupReportDto : groupReportDtoList) {
+            Map<String, String> variablesForGroupReport = new HashMap<>();
+            String groupNameLocal = groupService.getGroupNameById(groupReportDto.getGroupName());
+            createGroupReport(groupReportDto, groupNameLocal, reportDate, variablesForGroupReport);
+            byte[] data = wordTemplateService.generateWordFromRtfTemplate(GROUP_REPORT, variablesForGroupReport);
+            groupReportsString.add("\n");
+            groupReportsString.add("___________________________________");
 
+            groupReportsString.add(new String(data, StandardCharsets.UTF_8));
+            groupReportsString.add("___________________________________");
+            groupReportsString.add("\n");
+        }
 
-                groupReportsString.add(new String(data, StandardCharsets.UTF_8));
-                groupReportsString.add("___________________________________");
-                groupReportsString.add("\n");
+        variables.put("groupReports", String.join("\n", groupReportsString));
 
-            }
-
-            variables.put("groupReports", String.join("\n", groupReportsString));
-
-            RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
-            variables.put("regionReportDescription", report.getRegionDescription());
+        RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
+        List<ContractorDto> arrivedContractors = contractorService.getContractorsByIds(report.getArrivedContractorIds());
+        List<ContractorDto> departedContractors = contractorService.getContractorsByIds(report.getDepartedContractorIds());
+        variables.put("arrivedContractors", printContractors(arrivedContractors));
+        variables.put("departedContractors", printContractors(departedContractors));
+        variables.put("regionReportDescription", report.getRegionDescription());
 
         return variables;
     }
@@ -157,22 +155,48 @@ public class ExportReportController {
 
         String detailsByGroupId = descriptionTemplateService.getDetailsByGroupId(groupReportDto.getGroupId());
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
-        List <PlaceDto> places = placesService.getPlaceByIds(groupReportDto.getPlaceIds());
+        List<PlaceDto> places = placesService.getPlaceByIds(groupReportDto.getPlaceIds());
         variables.put("groupName", groupName);
         variables.put("groupDetails", detailsByGroupId);
+        variables.put("ammunition", getAmmunition(groupReportDto));
         variables.put("reportDate", formatDate(reportDate));
         variables.put("places", formatPlaces(places));
         UUID groupId = groupService.getGroupIdByName(groupName);
         GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
         List<ContractorDto> contractor = contractorService.getAllContractorByIds(report.getContractorsIds());
         variables.put("contractors",
-                contractor.stream()
-                        .map(e -> "* " + e.getFirstName()+ " " + e.getLastName() +" - "
-                                + e.getC_rank() + " ("+e.getNickName()+")")
-                        .collect(Collectors.joining("\n"))
+                printContractors(contractor)
         );
         variables.put("groupReportDescription", report.getDescription());
     }
+
+    private static String printContractors(List<ContractorDto> contractor) {
+        return contractor.stream()
+                .map(e -> "* " + e.getFirstName() + " " + e.getLastName() + " - "
+                        + e.getC_rank() + " (" + e.getNickName() + ")")
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String getAmmunition(GroupReportDto groupReportDto) {
+        List<AmmunitionDto> ammoList = groupReportDto.getAmmunition();
+        if (ammoList == null || ammoList.isEmpty()) {
+            return "";
+        }
+
+        return ammoList.stream()
+                .map(dto -> {
+                    StringBuilder sb = new StringBuilder(dto.getName());
+                    if (dto.getAmount() > 0) {
+                        sb.append(" : ").append(dto.getAmount());
+                    }
+                    if (dto.getUnit() != null && !dto.getUnit().isBlank()) {
+                        sb.append(" : ").append(dto.getUnit().trim());
+                    }
+                    return sb.toString();
+                })
+                .collect(Collectors.joining("\n"));
+    }
+
 
     private String formatPlaces(List<PlaceDto> places) {
         if (places == null || places.isEmpty()) return "";

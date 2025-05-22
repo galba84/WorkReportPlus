@@ -12,12 +12,12 @@ import java.util.UUID;
 
 import static com.example.jooq.Tables.RANK;
 import static com.example.jooq.Tables.UNIT;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class UnitService {
     private final DSLContext dsl;
     private final GoogleSheetsService googleSheetsService;
-    public static final String SHEEDT_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
 
     public UnitService(DSLContext dsl, GoogleSheetsService googleSheetsService) {
         this.dsl = dsl;
@@ -36,7 +36,7 @@ public class UnitService {
 
 
         // 1) Pull the sheet data
-        List<List<Object>> rows = googleSheetsService.readSheet(SHEEDT_ID, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
         if (rows.isEmpty()) {
             System.out.println("No data found in UnitList sheet");
             return;

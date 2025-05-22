@@ -11,16 +11,13 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.example.jooq.Tables.CONTRACTOR;
+import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
 
 @Service
 public class ContractorService {
-    private final String DOVIDNYK_SHEET_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
     private final GoogleSheetsService googleSheetsService;
     private final DSLContext dsl;
 
@@ -48,9 +45,25 @@ public class ContractorService {
                 .fetchInto(ContractorDto.class);
     }
 
+    public List<ContractorDto> getContractorsByIds(Collection<UUID> ids) {
+        return dsl.selectFrom(CONTRACTOR)
+                .where(CONTRACTOR.ID.in(ids))
+                .fetchInto(ContractorDto.class);
+    }
+
+    private boolean isValidUUID(String str) {
+        try {
+            UUID.fromString(str.trim());
+            return true;
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return false;
+        }
+    }
+
+
     public void updateContractorsFromTable() throws IOException {
         String range = "NamesList!A2:I"; // adjust if needed
-        List<List<Object>> lists = googleSheetsService.readSheet(DOVIDNYK_SHEET_ID, range);
+        List<List<Object>> lists = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
         String currentUser = SecurityUtil.getCurrentUsername();
 
         // ⚠️ Remove Group loading, no longer needed
@@ -58,6 +71,7 @@ public class ContractorService {
         Map<String, List<UUID>> positionNameToIds = dsl.select(Positions.POSITIONS.POSITION_NAME, Positions.POSITIONS.ID)
                 .from(Positions.POSITIONS)
                 .fetchGroups(Positions.POSITIONS.POSITION_NAME, Positions.POSITIONS.ID);
+
 
         // Map rows to DTOs
         List<ContractorDto> contractors = lists.stream()
@@ -133,8 +147,14 @@ public class ContractorService {
         dto.setNickName(row.size() > 4 ? row.get(4).toString() : "N/A");
 
         // ✅ Use unit_id directly
-        dto.setUnitId(UUID.fromString(row.get(8).toString()));
-        dto.setGroupId(UUID.fromString(row.get(6).toString()));
+        if (!row.get(8).toString().isEmpty() && !row.get(8).toString().equals("-") ) {
+            dto.setUnitId(UUID.fromString(row.get(8).toString()));
+        } else {
+            dto.setUnitId(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+        }
+        if (!row.get(6).toString().isEmpty()&& !row.get(6).toString().equals("-")) {
+            dto.setGroupId(UUID.fromString(row.get(6).toString()));
+        }
 
         // ✅ Use position normally
         String positionName = row.size() > 3 ? row.get(3).toString().trim() : null;

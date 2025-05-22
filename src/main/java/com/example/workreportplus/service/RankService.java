@@ -29,11 +29,10 @@ public class RankService {
     }
 
     public void updateRanksFromTable() throws IOException {
-        String sheetId = "1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA";
         String range   = "Довідник!F2:F16";
 
         // 1) Pull the sheet data
-        List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(GoogleSheetsService.SHPS_TABLE_ID, range);
         if (rows.isEmpty()) {
             System.out.println("No data found in Places sheet");
             return;
