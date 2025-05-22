@@ -109,7 +109,7 @@ public class DailyWorkReportController {
         return Map.of(
                 "arrived", arrivedMap,
                 "departed", departedMap,
-                "contractorsAll", contractors // e.g. Map<String, List<ContractorDto>>
+                "contractorsAll", contractors
         );
     }
 
