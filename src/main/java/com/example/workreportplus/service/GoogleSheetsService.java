@@ -21,6 +21,7 @@ import java.util.List;
 public class GoogleSheetsService {
     public static final String SHPS_TABLE_ID = "1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA";
     public static final String DOVIDNYK_TABLE_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
+    public static final String OPERATIVE_TABLE_ID = "1YtvuAvmyZ5JZFG9uQTy3GF38oHJpQsHRAjAGOl7ioF8";
 
     private static final String APPLICATION_NAME = "WorkReportPlus";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();

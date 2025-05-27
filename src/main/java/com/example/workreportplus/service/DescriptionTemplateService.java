@@ -102,6 +102,7 @@ public class DescriptionTemplateService {
                             .filter(row -> !row.get(0).toString().isEmpty()) // minimal required columns
                             .filter(row -> !row.get(1).toString().isEmpty()) // minimal required columns
                             .filter(row -> !row.get(2).toString().isEmpty()) // minimal required columns
+                            .filter(row -> !row.get(0).toString().equals("-"))
                             .map(row -> {
                                 UUID groupId = !row.get(0).toString().isEmpty()
                                         ? UUID.fromString(row.get(0).toString())

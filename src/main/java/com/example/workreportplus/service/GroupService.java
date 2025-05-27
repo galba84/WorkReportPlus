@@ -53,6 +53,13 @@ public class GroupService {
                 .fetchInto(UUID.class);
     }
 
+    public List<UUID> getAllGroupIdsValid() {
+        return dsl.select(GROUP.ID)
+                .from(GROUP)
+                .where(GROUP.STATUS.isTrue())
+                .fetchInto(UUID.class);
+    }
+
     public List<String> getGroupNames() {
         return dsl.select(GROUP.NAME)
                 .from(GROUP)

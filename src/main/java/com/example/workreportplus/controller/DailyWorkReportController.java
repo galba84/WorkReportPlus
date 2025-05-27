@@ -139,7 +139,7 @@ public class DailyWorkReportController {
             group.setDefaultDescription(groupIdToDescriptionMap.get(groupId));
 
             // ✅ Fetch places using the regionId from the group itself
-            group.setPlaces(placeService.getPlaceByRegionId(group.getRegionId()));
+            group.setPlaces(placeService.getFightingPlaceByRegionId(group.getRegionId()));
         }
 
         model.addAttribute("regions", regions);

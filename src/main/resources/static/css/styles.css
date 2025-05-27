@@ -343,4 +343,52 @@ select option:disabled {
     z-index: 1;
 }
 
+select option:disabled {
+    color: #aaa;
+    background-color: #eee;
+}
+
+.contractor-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: black;
+}
+
+.contractor-entry span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contractor-entry button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+.contractor-entry button:hover {
+    background-color: #0056b3;
+}
+#groupStatusSummaryTable tbody tr.status-ПОДАНО {
+    background-color: #28a745;  /* intense green */
+    color: black
+}
+
+#groupStatusSummaryTable tbody tr.status-НЕ\ ПОДАНО {
+    background-color: #dc3545;  /* intense red */
+    color: black;
+}
 

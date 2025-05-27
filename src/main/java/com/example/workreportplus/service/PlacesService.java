@@ -102,9 +102,30 @@ public class PlacesService {
     }
 
 
-    public List<PlaceDto> getPlaceByRegionId(UUID regionId) {
+    public List<PlaceDto> getFightingPlaceByRegionId(UUID regionId) {
         return dsl.selectFrom(PLACE)
                 .where(PLACE.REGION_ID.eq(regionId))
+                .and(PLACE.DISTRICT.eq("100"))
+                .fetch()
+                .map(record -> {
+                    PlaceDto dto = new PlaceDto();
+                    dto.setId(record.getId() != null ? record.getId().toString() : null);
+                    dto.setName(record.getName());
+                    dto.setAreaType(record.getAreaType());
+                    dto.setCounty(record.getCounty());
+                    dto.setDistrict(record.getDistrict());
+                    dto.setRegion(record.getRegion());
+                    dto.setCoeficient(record.getCoeficient());
+                    dto.setRegionId(record.getRegionId() != null ? record.getRegionId().toString() : null);
+                    return dto;
+                });
+
+    }
+
+    public List<PlaceDto> getRestPlaceByRegionId(UUID regionId) {
+        return dsl.selectFrom(PLACE)
+                .where(PLACE.REGION_ID.eq(regionId))
+                .and(PLACE.DISTRICT.eq("30"))
                 .fetch()
                 .map(record -> {
                     PlaceDto dto = new PlaceDto();

@@ -3,10 +3,7 @@ package com.example.workreportplus.service;
 
 import com.example.jooq.tables.records.GroupreportRecord;
 import com.example.workreportplus.ENUM.ReportStatus;
-import com.example.workreportplus.dto.AmmunitionDto;
-import com.example.workreportplus.dto.ContractorWorkReportDtoRecord;
-import com.example.workreportplus.dto.GroupReportDto;
-import com.example.workreportplus.dto.PlaceDto;
+import com.example.workreportplus.dto.*;
 import com.example.workreportplus.exception.DatabaseAccessException;
 import com.example.workreportplus.exception.ReportNotFoundException;
 import com.example.workreportplus.mapper.GroupReportMapper;
@@ -28,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,18 +39,22 @@ public class GroupReportService implements ReportService {
     private final PositionService positionService;
     private final PlacesService placeService;
     private final GroupService groupService;
+    private final OperativeReportService operativeReportService;
+    private final RegionService regionService;
     ObjectMapper objectMapper = new ObjectMapper();
 
     public GroupReportService(DSLContext dsl, RegionReportMapper regionReportMapper,
                               GroupReportMapper groupReportMapper, ContractorService contractorService,
                               PositionService positionService, PlacesService placeService,
-                              GroupService groupService) {
+                              GroupService groupService, OperativeReportService operativeReportService, RegionService regionService) {
         this.dsl = dsl;
         this.groupReportMapper = groupReportMapper;
         this.contractorService = contractorService;
         this.positionService = positionService;
         this.placeService = placeService;
         this.groupService = groupService;
+        this.operativeReportService = operativeReportService;
+        this.regionService = regionService;
     }
 
 
@@ -203,7 +205,8 @@ public class GroupReportService implements ReportService {
         String ammunitionJson = String.valueOf(record.get(GROUPREPORT.AMMUNITION));
         if (ammunitionJson != null && !ammunitionJson.isBlank()) {
             try {
-                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {});
+                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {
+                });
             } catch (Exception ignored) {
             }
         }
@@ -229,7 +232,6 @@ public class GroupReportService implements ReportService {
     }
 
 
-
     private static List<UUID> getContractorLooses(GroupreportRecord record) {
         UUID[] elements = record.get(GROUPREPORT.LOOSES);
         if (elements == null) {
@@ -247,7 +249,8 @@ public class GroupReportService implements ReportService {
 
         try {
             Map<String, List<String>> raw = objectMapper.readValue(
-                    jsonb.data(), new TypeReference<>() {}
+                    jsonb.data(), new TypeReference<>() {
+                    }
             );
 
             return raw.entrySet().stream()
@@ -259,7 +262,6 @@ public class GroupReportService implements ReportService {
             throw new RuntimeException("Error converting JSONB to Map", e);
         }
     }
-
 
 
     public GroupReportDto getReportByGroupIdAndDate(UUID groupId, LocalDate reportDate, UUID regionReportId) {
@@ -285,7 +287,8 @@ public class GroupReportService implements ReportService {
         String ammunitionJson = String.valueOf(record.get(GROUPREPORT.AMMUNITION));
         if (ammunitionJson != null && !ammunitionJson.isBlank()) {
             try {
-                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {});
+                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {
+                });
             } catch (Exception ignored) {
             }
         }
@@ -309,12 +312,11 @@ public class GroupReportService implements ReportService {
         }
 
 
-
         return dto;
     }
 
     public List<ContractorWorkReportDtoRecord> getContractorWorkDataByPeriodAndReportIds(LocalDate fromDate, LocalDate toDate,
-                                                                              List<UUID> regionReportIds) {
+                                                                                         List<UUID> regionReportIds) {
         return dsl.selectFrom(GROUPREPORT)
                 .where(GROUPREPORT.REPORT_DATE.between(fromDate, toDate))
                 .and(GROUPREPORT.REGION_REPORT_ID.in(regionReportIds))
@@ -325,7 +327,7 @@ public class GroupReportService implements ReportService {
                     UUID[] contractorIds = record.getContractorsIds();
                     LocalDate date = record.getReportDate();
                     Boolean isWorked = record.getIsWorked();
-                    String groupName =groupService.getGroupNameById(record.getGroupId());
+                    String groupName = groupService.getGroupNameById(record.getGroupId());
 
                     if (contractorIds == null) return Stream.empty();
 
@@ -334,4 +336,120 @@ public class GroupReportService implements ReportService {
                 })
                 .collect(Collectors.toList());
     }
+
+    public List<GroupReportPrefillDto> getPrefilledGroupReports(UUID regionId, LocalDate date) throws IOException {
+        // Fetch all group IDs (or you can fetch only those assigned to this region)
+        List<UUID> groupIds = groupService.getAllGroupIdsValid();
+        String regionNameById = regionService.getRegionNameById(regionId);
+        List<OperationReportDto> reportsByDate = operativeReportService.getOperationReportsByDate(date, regionNameById);
+
+
+        Map<UUID, OperationReportDto> reportMap = reportsByDate.stream()
+                .filter(report -> report.getGroupId() != null) // optional: skip null keys
+                .collect(Collectors.toMap(
+                        OperationReportDto::getGroupId,
+                        Function.identity(),
+                        (existing, replacement) -> replacement // in case of duplicate groupIds
+                ));
+
+        List<GroupReportPrefillDto> result = groupIds.stream()
+                .map(groupId -> {
+                    // Fetch group entity with name (assume getGroupById returns a Group object)
+                    var group = groupService.getGroupNameById(groupId);
+                    String groupNameById = groupService.getGroupNameById(groupId);
+                    // Fetch reports and assignments for this group and date
+                    String description = getGroupDescription(reportMap.getOrDefault(groupId, null));
+                    String fightingReport = getFightingReport(groupId, date);
+                    List<UUID> fightingPlaces = getFightingPlaces(regionId, date, reportMap.getOrDefault(groupId, null));
+                    List<UUID> restPlaces = getRestPlaces(regionId, date);
+                    List<UUID> fightingContractors = getFightingContractors(groupId, date);
+                    List<UUID> restContractors = getRestContractors(groupId, date);
+                    String ammunition = getAmmunition(reportMap.getOrDefault(groupId, null));
+                    boolean ammoVerified = isAmmoVerified(groupId, date, reportMap.getOrDefault(groupId, null));
+                    boolean fightingGroup = isFightingGroup(groupId, date);
+
+                    return new GroupReportPrefillDto(
+                            groupId,
+                            groupNameById,
+                            description,
+                            fightingReport,
+                            fightingContractors,
+                            fightingPlaces,
+                            restContractors,
+                            restPlaces,
+                            ammunition,
+                            ammoVerified,
+                            fightingGroup
+                    );
+                })
+                .toList();
+
+        return result;
+    }
+
+    private boolean isFightingGroup(UUID groupId, LocalDate date) {
+        return false;
+    }
+
+    private boolean isAmmoVerified(UUID groupId, LocalDate date, OperationReportDto reportDto) {
+        if (reportDto == null) {
+            return false;
+        }
+        return reportDto.getIsAmmoVerified();
+    }
+
+    private String getAmmunition(OperationReportDto reportDto) {
+        if (reportDto == null) {
+            return "null ammo";
+        }
+        return reportDto.getAmmo() + System.lineSeparator() + reportDto.getAssets();
+    }
+
+
+    private List<UUID> getRestContractors(UUID groupId, LocalDate date) {
+        return contractorService.getContractorsByGroupId(groupId)
+                .stream()
+                .map(e -> e.getId())
+                .toList();
+    }
+
+    private List<UUID> getFightingContractors(UUID groupId, LocalDate date) {
+        return contractorService.getContractorsByGroupId(groupId)
+                .stream()
+                .map(e -> e.getId())
+                .toList();
+    }
+
+    private List<UUID> getRestPlaces(UUID regionId, LocalDate date) {
+        return placeService.getRestPlaceByRegionId(regionId)
+                .stream()
+                .map(e -> UUID.fromString(e.getId()))
+                .toList();
+    }
+
+    private List<UUID> getFightingPlaces(UUID regionId, LocalDate date, OperationReportDto reportDto) {
+
+        if (reportDto != null) {
+            return List.of(reportDto.getPlaceId());
+        }
+
+        return placeService.getFightingPlaceByRegionId(regionId)
+                .stream()
+                .map(e -> UUID.fromString(e.getId()))
+                .toList();
+    }
+
+    private String getFightingReport(UUID groupId, LocalDate date) {
+        return "fighting report";
+    }
+
+    private String getGroupDescription(OperationReportDto reportDto) {
+        if (reportDto != null) {
+            return reportDto.getDescription() + System.lineSeparator() + reportDto.getResult();
+        }
+
+        return "reportDto.getDescription() + reportDto.getResult()";
+    }
+
+
 }

@@ -51,390 +51,604 @@
 <div class="blur-overlay"></div>
 <div class="main-content">
     <!-- your existing page content -->
-<div th:insert="~{fragments/header :: body}"></div>
+    <div th:insert="~{fragments/header :: body}"></div>
 
-<h2 th:text="#{form.heading}">Submit New Region Report</h2>
+    <h2 th:text="#{form.heading}">Submit New Region Report</h2>
 
-<div th:if="${successMessage}" class="message-center success-message">
-    <p th:text="${successMessage}"></p>
-</div>
+    <div th:if="${successMessage}" class="message-center success-message">
+        <p th:text="${successMessage}"></p>
+    </div>
 
-<div th:if="${errorMessage}" style="color: red;">
-    <p th:text="${errorMessage}"></p>
-</div>
+    <div th:if="${errorMessage}" style="color: red;">
+        <p th:text="${errorMessage}"></p>
+    </div>
 
-<div class="form-container">
-    <form id="regionReportForm" th:action="@{/api/daily-work-report}" method="post">
-        <input type="hidden" name="status" value="true">
+    <h3 th:text="#{form.groupSummary}">Group Status Summary</h3>
+    <table id="groupStatusSummaryTable" border="1" style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+        <tr>
+            <th>Group Name</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th>Ammunition Status</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-        <label for="reportDate" th:text="#{form.reportDate}">Report Date:</label>
-        <input type="date" id="reportDate" name="reportDate" required>
 
-        <label for="regionName" th:text="#{form.region}">Region:</label>
-        <select id="regionName" name="regionName" required>
-            <option th:text="#{form.selectRegion}" value="">-- Select Region --</option>
-            <option th:each="region : ${regions}" th:value="${region.id}" th:text="${region.regionName}"></option>
-        </select>
+    <div class="form-container">
+        <form id="regionReportForm" th:action="@{/api/daily-work-report}" method="post">
+            <input type="hidden" name="status" value="true">
 
-        <label for="regionDescription" th:text="#{form.description}">Description:</label>
-        <textarea id="regionDescription" name="regionDescription" rows="1"
-                  style="resize: vertical; min-height: 1.5em;"></textarea>
+            <label for="reportDate" th:text="#{form.reportDate}">Report Date:</label>
+            <input type="date" id="reportDate" name="reportDate" required>
 
-        <div class="frame">
-            <h3 th:text="#{form.arrivedContractors}">Arrived</h3>
-            <div id="arrivedContractorsContainer"></div>
-        </div>
+            <label for="regionName" th:text="#{form.region}">Region:</label>
+            <select id="regionName" name="regionName" required>
+                <option th:text="#{form.selectRegion}" value="">-- Select Region --</option>
+                <option th:each="region : ${regions}" th:value="${region.id}" th:text="${region.regionName}"></option>
+            </select>
 
-        <div class="frame">
-            <h3 th:text="#{form.departedContractors}">Departed</h3>
-            <div id="departedContractorsContainer"></div>
-        </div>
+            <label for="regionDescription" th:text="#{form.description}">Description:</label>
+            <textarea id="regionDescription" name="regionDescription" rows="1"
+                      style="resize: vertical; min-height: 1.5em;"></textarea>
 
-        <div class="frame">
-            <h4>Additional Contractors</h4>
-            <div>
-                <select id="manualContractorSelect"></select>
-                <button type="button" id="addToArrived">+ To Arrived</button>
-                <button type="button" id="addToDeparted">+ To Departed</button>
+            <div class="frame">
+                <h3 th:text="#{form.arrivedContractors}">Arrived</h3>
+                <div id="arrivedContractorsContainer"></div>
             </div>
-        </div>
 
-        <h3 th:text="#{form.additionalData}">Additional Data</h3>
-        <div id="extraDataContainer"></div>
-        <template id="extraDataTemplate">
-            <div class="extraDataEntry">
-                <input type="text" name="extraData[key][]" placeholder="Key">
-                <input type="text" name="extraData[value][]" placeholder="Value">
-                <button type="button" class="removeExtraData">Remove</button>
+            <div class="frame">
+                <h3 th:text="#{form.departedContractors}">Departed</h3>
+                <div id="departedContractorsContainer"></div>
             </div>
-        </template>
-        <button type="button" id="addExtraData">+ Add Extra Data</button>
 
-        <h3 th:text="#{form.groupReports}">Group Reports</h3>
-        <div id="groupReportsContainer"></div>
-        <button type="button" id="addGroupReport">+ Add Group Report</button>
+            <div class="frame">
+                <h4 th:text="#{form.additionalContractors}">Additional Contractors</h4>
+                <div>
+                    <select id="manualContractorSelect"></select>
+                    <button type="button" id="addToArrived">+ To Arrived</button>
+                    <button type="button" id="addToDeparted">+ To Departed</button>
+                </div>
+            </div>
 
-        <button type="submit" th:text="#{form.submit}">Submit Report</button>
-    </form>
-</div>
+            <h3 th:text="#{form.additionalData}">Additional Data</h3>
+            <div id="extraDataContainer"></div>
+            <template id="extraDataTemplate">
+                <div class="extraDataEntry">
+                    <input type="text" name="extraData[key][]" placeholder="Key">
+                    <input type="text" name="extraData[value][]" placeholder="Value">
+                    <button type="button" class="removeExtraData">Remove</button>
+                </div>
+            </template>
+            <button type="button" id="addExtraData">+ Add Extra Data</button>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    let groups = /*[[${groups}]]*/ [];
-    let groupIndex = 0;
+            <h3 th:text="#{form.groupReports}">Group Reports</h3>
+            <div id="groupReportsContainer"></div>
+            <button type="button" id="addGroupReport">+ Add Group Report</button>
 
-    let labels = {
-        remove: /*[[#{form.remove}]]*/ 'Remove',
-        groupName: /*[[#{form.groupName}]]*/ 'Group Name',
-        description: /*[[#{form.description}]]*/ 'Description',
-        selectGroup: /*[[#{form.selectGroup}]]*/ 'Select Group'
-    };
+            <button type="submit" th:text="#{form.submit}">Submit Report</button>
+        </form>
+    </div>
 
-    function contractorLabel(c) {
-        const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
-        const nickname = c.nickName?.trim();
-        return nickname ? `${fullName} (${nickname})` : fullName;
-    }
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let groups = /*[[${groups}]]*/ [];
+        let groupIndex = 0;
 
-    function createContractorInput(name, id, label) {
-        return `<div class="contractor-entry">
+        let labels = {
+            remove: /*[[#{form.remove}]]*/ 'Remove',
+            groupName: /*[[#{form.groupName}]]*/ 'Group Name',
+            description: /*[[#{form.description}]]*/ 'Description',
+            selectGroup: /*[[#{form.selectGroup}]]*/ 'Select Group'
+        };
+
+        function contractorLabel(c) {
+            const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
+            const nickname = c.nickName?.trim();
+            return nickname ? `${fullName} (${nickname})` : fullName;
+        }
+
+        function createContractorInput(name, id, label) {
+            return `<div class="contractor-entry">
                 <input type="hidden" name="${name}" value="${id}" />
                 <span>${label}</span>
                 <button type="button" class="removeContractor">✖</button>
             </div>`;
-    }
-
-    function loadContractorsForSelectedDateAndRegion() {
-        const date = $("#reportDate").val();
-        const regionId = $("#regionName").val();
-        if (!date || !regionId) return;
-
-        fetch(`/api/daily-work-report/contractors?date=${date}`)
-            .then(res => res.json())
-            .then(data => {
-                const usedIds = new Set();
-                const arrived = data.arrived?.[regionId] || [];
-                const departed = data.departed?.[regionId] || [];
-                const additional = data.contractorsAll?.all || [];
-
-                $("#arrivedContractorsContainer").empty();
-                $("#departedContractorsContainer").empty();
-                $("#manualContractorSelect").empty();
-
-                arrived.forEach(c => {
-                    const label = contractorLabel(c);
-                    usedIds.add(c.id);
-                    $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", c.id, label));
-                });
-
-                departed.forEach(c => {
-                    const label = contractorLabel(c);
-                    usedIds.add(c.id);
-                    $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", c.id, label));
-                });
-
-                additional.filter(c => !usedIds.has(c.id)).forEach(c => {
-                    $("#manualContractorSelect").append(`<option value="${c.id}">${contractorLabel(c)}</option>`);
-                });
-            })
-            .catch(err => console.error("Failed to load contractors:", err));
-    }
-
-    function bindMutualExclusion(fightId, restId) {
-        const fightSelect = $(`#${fightId}`);
-        const restSelect = $(`#${restId}`);
-
-        function updateOptions(source, target) {
-            const selected = new Set(source.val() || []);
-            target.find("option").each(function () {
-                $(this).prop("disabled", selected.has($(this).val()));
-            });
         }
 
-        fightSelect.on("change", () => updateOptions(fightSelect, restSelect));
-        restSelect.on("change", () => updateOptions(restSelect, fightSelect));
-        fightSelect.trigger("change");
-        restSelect.trigger("change");
-    }
+        function loadContractorsForSelectedDateAndRegion() {
+            const date = $("#reportDate").val();
+            const regionId = $("#regionName").val();
+            if (!date || !regionId) return;
 
-    function addGroupReportEntry(filteredGroups) {
-        const localGroupIndex = groupIndex;
-        const groupOptions = filteredGroups.map(group =>
-            `<option value="${group.id}" data-group='${JSON.stringify(group)}'>${group.name}</option>`
-        ).join('');
+            fetch(`/api/daily-work-report/contractors?date=${date}`)
+                .then(res => res.json())
+                .then(data => {
+                    const usedIds = new Set();
+                    const arrived = data.arrived?.[regionId] || [];
+                    const departed = data.departed?.[regionId] || [];
+                    const additional = data.contractorsAll?.all || [];
 
-        const html = `<div class="groupReport" id="groupReport_${localGroupIndex}">
-        <h4>Group Report</h4>
-        <label for="groupName_${localGroupIndex}">${labels.groupName}</label>
-        <select id="groupName_${localGroupIndex}" name="groupReports[${localGroupIndex}].groupName" required>
-            <option value="">${labels.selectGroup}</option>
-            ${groupOptions}
-        </select>
+                    $("#arrivedContractorsContainer").empty();
+                    $("#departedContractorsContainer").empty();
+                    $("#manualContractorSelect").empty();
 
-        <div class="frame">
-            <h5>Combat</h5>
-            <label>Places:</label>
-            <select id="fightingPlaceIds_${localGroupIndex}" multiple></select>
-            <label>Contractors:</label>
-            <select id="fightingContractorsIds_${localGroupIndex}" multiple></select>
-        </div>
+                    arrived.forEach(c => {
+                        const label = contractorLabel(c);
+                        usedIds.add(c.id);
+                        $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", c.id, label));
+                    });
 
-        <div class="frame">
-            <h5>Rest</h5>
-            <label>Places:</label>
-            <select id="restPlaceIds_${localGroupIndex}" multiple></select>
-            <label>Contractors:</label>
-            <select id="restContractorsIds_${localGroupIndex}" multiple></select>
-        </div>
+                    departed.forEach(c => {
+                        const label = contractorLabel(c);
+                        usedIds.add(c.id);
+                        $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", c.id, label));
+                    });
 
-        <label for="groupDescription_${localGroupIndex}">${labels.description}</label>
-        <textarea id="groupDescription_${localGroupIndex}" name="groupReports[${localGroupIndex}].description" rows="2"></textarea>
+                    additional.filter(c => !usedIds.has(c.id)).forEach(c => {
+                        $("#manualContractorSelect").append(`<option value="${c.id}">${contractorLabel(c)}</option>`);
+                    });
+                })
+                .catch(err => console.error("Failed to load contractors:", err));
+        }
 
-        <input type="hidden" name="groupReports[${localGroupIndex}].worked" value="true" />
+        function bindMutualExclusion(fightId, restId) {
+            const fightSelect = $(`#${fightId}`);
+            const restSelect = $(`#${restId}`);
 
-        <div id="hiddenInputsContainer_${localGroupIndex}"></div>
+            function updateOptions(source, target) {
+                const selected = new Set(source.val() || []);
+                target.find("option").each(function () {
+                    $(this).prop("disabled", selected.has($(this).val()));
+                });
+            }
 
-        <div class="frame">
+            fightSelect.on("change", () => updateOptions(fightSelect, restSelect));
+            restSelect.on("change", () => updateOptions(restSelect, fightSelect));
+            fightSelect.trigger("change");
+            restSelect.trigger("change");
+        }
+
+        function addGroupReportEntry(filteredGroups) {
+            const localGroupIndex = groupIndex;
+            const groupOptions = filteredGroups.map(group =>
+                `<option value="${group.id}" data-group='${JSON.stringify(group)}'>${group.name}</option>`
+            ).join('');
+
+            const html = `<div class="groupReport" id="groupReport_${localGroupIndex}">
+    <h4 id="groupReportHeader_${localGroupIndex}">Group Report</h4>
+
+    <label for="groupName_${localGroupIndex}">${labels.groupName}</label>
+    <select id="groupName_${localGroupIndex}" name="groupReports[${localGroupIndex}].groupName" required>
+        <option value="">${labels.selectGroup}</option>
+        ${groupOptions}
+    </select>
+
+    <input type="hidden" id="fightingGroupFlag_${localGroupIndex}" name="groupReports[${localGroupIndex}].fightingGroup" value="false" />
+
+    <div class="frame">
+        <h5>Combat</h5>
+        <label>Places:</label>
+        <select id="fightingPlaceIds_${localGroupIndex}" multiple name="groupReports[${localGroupIndex}].fightingPlaces"></select>
+        <label>Contractors:</label>
+        <select id="fightingContractorsIds_${localGroupIndex}" multiple name="groupReports[${localGroupIndex}].fightingContractors"></select>
+    </div>
+
+    <div class="frame">
+        <h5>Rest</h5>
+        <label>Places:</label>
+        <select id="restPlaceIds_${localGroupIndex}" multiple name="groupReports[${localGroupIndex}].restPlaces"></select>
+        <label>Contractors:</label>
+        <select id="restContractorsIds_${localGroupIndex}" multiple name="groupReports[${localGroupIndex}].restContractors"></select>
+    </div>
+
+    <label for="groupDescription_${localGroupIndex}">${labels.description}</label>
+    <textarea id="groupDescription_${localGroupIndex}" name="groupReports[${localGroupIndex}].description" rows="2"></textarea>
+
+    <label for="fightingReport_${localGroupIndex}">Fighting Report:</label>
+    <textarea id="fightingReport_${localGroupIndex}" name="groupReports[${localGroupIndex}].fightingReport" rows="2" placeholder="Enter fighting report..."></textarea>
+
+    <div class="frame">
         <label>Ammunition:</label>
         <div class="align-right">
             <button type="button" onclick="toggleAmmunition('${localGroupIndex}')">Show/Hide Ammo</button>
         </div>
         <div id="ammunitionContainer_${localGroupIndex}" style="display:none; margin-top: 5px;">
             <textarea name="groupReports[${localGroupIndex}].ammunition" rows="2" placeholder="Enter ammunition details..."></textarea>
+            <div id="ammoVerifiedMarker_${localGroupIndex}" style="margin-top:5px;"></div>
         </div>
-        </div>
+    </div>
 
-        <input type="hidden" name="groupReports[${localGroupIndex}].worked" value="true" />
-        <div id="hiddenInputsContainer_${localGroupIndex}"></div>
+    <input type="hidden" name="groupReports[${localGroupIndex}].worked" value="true" />
+    <div id="hiddenInputsContainer_${localGroupIndex}"></div>
 
-
-
-        <div class="flex-buttons">
-            <button type="button" class="removeGroupReport" data-group-id="groupReport_${localGroupIndex}">${labels.remove}</button>
-        </div>
-
-
-    </div>`;
-
-        $("#groupReportsContainer").append(html);
-        bindMutualExclusion(`fightingPlaceIds_${localGroupIndex}`, `restPlaceIds_${localGroupIndex}`);
-        bindMutualExclusion(`fightingContractorsIds_${localGroupIndex}`, `restContractorsIds_${localGroupIndex}`);
-
-        $(`#groupName_${localGroupIndex}`).trigger("change");
-        groupIndex++;
-    }
-
-    function updateManualContractorSelect() {
-        const usedIds = new Set();
-
-        $("#arrivedContractorsContainer input[name='arrivedContractorIds']").each(function () {
-            usedIds.add($(this).val());
-        });
-
-        $("#departedContractorsContainer input[name='departedContractorIds']").each(function () {
-            usedIds.add($(this).val());
-        });
-
-        $("#manualContractorSelect option").each(function () {
-            const id = $(this).val();
-            $(this).prop("disabled", usedIds.has(id));
-        });
-    }
-
-    // Call after adding/removing contractor
-    $("#addToArrived, #addToDeparted").click(updateManualContractorSelect);
-    $(document).on("click", ".removeContractor", updateManualContractorSelect);
+    <div class="flex-buttons">
+        <button type="button" class="removeGroupReport" data-group-id="groupReport_${localGroupIndex}">${labels.remove}</button>
+    </div>
+</div>`;
 
 
-    $(document).on("change", "select[id^='groupName_']", function () {
-        const $this = $(this);
-        const idx = $this.attr("id").split("_")[1];
-        const selectedOption = $this.find("option:selected");
-        const groupData = selectedOption.data("group");
-        if (!groupData) return;
 
-        const fightingPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 100)
-            .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
-        $(`#fightingPlaceIds_${idx}`).html(fightingPlaceOptions);
+            $("#groupReportsContainer").append(html);
+            bindMutualExclusion(`fightingPlaceIds_${localGroupIndex}`, `restPlaceIds_${localGroupIndex}`);
+            bindMutualExclusion(`fightingContractorsIds_${localGroupIndex}`, `restContractorsIds_${localGroupIndex}`);
 
-        const restPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 30)
-            .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
-        $(`#restPlaceIds_${idx}`).html(restPlaceOptions);
+            const $groupSelect = $(`#groupName_${localGroupIndex}`);
+            $groupSelect.on("change", function () {
+                const idx = this.id.split("_")[1];
+                const selectedOption = $(this).find("option:selected");
+                const groupJson = selectedOption.attr("data-group");
+                if (!groupJson) return;
+                const groupData = JSON.parse(groupJson);
 
-        const contractorOptions = (groupData.contractors || []).map(c =>
-            `<option value="${c.id}">${contractorLabel(c)}</option>`).join('');
-        $(`#fightingContractorsIds_${idx}`).html(contractorOptions);
-        $(`#restContractorsIds_${idx}`).html(contractorOptions);
+                const fightingPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 100)
+                    .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+                $(`#fightingPlaceIds_${idx}`).html(fightingPlaceOptions);
 
-        $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
-    });
+                const restPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 30)
+                    .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+                $(`#restPlaceIds_${idx}`).html(restPlaceOptions);
 
-    $("#regionReportForm").on("submit", function () {
-        $("[id^='groupReport_']").each(function () {
-            const idx = this.id.split('_')[1];
-            const container = $(`#hiddenInputsContainer_${idx}`).empty();
+                const contractorOptions = (groupData.contractors || []).map(c =>
+                    `<option value="${c.id}">${contractorLabel(c)}</option>`).join('');
+                $(`#fightingContractorsIds_${idx}`).html(contractorOptions);
+                $(`#restContractorsIds_${idx}`).html(contractorOptions);
 
-            const allPlaces = {};
-            $(`#fightingPlaceIds_${idx} option:selected, #restPlaceIds_${idx} option:selected`).each(function () {
-                const coef = $(this).data("coef") || 0;
-                allPlaces[$(this).val()] = coef;
+                $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
+
+                $(`#groupReportHeader_${idx}`).text(`Group Report: ${selectedOption.text()}`);
             });
 
-            for (const [placeId, coef] of Object.entries(allPlaces)) {
-                container.append(`<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`);
-            }
+// ⏬ Trigger after binding
+            $groupSelect.trigger("change");
 
-            const appendMap = (contractors, places) => {
-                contractors.forEach(cid => {
-                    places.forEach(pid => {
-                        container.append(`<input type="hidden" name="groupReports[${idx}].contractorPlaceMap[${cid}][]" value="${pid}"/>`);
-                    });
-                });
-            };
-
-            const fightC = $(`#fightingContractorsIds_${idx}`).val() || [];
-            const restC = $(`#restContractorsIds_${idx}`).val() || [];
-            const fightP = $(`#fightingPlaceIds_${idx}`).val() || [];
-            const restP = $(`#restPlaceIds_${idx}`).val() || [];
-
-            appendMap(fightC, fightP);
-            appendMap(restC, restP);
-
-            const allContractorIds = new Set([...fightC, ...restC]);
-            for (const contractorId of allContractorIds) {
-                container.append(`<input type="hidden" name="groupReports[${idx}].contractorsIds" value="${contractorId}" />`);
-            }
-        });
-    });
-
-    function toggleAmmunition(index) {
-        const container = document.getElementById(`ammunitionContainer_${index}`);
-        if (container) {
-            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            groupIndex++;
         }
-    }
 
-
-    $(document).ready(function () {
-        $("#regionName, #reportDate").on("change", function () {
-            loadContractorsForSelectedDateAndRegion();
-
-            const regionId = $("#regionName").val();
-            const filteredGroups = groups.filter(g => g.regionId == regionId);
-
-            $("#groupReportsContainer").empty();
-            groupIndex = 0;
-
-            $("#addGroupReport").off("click").on("click", function () {
-                addGroupReportEntry(filteredGroups);
-            });
-
-            $("#addGroupReport").click();
-        });
-
-        $("#regionReportForm").on("submit", function (e) {
-            const arrived = new Set();
-            const departed = new Set();
+        function updateManualContractorSelect() {
+            const usedIds = new Set();
 
             $("#arrivedContractorsContainer input[name='arrivedContractorIds']").each(function () {
-                arrived.add($(this).val());
+                usedIds.add($(this).val());
             });
+
             $("#departedContractorsContainer input[name='departedContractorIds']").each(function () {
-                departed.add($(this).val());
+                usedIds.add($(this).val());
             });
 
-            for (let id of arrived) {
-                if (departed.has(id)) {
-                    alert("❗ Contractor cannot be both arrived and departed: " + id);
-                    e.preventDefault(); // block form submission
-                    return false;
+            $("#manualContractorSelect option").each(function () {
+                const id = $(this).val();
+                $(this).prop("disabled", usedIds.has(id));
+            });
+        }
+
+        // Call after adding/removing contractor
+        $("#addToArrived, #addToDeparted").click(updateManualContractorSelect);
+        $(document).on("click", ".removeContractor", updateManualContractorSelect);
+
+
+        $(document).on("change", "select[id^='groupName_']", function () {
+            const $this = $(this);
+            const idx = $this.attr("id").split("_")[1];
+            const selectedOption = $this.find("option:selected");
+            const groupData = selectedOption.data("group");
+            if (!groupData) return;
+
+            const fightingPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 100)
+                .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+            $(`#fightingPlaceIds_${idx}`).html(fightingPlaceOptions);
+
+            const restPlaceOptions = (groupData.places || []).filter(p => Number(p.coeficient) === 30)
+                .map(p => `<option value="${p.id}" data-coef="${p.coeficient}">${p.name} (${p.coeficient})</option>`).join('');
+            $(`#restPlaceIds_${idx}`).html(restPlaceOptions);
+
+            const contractorOptions = (groupData.contractors || []).map(c =>
+                `<option value="${c.id}">${contractorLabel(c)}</option>`).join('');
+            $(`#fightingContractorsIds_${idx}`).html(contractorOptions);
+            $(`#restContractorsIds_${idx}`).html(contractorOptions);
+
+            $(`#groupDescription_${idx}`).val(groupData.defaultDescription || '');
+
+            $(`#groupReportHeader_${idx}`).text(`Group Report: ${selectedOption.text()}`);
+        });
+
+        $("#regionReportForm").on("submit", function () {
+            $("[id^='groupReport_']").each(function () {
+                const idx = this.id.split('_')[1];
+                const container = $(`#hiddenInputsContainer_${idx}`).empty();
+
+                const allPlaces = {};
+                $(`#fightingPlaceIds_${idx} option:selected, #restPlaceIds_${idx} option:selected`).each(function () {
+                    const coef = $(this).data("coef") || 0;
+                    allPlaces[$(this).val()] = coef;
+                });
+
+                for (const [placeId, coef] of Object.entries(allPlaces)) {
+                    container.append(`<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`);
                 }
+
+                const appendMap = (contractors, places) => {
+                    contractors.forEach(cid => {
+                        places.forEach(pid => {
+                            container.append(`<input type="hidden" name="groupReports[${idx}].contractorPlaceMap[${cid}][]" value="${pid}"/>`);
+                        });
+                    });
+                };
+
+                const fightC = $(`#fightingContractorsIds_${idx}`).val() || [];
+                const restC = $(`#restContractorsIds_${idx}`).val() || [];
+                const fightP = $(`#fightingPlaceIds_${idx}`).val() || [];
+                const restP = $(`#restPlaceIds_${idx}`).val() || [];
+
+                appendMap(fightC, fightP);
+                appendMap(restC, restP);
+
+                const allContractorIds = new Set([...fightC, ...restC]);
+                for (const contractorId of allContractorIds) {
+                    container.append(`<input type="hidden" name="groupReports[${idx}].contractorsIds" value="${contractorId}" />`);
+                }
+            });
+        });
+
+        function toggleAmmunition(index) {
+            const container = document.getElementById(`ammunitionContainer_${index}`);
+            if (container) {
+                container.style.display = container.style.display === 'none' ? 'block' : 'none';
             }
-        });
+        }
 
 
-        $(document).on("click", ".removeContractor", function () {
-            const $entry = $(this).closest(".contractor-entry");
-            const id = $entry.find("input").val();
-            const label = $entry.find("span").text();
-            if (!$("#manualContractorSelect option[value='" + id + "']").length) {
-                $("#manualContractorSelect").append(`<option value="${id}">${label}</option>`);
-            }
-            $entry.remove();
+        $(document).ready(function () {
+            $("#regionName, #reportDate").on("change", function () {
+                const regionId = $("#regionName").val();
+                const date = $("#reportDate").val(); // ✅ define `date`
+
+                if (!regionId || !date) return; // ✅ exit early if either is missing
+
+                loadContractorsForSelectedDateAndRegion();
+                loadGroupStatusSummary();
+
+                const filteredGroups = groups.filter(g => g.regionId == regionId);
+
+                $("#groupReportsContainer").empty();
+                groupIndex = 0;
+
+                // Attach fresh click listener to "Add Group Report" button
+                $("#addGroupReport").off("click").on("click", function () {
+                    addGroupReportEntry(filteredGroups);
+                });
+
+                // Pre-fill all group reports from backend
+                loadGroupReportsPrefilled(regionId, date, filteredGroups);
+            });
+
+
+            $("#regionReportForm").on("submit", function (e) {
+                const arrived = new Set();
+                const departed = new Set();
+
+                $("#arrivedContractorsContainer input[name='arrivedContractorIds']").each(function () {
+                    arrived.add($(this).val());
+                });
+                $("#departedContractorsContainer input[name='departedContractorIds']").each(function () {
+                    departed.add($(this).val());
+                });
+
+                for (let id of arrived) {
+                    if (departed.has(id)) {
+                        alert("❗ Contractor cannot be both arrived and departed: " + id);
+                        e.preventDefault(); // block form submission
+                        return false;
+                    }
+                }
+            });
+
+
+            $(document).on("click", ".removeContractor", function () {
+                const $entry = $(this).closest(".contractor-entry");
+                const id = $entry.find("input").val();
+                const label = $entry.find("span").text();
+                if (!$("#manualContractorSelect option[value='" + id + "']").length) {
+                    $("#manualContractorSelect").append(`<option value="${id}">${label}</option>`);
+                }
+                $entry.remove();
+            });
+
+            $(document).on("click", ".removeExtraData", function () {
+                $(this).parent().remove();
+            });
+
+            $(document).on("click", ".removeGroupReport", function () {
+                $("#" + $(this).data("group-id")).remove();
+
+                // Перегенерація всіх залишених блоків
+                const reports = $("#groupReportsContainer .groupReport");
+                groupIndex = 0; // скидаємо
+
+                reports.each(function () {
+                    const oldIdx = this.id.split('_')[1];
+                    const newIdx = groupIndex++;
+
+                    // Оновити ID і name всім елементам усередині блоку
+                    $(this).attr("id", `groupReport_${newIdx}`);
+                    $(this).find(`[id^='groupReportHeader_']`).attr("id", `groupReportHeader_${newIdx}`);
+                    $(this).find(`[id^='groupName_']`)
+                        .attr("id", `groupName_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].groupName`);
+
+                    $(this).find(`[id^='groupDescription_']`)
+                        .attr("id", `groupDescription_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].description`);
+
+                    $(this).find(`[id^='fightingReport_']`)
+                        .attr("id", `fightingReport_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].fightingReport`);
+
+                    $(this).find(`[id^='fightingPlaceIds_']`)
+                        .attr("id", `fightingPlaceIds_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].fightingPlaces`);
+
+                    $(this).find(`[id^='restPlaceIds_']`)
+                        .attr("id", `restPlaceIds_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].restPlaces`);
+
+                    $(this).find(`[id^='fightingContractorsIds_']`)
+                        .attr("id", `fightingContractorsIds_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].fightingContractors`);
+
+                    $(this).find(`[id^='restContractorsIds_']`)
+                        .attr("id", `restContractorsIds_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].restContractors`);
+
+                    $(this).find(`[id^='ammunitionContainer_']`).attr("id", `ammunitionContainer_${newIdx}`);
+                    $(this).find(`[id^='ammoVerifiedMarker_']`).attr("id", `ammoVerifiedMarker_${newIdx}`);
+                    $(this).find(`[id^='fightingGroupFlag_']`)
+                        .attr("id", `fightingGroupFlag_${newIdx}`)
+                        .attr("name", `groupReports[${newIdx}].fightingGroup`);
+
+                    $(this).find(`[id^='hiddenInputsContainer_']`).attr("id", `hiddenInputsContainer_${newIdx}`);
+
+                    $(this).find(".removeGroupReport").attr("data-group-id", `groupReport_${newIdx}`);
+                });
+            });
+
+            $("#addToArrived").click(() => {
+                const $sel = $("#manualContractorSelect");
+                const id = $sel.val();
+                const label = $sel.find("option:selected").text();
+                if (!id) return;
+                $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", id, label));
+                $sel.find(`option[value="${id}"]`).remove();
+            });
+
+            $("#addToDeparted").click(() => {
+                const $sel = $("#manualContractorSelect");
+                const id = $sel.val();
+                const label = $sel.find("option:selected").text();
+                if (!id) return;
+                $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", id, label));
+                $sel.find(`option[value="${id}"]`).remove();
+            });
+
+            $("#addExtraData").click(function () {
+                $("#extraDataContainer").append($("#extraDataTemplate").html());
+            });
         });
 
-        $(document).on("click", ".removeExtraData", function () {
-            $(this).parent().remove();
-        });
+        function loadGroupStatusSummary() {
+            const date = $("#reportDate").val();
+            const regionId = $("#regionName").val();
+            if (!date || !regionId) return;
 
-        $(document).on("click", ".removeGroupReport", function () {
-            $("#" + $(this).data("group-id")).remove();
-        });
+            fetch(`/api/group-summary?date=${date}&regionId=${regionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = $("#groupStatusSummaryTable tbody");
+                    tbody.empty();
+                    data.forEach(status => {
+                        const rowClass = `status-${status.status.replace(/\s/g, '\\ ')}`;
+                        tbody.append(`<tr class="${rowClass}">
+                                        <td>${status.name}</td>
+                                        <td>${status.status}</td>
+                                        <td>${status.type}</td>
+                                        <td>${status.ammunitionStatus || '-'}</td>
+                                    </tr>`);
+                    });
 
-        $("#addToArrived").click(() => {
-            const $sel = $("#manualContractorSelect");
-            const id = $sel.val();
-            const label = $sel.find("option:selected").text();
-            if (!id) return;
-            $("#arrivedContractorsContainer").append(createContractorInput("arrivedContractorIds", id, label));
-            $sel.find(`option[value="${id}"]`).remove();
-        });
 
-        $("#addToDeparted").click(() => {
-            const $sel = $("#manualContractorSelect");
-            const id = $sel.val();
-            const label = $sel.find("option:selected").text();
-            if (!id) return;
-            $("#departedContractorsContainer").append(createContractorInput("departedContractorIds", id, label));
-            $sel.find(`option[value="${id}"]`).remove();
-        });
+                })
+                .catch(err => console.error("Failed to load group status summary:", err));
+        }
 
-        $("#addExtraData").click(function () {
-            $("#extraDataContainer").append($("#extraDataTemplate").html());
-        });
-    });
-    /*]]>*/
-</script>
+        function loadGroupReportsPrefilled(regionId, date, filteredGroups) {
+            fetch(`/api/group-report-prefill?regionId=${regionId}&date=${date}`)
+                .then(res => res.json())
+                .then(data => {
+                    $("#groupReportsContainer").empty();
+                    groupIndex = 0;
+
+                    data.forEach(prefill => {
+                        addGroupReportEntry(filteredGroups);
+
+                        const idx = groupIndex - 1;
+                        const $groupSelect = $(`#groupName_${idx}`);
+                        $groupSelect.val(prefill.groupId).trigger("change");
+
+                        // Delay to allow dynamic group data binding (places/contractors)
+                        setTimeout(() => {
+                            $(`#groupDescription_${idx}`).val(prefill.description || '');
+                            $(`#fightingReport_${idx}`).val(prefill.fightingReport || '');
+
+                            $(`#fightingContractorsIds_${idx}`).val(prefill.fightingContractors || []).trigger("change");
+                            $(`#restContractorsIds_${idx}`).val(prefill.restContractors || []).trigger("change");
+                            $(`#fightingPlaceIds_${idx}`).val(prefill.fightingPlaces || []).trigger("change");
+                            $(`#restPlaceIds_${idx}`).val(prefill.restPlaces || []).trigger("change");
+
+                            if (prefill.ammunition) {
+                                $(`#ammunitionContainer_${idx}`).show();
+                                $(`#ammunitionContainer_${idx} textarea`).val(prefill.ammunition);
+                            }
+
+                            if (prefill.ammoVerified) {
+                                $(`#ammoVerifiedMarker_${idx}`).html(`<label style="color:green; font-weight:bold;">✓ Ammunition Verified</label>`);
+                            }
+
+                            if (prefill.fightingGroup) {
+                                $(`#fightingGroupFlag_${idx}`).val("true");
+                            }
+                        }, 500);
+                    });
+
+                    // 🔄 Regenerate hidden fields AFTER all prefill has settled
+                    setTimeout(() => {
+                        $("[id^='groupReport_']").each(function () {
+                            const idx = this.id.split('_')[1];
+                            const container = $(`#hiddenInputsContainer_${idx}`).empty();
+
+                            const allPlaces = {};
+                            $(`#fightingPlaceIds_${idx} option:selected, #restPlaceIds_${idx} option:selected`).each(function () {
+                                const coef = $(this).data("coef") || 0;
+                                allPlaces[$(this).val()] = coef;
+                            });
+
+                            for (const [placeId, coef] of Object.entries(allPlaces)) {
+                                container.append(`<input type="hidden" name="groupReports[${idx}].placeCoefficients[${placeId}]" value="${coef}">`);
+                            }
+
+                            const appendMap = (contractors, places) => {
+                                contractors.forEach(cid => {
+                                    places.forEach(pid => {
+                                        container.append(`<input type="hidden" name="groupReports[${idx}].contractorPlaceMap[${cid}][]" value="${pid}"/>`);
+                                    });
+                                });
+                            };
+
+                            const fightC = $(`#fightingContractorsIds_${idx}`).val() || [];
+                            const restC = $(`#restContractorsIds_${idx}`).val() || [];
+                            const fightP = $(`#fightingPlaceIds_${idx}`).val() || [];
+                            const restP = $(`#restPlaceIds_${idx}`).val() || [];
+
+                            appendMap(fightC, fightP);
+                            appendMap(restC, restP);
+
+                            const allContractorIds = new Set([...fightC, ...restC]);
+                            for (const contractorId of allContractorIds) {
+                                container.append(`<input type="hidden" name="groupReports[${idx}].contractorsIds" value="${contractorId}" />`);
+                            }
+                        });
+                    }, 500); // ⏳ Slightly increased delay to ensure all DOM updates have settled
+                })
+                .catch(err => console.error("❌ Failed to load pre-filled group reports:", err));
+        }
+
+
+
+
+
+        /*]]>*/
+    </script>
 
 </div>
 </body>

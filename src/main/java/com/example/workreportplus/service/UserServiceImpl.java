@@ -93,6 +93,12 @@ public class UserServiceImpl implements UserService {
                 .fetchOptional(USERS.ID);
     }
 
+    @Override
+    public String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
+    }
+
+
 
 
 
