@@ -52,9 +52,9 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        String token = jwtTokenProvider.generateToken(request.email());
 
         UsersRecord user = userService.getByEmail(request.email()).orElseThrow();
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole());
 
         auditLogService.log(
                 "LOGIN", "auth", user.getEmail(), user.getId(), httpRequest.getRemoteAddr(), "User logged in"

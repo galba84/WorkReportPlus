@@ -2,6 +2,7 @@ package com.example.workreportplus.service;
 
 import com.example.workreportplus.dto.OperationReportDto;
 import org.jooq.DSLContext;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class OperativeReportService {
         this.googleSheetsService = googleSheetsService;
     }
 
+    @Cacheable("getOperationReportsByDate")
     public List<OperationReportDto> getOperationReportsByDate(LocalDate targetDate, String regionName) throws IOException {
         String range = "ЗвітГруп!A2:L"; // A = Дата Звіту, L = ІД Населеного пункту
         List<List<Object>> rows = googleSheetsService.readSheet(OPERATIVE_TABLE_ID, range);

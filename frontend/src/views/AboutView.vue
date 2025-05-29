@@ -1,6 +1,8 @@
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+
+
+    <img alt="Vue logo" class="logo" src="@/assets/Personal Manager plus schema1.jpg" width="600" height="600" />
   </div>
 </template>
 

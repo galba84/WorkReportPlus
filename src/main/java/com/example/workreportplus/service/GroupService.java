@@ -16,7 +16,6 @@ import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TA
 @Service
 public class GroupService {
 
-    public static final String SHEEDT_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
     private final DSLContext dsl;
     private final GoogleSheetsService googleSheetsService;
 
@@ -47,6 +46,13 @@ public class GroupService {
                 .fetchInto(GroupDto.class);
     }
 
+    public GroupDto getGroupById(UUID groupId) {
+        return dsl.selectFrom(GROUP)
+                .where(GROUP.STATUS.isTrue())
+                .and(GROUP.ID.eq(groupId))
+                .fetchOneInto(GroupDto.class);
+    }
+
     public List<UUID> getAllGroupIds() {
         return dsl.select(GROUP.ID)
                 .from(GROUP)
@@ -70,6 +76,7 @@ public class GroupService {
         return dsl.select(GROUP.ID)
                 .from(GROUP)
                 .where(GROUP.REGION_ID.eq(regionId))
+                .and(GROUP.STATUS.isTrue())
                 .fetchInto(UUID.class);
     }
 
@@ -96,34 +103,9 @@ public class GroupService {
                 .fetchOne(GROUP.NAME);
     }
 
-    public UUID upsertGroup(UUID id, String groupName, UUID regionId) {
-        UUID existingId = dsl.select(GROUP.ID)
-                .from(GROUP)
-                .where(GROUP.NAME.eq(groupName))
-                .fetchOne(GROUP.ID);
-
-        if (existingId != null) {
-            return existingId;
-        }
-
-        // generate id if null
-        UUID finalId = (id != null) ? id : UUID.randomUUID();
-
-        dsl.insertInto(GROUP)
-                .set(GROUP.ID, finalId)
-                .set(GROUP.NAME, groupName)
-                .set(GROUP.REGION_ID, regionId)
-                .execute();
-
-        return finalId;
-    }
-
-
     public void updateGroupsFromTable() throws IOException {
-        String range = "GroupList!A2:D"; // assuming A = id, B = name, C = region, D = regionId
-
+        String range = "GroupList!A2:E"; // assuming A = id, B = name, C = region, D = regionId
         List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
-
         if (rows.isEmpty()) {
             System.out.println("No data found in GroupList sheet");
             return;
@@ -136,27 +118,29 @@ public class GroupService {
                             .execute();
                     ctx.batch(
                             rows.stream()
-                                    .filter(row -> row.size() >= 4) // minimal required columns
+                                    .filter(row -> row.size() >= 5) // minimal required columns
                                     .filter(row -> !row.get(0).toString().isEmpty())
                                     .filter(row -> !row.get(1).toString().isEmpty())
                                     .filter(row -> !row.get(2).toString().isEmpty())
                                     .filter(row -> !row.get(3).toString().isEmpty())
-
+                                    .filter(row -> !row.get(4).toString().isEmpty())
                                     .map(row -> {
                                         UUID groupId = !row.get(0).toString().isEmpty() ? UUID.fromString(row.get(0).toString()) : UUID.randomUUID();
                                         String groupName = row.get(1).toString().trim();
                                         UUID regionId = UUID.fromString(row.get(3).toString());
-
+                                        boolean isFighting = "Б".equalsIgnoreCase(row.get(4).toString().trim());
                                         return ctx.insertInto(GROUP)
                                                 .set(GROUP.ID, groupId)
                                                 .set(GROUP.NAME, groupName)
                                                 .set(GROUP.REGION_ID, regionId)
                                                 .set(GROUP.STATUS, true)
+                                                .set(GROUP.IS_FIGHTING, isFighting)
                                                 .onConflict(GROUP.ID)
                                                 .doUpdate()
                                                 .set(GROUP.NAME, groupName)
                                                 .set(GROUP.REGION_ID, regionId)
-                                                .set(GROUP.STATUS, true);
+                                                .set(GROUP.STATUS, true)
+                                                .set(GROUP.IS_FIGHTING, isFighting);
                                     })
                                     .toList()
                     ).execute();

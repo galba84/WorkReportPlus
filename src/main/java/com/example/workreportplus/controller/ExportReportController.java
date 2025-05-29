@@ -155,7 +155,7 @@ public class ExportReportController {
 
         String detailsByGroupId = descriptionTemplateService.getDetailsByGroupId(groupReportDto.getGroupId());
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
-        List<PlaceDto> places = placesService.getPlaceByIds(groupReportDto.getPlaceIds());
+        List<PlaceDto> places = placesService.getPlacesByIds(groupReportDto.getPlaceIds());
         variables.put("groupName", groupName);
         variables.put("groupDetails", detailsByGroupId);
         variables.put("ammunition", getAmmunition(groupReportDto));

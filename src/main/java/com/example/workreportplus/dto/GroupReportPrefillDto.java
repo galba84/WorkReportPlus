@@ -12,13 +12,13 @@ public record GroupReportPrefillDto(
         String groupName,
         String description,
         String fightingReport,
-        List<UUID> fightingContractors,
-        List<UUID> fightingPlaces,
-        List<UUID> restContractors,
-        List<UUID> restPlaces,
+        List<ContractorDto> fightingContractors,
+        List<PlaceDto> fightingPlaces,
+        List<ContractorDto> restContractors,
+        List<PlaceDto> restPlaces,
         String ammunition,
         boolean ammoVerified,
-        boolean fightingGroup
+        boolean isFighting
 ) {
 
 }

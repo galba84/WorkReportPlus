@@ -142,7 +142,7 @@ public class PlacesService {
 
     }
 
-    public List<PlaceDto> getPlaceByIds(List<UUID> placeIds) {
+    public List<PlaceDto> getPlacesByIds(List<UUID> placeIds) {
         if (placeIds == null || placeIds.isEmpty()) {
             return List.of(); // return empty list safely
         }
@@ -164,19 +164,29 @@ public class PlacesService {
                 });
     }
 
+    public PlaceDto getPlaceByIds(UUID placeId) {
+        if (placeId == null) {
+            return new PlaceDto(); // or return null, depending on your design
+        }
 
-    public List<PlaceDto> getPlacesByIds(List<UUID> placeIds) {
         return dsl.selectFrom(PLACE)
-                .where(PLACE.ID.in(placeIds))
-                .fetch()
-                .map(record -> PlaceDto.builder()
-                        .name(record.getName())
-                        .areaType(record.getAreaType())
-                        .county(record.getCounty())
-                        .district(record.getDistrict())
-                        .region(record.getRegion()) // if applicable
-                        .coeficient(record.getCoeficient()) // if applicable
-                        .build());
+                .where(PLACE.ID.eq(placeId))
+                .fetchOptional()
+                .map(record -> {
+                    PlaceDto dto = new PlaceDto();
+                    dto.setId(record.getId() != null ? record.getId().toString() : null);
+                    dto.setName(record.getName());
+                    dto.setAreaType(record.getAreaType());
+                    dto.setCounty(record.getCounty());
+                    dto.setDistrict(record.getDistrict());
+                    dto.setRegion(record.getRegion());
+                    dto.setCoeficient(record.getCoeficient());
+                    dto.setRegionId(record.getRegionId() != null ? record.getRegionId().toString() : null);
+                    return dto;
+                })
+                .orElseGet(PlaceDto::new); // return empty dto if not found
     }
+
+
 
 }
