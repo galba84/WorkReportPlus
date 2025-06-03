@@ -26,17 +26,13 @@ public abstract class GroupReportMapper {
         if (groupId != null) {
             dto.setGroupId(groupId);
         }
-        dto.setPlacesWithCoeficcient(dto.getPlacesWithCoeficcient());
-        dto.setPlaceIds((request.getPlaceCoefficients()
-                .keySet().stream()
-                .filter(Objects::nonNull)
-                .toList()));
-        dto.setContractorsIds(safeStringListToUuidList(request.getContractorPlaceMap().keySet().stream().toList()));
-        dto.setContractorToPlacesMap(convertToUUIDMap(request.getContractorPlaceMap()));
-        dto.setPlacesWithCoeficcient(request.getPlaceCoefficients());
+        dto.setFightingPlaces(request.getFightingPlaces());
+        dto.setFightingContractors(request.getFightingContractors());
+        dto.setRestContractors(request.getRestContractors());
+        dto.setRestPlaces(request.getRestPlaces());
         dto.setRegionReportId(UUID.fromString(regionId));
         dto.setReportDate(reportDate);
-        dto.setAmmunition(parseAmmunition(request.getAmmunition()));
+        dto.setAmmunition((request.getAmmunition()));
     }
 
     private List<AmmunitionDto> parseAmmunition(String raw) {

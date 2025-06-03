@@ -1,6 +1,5 @@
 package com.example.workreportplus.dto;
 
-import com.example.workreportplus.ENUM.PersonnelLossesType;
 import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.dto.templates.TrackedDto;
 import lombok.*;
@@ -25,17 +24,17 @@ public class GroupReportDto extends TrackedDto {
 
     private UUID regionReportId;
 
-    private List<UUID> placeIds;
-    private Map<UUID, String> placesWithCoeficcient;
-    private Map<UUID, List<UUID>> contractorToPlacesMap;
+    private List<UUID> fightingContractors;
+    private List<UUID> restContractors;
 
-    private List<UUID> contractorsIds;
-    private List<ContractorDto> contractors;
+    private List<UUID> fightingPlaces;
+    private List<UUID> restPlaces;
 
     private String description;
-    private String details;
+    private String successReport;
 
-    private Map<String, PersonnelLossesType> contractorLoosesIdTypeMap;
+    private String ammunition;
+    private boolean ammoVerified;
 
     private boolean worked;
 
@@ -47,5 +46,4 @@ public class GroupReportDto extends TrackedDto {
 
     private Map<String, String> extraData;
 
-    private List<AmmunitionDto> ammunition;
 }

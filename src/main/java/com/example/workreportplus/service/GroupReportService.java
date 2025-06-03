@@ -43,12 +43,13 @@ public class GroupReportService implements ReportService {
     private final OperativeReportService operativeReportService;
     private final RegionService regionService;
     private final Status_30_100_Service status_30_100_service;
+    private final DescriptionTemplateService descriptionTemplateService;
     ObjectMapper objectMapper = new ObjectMapper();
 
     public GroupReportService(DSLContext dsl, RegionReportMapper regionReportMapper,
                               GroupReportMapper groupReportMapper, ContractorService contractorService,
                               PositionService positionService, PlacesService placeService,
-                              GroupService groupService, OperativeReportService operativeReportService, RegionService regionService, Status_30_100_Service status30100Service) {
+                              GroupService groupService, OperativeReportService operativeReportService, RegionService regionService, Status_30_100_Service status30100Service, DescriptionTemplateService descriptionTemplateService) {
         this.dsl = dsl;
         this.groupReportMapper = groupReportMapper;
         this.contractorService = contractorService;
@@ -58,6 +59,7 @@ public class GroupReportService implements ReportService {
         this.operativeReportService = operativeReportService;
         this.regionService = regionService;
         status_30_100_service = status30100Service;
+        this.descriptionTemplateService = descriptionTemplateService;
     }
 
 
@@ -149,7 +151,7 @@ public class GroupReportService implements ReportService {
     }
 
     private List<ContractorResponse> getContractorResponses(GroupreportRecord record) {
-        UUID[] contractorIds = record.get(GROUPREPORT.CONTRACTORS_IDS);
+        UUID[] contractorIds = record.get(GROUPREPORT.FIGHTING_CONTRACTORS);
 
         return (contractorIds == null || contractorIds.length == 0)
                 ? List.of()
@@ -198,7 +200,7 @@ public class GroupReportService implements ReportService {
 
         // 🔹 Working Areas
         List<PlaceDto> workingAreas = List.of();
-        UUID[] placeIds = record.get(GROUPREPORT.PLACE_IDS);
+        UUID[] placeIds = record.get(GROUPREPORT.FIGHTING_PLACES);
         if (placeIds != null && placeIds.length > 0) {
             workingAreas = placeService.getPlacesByIds(List.of(placeIds));
         }
@@ -221,7 +223,7 @@ public class GroupReportService implements ReportService {
                 .date(record.get(GROUPREPORT.REPORT_DATE))
                 .description(record.get(GROUPREPORT.DESCRIPTION))
                 .status(status)
-                .worked(record.get(GROUPREPORT.IS_WORKED))
+                .worked(record.get(GROUPREPORT.WORKED))
                 .contractors(getContractorResponses(record))
                 .extraData(getExtraDataGroupReport(record))
                 .contractorLooses(getContractorLooses(record))
@@ -301,12 +303,12 @@ public class GroupReportService implements ReportService {
         dto.setGroupId(record.get(GROUPREPORT.GROUP_ID));
         dto.setGroupName(record.get(GROUPREPORT.GROUP_ID).toString());
         dto.setRegionReportId(record.get(GROUPREPORT.REGION_REPORT_ID));
-        dto.setPlaceIds(Arrays.stream(record.get(GROUPREPORT.PLACE_IDS)).toList()); // check if this is Array or JSONB
-        dto.setContractorsIds(Arrays.stream(record.get(GROUPREPORT.CONTRACTORS_IDS)).toList()); // same here
+        dto.setFightingPlaces(Arrays.stream(record.get(GROUPREPORT.FIGHTING_PLACES)).toList()); // check if this is Array or JSONB
+        dto.setFightingContractors(Arrays.stream(record.get(GROUPREPORT.FIGHTING_CONTRACTORS)).toList()); // same here
         dto.setDescription(record.get(GROUPREPORT.DESCRIPTION));
-        dto.setWorked(record.get(GROUPREPORT.IS_WORKED));
+        dto.setWorked(record.get(GROUPREPORT.WORKED));
         dto.setReportDate(record.get(GROUPREPORT.REPORT_DATE));
-        dto.setAmmunition(parsedAmmo);
+        dto.setAmmunition(ammunitionJson);
 
         // 👇 Handle status manually if it's Boolean in DB but Enum in code
         Boolean statusValue = record.get(GROUPREPORT.STATUS);
@@ -327,9 +329,9 @@ public class GroupReportService implements ReportService {
                 .fetch()
                 .stream()
                 .flatMap(record -> {
-                    UUID[] contractorIds = record.getContractorsIds();
+                    UUID[] contractorIds = record.getFightingContractors();
                     LocalDate date = record.getReportDate();
-                    Boolean isWorked = record.getIsWorked();
+                    Boolean isWorked = record.getWorked();
                     String groupName = groupService.getGroupNameById(record.getGroupId());
 
                     if (contractorIds == null) return Stream.empty();
@@ -366,7 +368,6 @@ public class GroupReportService implements ReportService {
                     var group = groupService.getGroupById(groupId);
                     String groupNameById = groupService.getGroupNameById(groupId);
                     // Fetch reports and assignments for this group and date
-                    String description = getGroupDescription(reportMap.getOrDefault(groupId, null));
                     String fightingReport = getFightingReport(reportMap.getOrDefault(groupId, null));
                     List<PlaceDto> fightingPlaces = getFightingPlaces(regionId, reportMap.getOrDefault(groupId, null));
                     List<PlaceDto> restPlaces = getRestPlaces(regionId, date);
@@ -378,6 +379,8 @@ public class GroupReportService implements ReportService {
                     List<ContractorDto> restContractors = filterByStatus(contractorsByGroup, uuidServiceStatusMap,
                             ServiceStatus.FIRSTDAY, ServiceStatus.THIRTY);
 
+                    boolean isFightersAvaliable = fightingContractors.size() > 0;
+                    String description = getGroupDescription(reportMap.getOrDefault(groupId, null), group, isFightersAvaliable);
 
                     String ammunition = getAmmunition(reportMap.getOrDefault(groupId, null));
                     boolean ammoVerified = isAmmoVerified(groupId, date, reportMap.getOrDefault(groupId, null));
@@ -410,7 +413,7 @@ public class GroupReportService implements ReportService {
 
     private String getAmmunition(OperationReportDto reportDto) {
         if (reportDto == null) {
-            return "null ammo";
+            return "";
         }
         return reportDto.getAmmo() + System.lineSeparator() + reportDto.getAssets();
     }
@@ -454,18 +457,21 @@ public class GroupReportService implements ReportService {
 
     private String getFightingReport(OperationReportDto reportDto) {
         if (reportDto != null) {
-            return  reportDto.getResult();
+            return reportDto.getResult();
         }
 
         return "";
     }
 
-    private String getGroupDescription(OperationReportDto reportDto) {
+    private String getGroupDescription(OperationReportDto reportDto, GroupDto group, boolean isFightersAvaliable) {
         if (reportDto != null) {
             return reportDto.getDescription();
         }
-
-        return "reportDto.getDescription()";
+        if (isFightersAvaliable) {
+            return descriptionTemplateService.getContentByGroupId(UUID.fromString(group.getId()));
+        } else {
+            return descriptionTemplateService.getContentRestByGroupId(UUID.fromString(group.getId()));
+        }
     }
 
     public Map<UUID, ServiceStatus> mapStatusByContractor(List<ContractorServiceStatusDto> list, LocalDate targetDate) {
@@ -494,8 +500,8 @@ public class GroupReportService implements ReportService {
 
 
     public List<ContractorDto> filterByStatus(List<ContractorDto> contractorsByGroup,
-                                                     Map<UUID, ServiceStatus> statusMap,
-                                                     ServiceStatus... targetStatuses) {
+                                              Map<UUID, ServiceStatus> statusMap,
+                                              ServiceStatus... targetStatuses) {
         var targetSet = Set.of(targetStatuses);
 
         return contractorsByGroup.stream()

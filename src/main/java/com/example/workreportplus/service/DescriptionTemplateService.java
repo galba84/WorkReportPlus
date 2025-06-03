@@ -55,6 +55,16 @@ public class DescriptionTemplateService {
                 .fetchOneInto(String.class);
     }
 
+    public String getContentRestByGroupId(UUID groupId) {
+        return dsl.select(Descriptiontemplate.DESCRIPTIONTEMPLATE.CONTENT_REST)
+                .from(Descriptiontemplate.DESCRIPTIONTEMPLATE)
+                .join(Group.GROUP)
+                .on(Descriptiontemplate.DESCRIPTIONTEMPLATE.GROUP_ID.eq(Group.GROUP.ID))
+                .where(Group.GROUP.ID.eq(groupId))
+                .limit(1)
+                .fetchOneInto(String.class);
+    }
+
     // Get template by group name
     public String getDetailsByGroupId(UUID groupId) {
         return dsl.select(Descriptiontemplate.DESCRIPTIONTEMPLATE.DETAILS)
@@ -83,7 +93,7 @@ public class DescriptionTemplateService {
     }
 
     public void updateFromTableSource() throws IOException {
-        String range = "GroupReportText!A2:D"; // id, name
+        String range = "GroupReportText!A2:E"; // id, name
 
         List<List<Object>> rows = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
 
@@ -98,7 +108,7 @@ public class DescriptionTemplateService {
 
             ctx.batch(
                     rows.stream()
-                            .filter(row -> row.size() >= 2) // minimal required columns
+                            .filter(row -> row.size() >= 4) // minimal required columns
                             .filter(row -> !row.get(0).toString().isEmpty()) // minimal required columns
                             .filter(row -> !row.get(1).toString().isEmpty()) // minimal required columns
                             .filter(row -> !row.get(2).toString().isEmpty()) // minimal required columns
@@ -109,11 +119,13 @@ public class DescriptionTemplateService {
                                         : UUID.randomUUID();
 
                                 String description = row.size() > 2 ? row.get(2).toString().trim() : "";
+                                String description_rest = row.size() >= 4 ? row.get(4).toString().trim() : "";
                                 String details = row.size() > 3 ? row.get(3).toString().trim() : "";
 
                                 return ctx.insertInto(DESCRIPTIONTEMPLATE)
                                         .set(DESCRIPTIONTEMPLATE.GROUP_ID, groupId)
                                         .set(DESCRIPTIONTEMPLATE.CONTENT, description)
+                                        .set(DESCRIPTIONTEMPLATE.CONTENT_REST, description_rest)
                                         .set(DESCRIPTIONTEMPLATE.DETAILS, details)
                                         .set(DESCRIPTIONTEMPLATE.UPDATED_BY, getCurrentUsername())
                                         .set(DESCRIPTIONTEMPLATE.CREATED_BY, getCurrentUsername())
@@ -121,7 +133,8 @@ public class DescriptionTemplateService {
                                         .set(DESCRIPTIONTEMPLATE.UPDATED_ON, OffsetDateTime.now())
                                         .onConflict(DESCRIPTIONTEMPLATE.GROUP_ID)
                                         .doUpdate()
-                                        .set(DESCRIPTIONTEMPLATE.CONTENT, description);
+                                        .set(DESCRIPTIONTEMPLATE.CONTENT, description)
+                                        .set(DESCRIPTIONTEMPLATE.CONTENT_REST, description_rest);
                             })
                             .toList()
             ).execute();

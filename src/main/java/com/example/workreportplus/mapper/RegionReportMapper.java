@@ -10,7 +10,6 @@ import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.UUID;
 
 @Mapper(componentModel = "spring")
 public abstract class RegionReportMapper {
@@ -23,7 +22,7 @@ public abstract class RegionReportMapper {
     @AfterMapping
     protected void setGroupId(@MappingTarget RegionReportDto dto, RegionReportRequest request) {
 
-        dto.setRegionId(UUID.fromString(request.getRegionName()));
+        dto.setRegionId(regionService.getRegionIdByName(request.getRegionName()));
         if (request.getGroupReports() == null) {
             dto.setGroupReportIds(List.of());
         }

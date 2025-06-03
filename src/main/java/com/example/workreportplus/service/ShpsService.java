@@ -22,7 +22,7 @@ public class ShpsService {
         this.regionService = regionService;
     }
 
-    public List<ContractorRelocation> getArrivedContractors(LocalDate date) throws IOException {
+    public List<ContractorRelocation> getArrivedContractors(LocalDate date, UUID regionId) throws IOException {
         String range = "Штатка!A2:CG";
         List<List<Object>> rows = googleSheetsService.readSheet(GoogleSheetsService.SHPS_TABLE_ID, range);
         if (rows.isEmpty()) {
@@ -33,10 +33,11 @@ public class ShpsService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yy");
         String formattedDate = date.format(formatter);
         List<String> regionNames = regionService.getRegionNames();
+        String regionName = regionService.getRegionNameById(regionId);
 
         return rows.stream()
                 .map(this::parseShtatka)
-                .filter(e -> regionNames.contains(e.getDestination_L_11()))
+                .filter(e -> regionName.equals(e.getDestination_L_11()))
                 .filter(e -> "відрядження БР".equals(e.getAbsenceReason_H_7()))
                 .filter(e -> "ОР".equalsIgnoreCase(e.getReturnDate_K_10()))
                 .filter(e -> formattedDate.equals(e.getDepartureDate_I_8()))
@@ -44,7 +45,7 @@ public class ShpsService {
                 .toList();
     }
 
-    public List<ContractorRelocation> getDeparturedContractors(LocalDate date) throws IOException {
+    public List<ContractorRelocation> getDeparturedContractors(LocalDate date, UUID regionId) throws IOException {
         String range = "Штатка!A2:S";
         List<List<Object>> rows = googleSheetsService.readSheet(GoogleSheetsService.SHPS_TABLE_ID, range);
         if (rows.isEmpty()) {

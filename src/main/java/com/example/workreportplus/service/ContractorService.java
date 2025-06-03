@@ -70,16 +70,6 @@ public class ContractorService {
                 .fetchInto(ContractorDto.class);
     }
 
-    private boolean isValidUUID(String str) {
-        try {
-            UUID.fromString(str.trim());
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            return false;
-        }
-    }
-
-
     public void updateContractorsFromTable() throws IOException {
         String range = "NamesList!A2:I"; // adjust if needed
         List<List<Object>> lists = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
@@ -95,6 +85,7 @@ public class ContractorService {
         // Map rows to DTOs
         List<ContractorDto> contractors = lists.stream()
                 .filter(row -> row.size() >= 2)
+                .filter(row->!row.get(0).toString().isBlank())
                 .map(row -> mapRowToDto(row, currentUser, positionNameToIds)) // remove groupNameToId param
                 .toList();
 

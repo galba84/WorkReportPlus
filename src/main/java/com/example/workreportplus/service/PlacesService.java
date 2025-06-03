@@ -105,7 +105,7 @@ public class PlacesService {
     public List<PlaceDto> getFightingPlaceByRegionId(UUID regionId) {
         return dsl.selectFrom(PLACE)
                 .where(PLACE.REGION_ID.eq(regionId))
-                .and(PLACE.DISTRICT.eq("100"))
+                .and(PLACE.COEFICIENT.eq("100"))
                 .fetch()
                 .map(record -> {
                     PlaceDto dto = new PlaceDto();
@@ -125,7 +125,7 @@ public class PlacesService {
     public List<PlaceDto> getRestPlaceByRegionId(UUID regionId) {
         return dsl.selectFrom(PLACE)
                 .where(PLACE.REGION_ID.eq(regionId))
-                .and(PLACE.DISTRICT.eq("30"))
+                .and(PLACE.COEFICIENT.eq("30"))
                 .fetch()
                 .map(record -> {
                     PlaceDto dto = new PlaceDto();

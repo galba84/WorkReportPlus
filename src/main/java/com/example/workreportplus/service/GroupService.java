@@ -39,7 +39,6 @@ public class GroupService {
         );
     }
 
-
     public List<GroupDto> getAllGroups() {
         return dsl.selectFrom(GROUP)
                 .where(GROUP.STATUS.isTrue())

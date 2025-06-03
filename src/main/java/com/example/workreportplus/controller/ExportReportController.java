@@ -155,15 +155,15 @@ public class ExportReportController {
 
         String detailsByGroupId = descriptionTemplateService.getDetailsByGroupId(groupReportDto.getGroupId());
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate);
-        List<PlaceDto> places = placesService.getPlacesByIds(groupReportDto.getPlaceIds());
+        List<PlaceDto> places = placesService.getPlacesByIds(groupReportDto.getFightingPlaces());
         variables.put("groupName", groupName);
         variables.put("groupDetails", detailsByGroupId);
-        variables.put("ammunition", getAmmunition(groupReportDto));
+        variables.put("ammunition", groupReportDto.getAmmunition());
         variables.put("reportDate", formatDate(reportDate));
         variables.put("places", formatPlaces(places));
         UUID groupId = groupService.getGroupIdByName(groupName);
         GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
-        List<ContractorDto> contractor = contractorService.getAllContractorByIds(report.getContractorsIds());
+        List<ContractorDto> contractor = contractorService.getAllContractorByIds(report.getFightingContractors());
         variables.put("contractors",
                 printContractors(contractor)
         );
@@ -177,25 +177,25 @@ public class ExportReportController {
                 .collect(Collectors.joining("\n"));
     }
 
-    private String getAmmunition(GroupReportDto groupReportDto) {
-        List<AmmunitionDto> ammoList = groupReportDto.getAmmunition();
-        if (ammoList == null || ammoList.isEmpty()) {
-            return "";
-        }
-
-        return ammoList.stream()
-                .map(dto -> {
-                    StringBuilder sb = new StringBuilder(dto.getName());
-                    if (dto.getAmount() > 0) {
-                        sb.append(" : ").append(dto.getAmount());
-                    }
-                    if (dto.getUnit() != null && !dto.getUnit().isBlank()) {
-                        sb.append(" : ").append(dto.getUnit().trim());
-                    }
-                    return sb.toString();
-                })
-                .collect(Collectors.joining("\n"));
-    }
+//    private String getAmmunition(GroupReportDto groupReportDto) {
+//        List<AmmunitionDto> ammoList = groupReportDto.getAmmunition();
+//        if (ammoList == null || ammoList.isEmpty()) {
+//            return "";
+//        }
+//
+//        return ammoList.stream()
+//                .map(dto -> {
+//                    StringBuilder sb = new StringBuilder(dto.getName());
+//                    if (dto.getAmount() > 0) {
+//                        sb.append(" : ").append(dto.getAmount());
+//                    }
+//                    if (dto.getUnit() != null && !dto.getUnit().isBlank()) {
+//                        sb.append(" : ").append(dto.getUnit().trim());
+//                    }
+//                    return sb.toString();
+//                })
+//                .collect(Collectors.joining("\n"));
+//    }
 
 
     private String formatPlaces(List<PlaceDto> places) {

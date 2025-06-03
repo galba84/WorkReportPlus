@@ -22,11 +22,8 @@ import com.example.workreportplus.response.DailyRegionReportResponse;
 import com.example.workreportplus.response.ReportResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -173,7 +170,7 @@ public class RegionReportService implements ReportService {
                                         .description(record.get(REGIONREPORT.REGION_DESCRIPTION))
                                         .status(status)
                                         .extraData(JsonUtils.jsonbToMap(record.get(REGIONREPORT.EXTRA_DATA)))
-                                        .arrivedContractors(populateContractorData(record.get(REGIONREPORT.ARRIVED_CONTRACTORS)))
+                                        .arrivedContractors(Arrays.asList(record.get(REGIONREPORT.ARRIVED_CONTRACTORS)))
                                         .departedContractors(populateContractorData(record.get(REGIONREPORT.DEPARTED_CONTRACTORS)))
                                         .date(record.get(REGIONREPORT.REPORT_DATE))
                                         .regionName(regionService.getRegionNameById(record.get(REGIONREPORT.REGION_ID)))
@@ -218,18 +215,20 @@ public class RegionReportService implements ReportService {
                 if (groupIdByName != null) {
                     dto.setGroupId(groupIdByName);
                 }
-                dto.setPlacesWithCoeficcient(dto.getPlacesWithCoeficcient());
-                dto.setPlaceIds((groupReport.getPlaceCoefficients()
-                        .keySet().stream()
-                        .filter(Objects::nonNull)
-                        .toList()));
-                dto.setContractorsIds(groupReportMapper.safeStringListToUuidList(groupReport.getContractorPlaceMap()
-                        .keySet().stream().toList()));
-                dto.setContractorToPlacesMap(groupReportMapper.convertToUUIDMap(groupReport.getContractorPlaceMap()));
-                dto.setPlacesWithCoeficcient(groupReport.getPlaceCoefficients());
+
+                dto.setDescription(groupReport.getDescription());
+                dto.setSuccessReport(groupReport.getSuccessReport());
+                dto.setAmmunition(groupReport.getAmmunition());
+                dto.setAmmoVerified(groupReport.isAmmoVerified());
+                dto.setWorked(groupReport.isWorked());
+                dto.setFightingContractors(groupReport.getFightingContractors());
+                dto.setFightingPlaces(groupReport.getFightingPlaces());
+                dto.setRestContractors(groupReport.getRestContractors());
+                dto.setRestPlaces(groupReport.getRestPlaces());
+
                 dto.setRegionReportId(regionReportId);
                 dto.setReportDate(regionReportRequest.getReportDate());
-                dto.setAmmunition(parseAmmunition(groupReport.getAmmunition()));
+                dto.setAmmunition((groupReport.getAmmunition()));
                 saveGroupReport(dto);
             });
         }
@@ -339,7 +338,7 @@ public class RegionReportService implements ReportService {
             DSLContext tx = DSL.using(configuration);
 
             GroupreportRecord record = tx.newRecord(GROUPREPORT);
-            record.setGroupId(UUID.fromString(groupReportDto.getGroupName()));
+            record.setGroupId(groupReportDto.getGroupId());
             record.setRegionReportId(groupReportDto.getRegionReportId());
             record.setReportDate(groupReportDto.getReportDate());
             // Set status default
@@ -351,27 +350,20 @@ public class RegionReportService implements ReportService {
 
 
             record.setDescription(groupReportDto.getDescription());
+            record.setSuccessReport(groupReportDto.getSuccessReport());
+            record.setFightingContractors(groupReportDto.getFightingContractors().toArray(UUID[]::new));
+            record.setFightingPlaces(groupReportDto.getFightingPlaces().toArray(UUID[]::new));
+            record.setRestContractors(groupReportDto.getRestContractors().toArray(UUID[]::new));
+            record.setRestPlaces(groupReportDto.getRestPlaces().toArray(UUID[]::new));
 
-            if (groupReportDto.getContractorsIds() != null && groupReportDto.getContractorToPlacesMap() != null) {
-                record.setContractorsIds(groupReportDto.getContractorToPlacesMap().keySet().toArray(new UUID[0]));
+
+            try {
+                String json = objectMapper.writeValueAsString(groupReportDto.getAmmunition());
+                record.setAmmunition(org.jooq.JSONB.valueOf(json));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize extraDataGroupReport", e);
             }
 
-            if (groupReportDto.getPlaceIds() != null) {
-                record
-                        .setPlaceIds(groupReportDto.getContractorToPlacesMap()
-                                .values()
-                                .stream()
-                                .flatMap(List::stream).distinct() // optional: to avoid duplicate place IDs
-                                .toArray(UUID[]::new));
-            }
-
-            if (record.getPlaceIds() == null) {
-                record.setPlaceIds(
-                        groupReportDto.getPlacesWithCoeficcient()
-                                .keySet().toArray(UUID[]::new)
-                );
-
-            }
 
             // ✅ Merge extra data and place coefficients
             Map<String, String> extraData = new HashMap<>();
@@ -380,17 +372,8 @@ public class RegionReportService implements ReportService {
             }
 
             AtomicBoolean worked = new AtomicBoolean(false);
-            if (groupReportDto.getPlacesWithCoeficcient() != null) {
-                groupReportDto.getPlacesWithCoeficcient().forEach((placeId, coef) -> {
-                            extraData.put("placeCoef_" + placeId, coef);
-                            if ("100".equals(coef)) {
-                                worked.set(true);
-                            }
-                        }
-                );
-            }
 
-            record.setIsWorked(worked.get());
+            record.setWorked(worked.get());
 
             try {
                 String extraJson = objectMapper.writeValueAsString(extraData);
@@ -399,59 +382,11 @@ public class RegionReportService implements ReportService {
                 throw new RuntimeException("Failed to serialize extraDataGroupReport", e);
             }
 
-            if (Objects.nonNull(groupReportDto.getContractorToPlacesMap())) {
-                try {
-
-                    Map<UUID, List<UUID>> contractorToPlacesMap = groupReportDto.getContractorToPlacesMap();
-
-                    Map<UUID, String> original = groupReportDto.getPlacesWithCoeficcient();
-                    Map<UUID, Integer> converted = original.entrySet().stream()
-                            .filter(e -> e.getValue() != null && !e.getValue().isBlank())
-                            .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    e -> Integer.parseInt(e.getValue().trim())
-                            ));
-
-
-                    Map<UUID, Integer> contractorToCoefficientMap = new HashMap<>();
-
-                    for (Map.Entry<UUID, List<UUID>> entry : contractorToPlacesMap.entrySet()) {
-                        UUID contractorId = entry.getKey();
-                        List<UUID> places = entry.getValue();
-
-                        // Example logic: take the **max** coefficient from the assigned places
-                        int maxCoefficient = places.stream()
-                                .map(pid -> converted.getOrDefault(pid, 0))
-                                .max(Integer::compareTo)
-                                .orElse(0);
-
-                        contractorToCoefficientMap.put(contractorId, maxCoefficient);
-                    }
-
-
-                    String extraJson = objectMapper.writeValueAsString(contractorToCoefficientMap);
-                    record.setCoefficient(org.jooq.JSONB.valueOf(extraJson));
-                    if (!groupReportDto.getAmmunition().isEmpty()) {
-
-                        setAmmunition(groupReportDto, record);
-                    }
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException("Failed to serialize contractorTocoeficient map", e);
-                }
-            }
-
-
             record.setCreatedBy(currentUser);
             record.setUpdatedBy(currentUser);
             record.setCreatedOn(LocalDateTime.now());
             record.setUpdatedOn(LocalDateTime.now());
 
-            if (groupReportDto.getContractorToPlacesMap() != null) {
-                Map<UUID, List<UUID>> contractorToPlacesMap = groupReportDto.getContractorToPlacesMap();// or getContractorToPlacesMap()
-                String jsonString = objectMapper.writeValueAsString(contractorToPlacesMap);
-                record.setExtraDataGroupReport(JSONB.valueOf(jsonString));
-
-            }
             // Save current group report
             record.store();
 
@@ -476,35 +411,35 @@ public class RegionReportService implements ReportService {
         });
     }
 
-    private void setAmmunition(GroupReportDto groupReportDto, GroupreportRecord record) throws JsonProcessingException {
-        List<AmmunitionDto> ammunitionList = groupReportDto.getAmmunition();
-        if (ammunitionList == null || ammunitionList.isEmpty()) {
-            record.setAmmunition(JSONB.valueOf("[]"));
-            return;
-        }
-
-        ArrayNode jsonArray = objectMapper.createArrayNode();
-
-        for (AmmunitionDto ammo : ammunitionList) {
-            if (ammo.getName() == null || ammo.getName().trim().isEmpty()) continue;
-
-            ObjectNode entry = objectMapper.createObjectNode();
-            entry.put("name", ammo.getName().trim());
-
-            if (ammo.getAmount() != 0) {
-                entry.put("amount", ammo.getAmount());
-            }
-
-            if (ammo.getUnit() != null && !ammo.getUnit().isBlank()) {
-                entry.put("unit", ammo.getUnit().trim());
-            }
-
-            jsonArray.add(entry);
-        }
-
-        String ammoJson = objectMapper.writeValueAsString(jsonArray);
-        record.setAmmunition(JSONB.valueOf(ammoJson));
-    }
+//    private void setAmmunition(GroupReportDto groupReportDto, GroupreportRecord record) throws JsonProcessingException {
+//        List<AmmunitionDto> ammunitionList = groupReportDto.getAmmunition();
+//        if (ammunitionList == null || ammunitionList.isEmpty()) {
+//            record.setAmmunition(JSONB.valueOf("[]"));
+//            return;
+//        }
+//
+//        ArrayNode jsonArray = objectMapper.createArrayNode();
+//
+//        for (AmmunitionDto ammo : ammunitionList) {
+//            if (ammo.getName() == null || ammo.getName().trim().isEmpty()) continue;
+//
+//            ObjectNode entry = objectMapper.createObjectNode();
+//            entry.put("name", ammo.getName().trim());
+//
+//            if (ammo.getAmount() != 0) {
+//                entry.put("amount", ammo.getAmount());
+//            }
+//
+//            if (ammo.getUnit() != null && !ammo.getUnit().isBlank()) {
+//                entry.put("unit", ammo.getUnit().trim());
+//            }
+//
+//            jsonArray.add(entry);
+//        }
+//
+//        String ammoJson = objectMapper.writeValueAsString(jsonArray);
+//        record.setAmmunition(JSONB.valueOf(ammoJson));
+//    }
 
 
     public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
