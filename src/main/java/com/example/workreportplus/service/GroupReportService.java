@@ -288,15 +288,7 @@ public class GroupReportService implements ReportService {
         }
 
         // 🔹 Ammunition
-        List<AmmunitionDto> parsedAmmo = List.of();
         String ammunitionJson = String.valueOf(record.get(GROUPREPORT.AMMUNITION));
-        if (ammunitionJson != null && !ammunitionJson.isBlank()) {
-            try {
-                parsedAmmo = objectMapper.readValue(ammunitionJson, new TypeReference<>() {
-                });
-            } catch (Exception ignored) {
-            }
-        }
 
         // === Manual mapping ===
         GroupReportDto dto = new GroupReportDto();
@@ -309,14 +301,13 @@ public class GroupReportService implements ReportService {
         dto.setWorked(record.get(GROUPREPORT.WORKED));
         dto.setReportDate(record.get(GROUPREPORT.REPORT_DATE));
         dto.setAmmunition(ammunitionJson);
+        dto.setSuccessReport(record.get(GROUPREPORT.SUCCESS_REPORT));
 
         // 👇 Handle status manually if it's Boolean in DB but Enum in code
         Boolean statusValue = record.get(GROUPREPORT.STATUS);
         if (statusValue != null) {
             dto.setStatus(statusValue ? ReportStatus.ACTIVE : ReportStatus.DELETED);
         }
-
-
         return dto;
     }
 

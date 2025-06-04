@@ -76,7 +76,7 @@ const userRoles = ref([])
 
 onMounted(async () => {
   try {
-    const response = await api.get('/api/user/roles') // ✅ use `api`
+    const response = await api.get('/api/users/roles') // ✅ use `api`
     userRoles.value = response.data
   } catch (e) {
     console.error('Failed to load user roles', e)

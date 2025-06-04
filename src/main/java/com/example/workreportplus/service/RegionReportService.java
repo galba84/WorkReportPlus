@@ -305,10 +305,10 @@ public class RegionReportService implements ReportService {
 
 
     private static UUID[] setDepartedContractors(RegionReportDto regionReportDto) {
-        if (regionReportDto.getDepartedContractorIds() == null) {
+        if (regionReportDto.getDepartedContractors() == null) {
             return new UUID[0];
         }
-        return regionReportDto.getDepartedContractorIds().toArray(new UUID[0]);
+        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
     }
 
     private static UUID[] getValue(RegionReportDto regionReportDto) {
@@ -316,14 +316,14 @@ public class RegionReportService implements ReportService {
     }
 
     private static UUID[] getArray(RegionReportDto regionReportDto) {
-        return regionReportDto.getDepartedContractorIds().toArray(new UUID[0]);
+        return regionReportDto.getDepartedContractors().toArray(new UUID[0]);
     }
 
     private static UUID[] setArrivedContractors(RegionReportDto regionReportDto) {
-        if (regionReportDto.getArrivedContractorIds() == null) {
+        if (regionReportDto.getArrivedContractors() == null) {
             return new UUID[0];
         }
-        return regionReportDto.getArrivedContractorIds().toArray(new UUID[0]);
+        return regionReportDto.getArrivedContractors().toArray(new UUID[0]);
     }
 
 
@@ -447,17 +447,18 @@ public class RegionReportService implements ReportService {
         if (reportDate != null) {
             condition = condition.and(REGIONREPORT.REPORT_DATE.eq(reportDate));
         }
-
+        condition = condition.and(REGIONREPORT.STATUS.eq(Boolean.TRUE));
         return dsl.selectFrom(REGIONREPORT)
                 .where(condition)
                 .limit(1)
                 .fetchOneInto(RegionReportDto.class);
     }
 
-    public UUID getLastReportIdByDate(LocalDate reportDate) {
+    public UUID getLastReportIdByDate(LocalDate reportDate, UUID regionId) {
         return dsl.select(REGIONREPORT.ID)
                 .from(REGIONREPORT)
                 .where(REGIONREPORT.REPORT_DATE.eq(reportDate))
+                .and(REGIONREPORT.REGION_ID.eq(regionId))
                 .orderBy(REGIONREPORT.CREATED_ON.desc())
                 .limit(1)
                 .fetchOneInto(UUID.class);

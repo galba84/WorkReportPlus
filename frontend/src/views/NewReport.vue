@@ -14,6 +14,8 @@ const hasValidationErrorsForGroup = index => {
   return Object.keys(validationErrors.value).some(key => key.startsWith(prefix))
 }
 
+
+
 const regions = ref([])
 const selectedRegion = ref(null)
 
@@ -97,10 +99,23 @@ watch([selectedDate, selectedRegion], () => {
 
 onMounted(async () => {
   await fetchRegions()
+  await fetchContractorData()
+
   if (selectedRegion.value) {
     fetchReports()
   }
+
+  if (contractorData.value.arrived?.[0]) {
+    arrivedOrderNumber.value = contractorData.value.arrived[0].orderNumber || ''
+    arrivedOrderDate.value = contractorData.value.arrived[0].orderDate || ''
+  }
+
+  if (contractorData.value.departed?.[0]) {
+    departedOrderNumber.value = contractorData.value.departed[0].orderNumber || ''
+    departedOrderDate.value = contractorData.value.departed[0].orderDate || ''
+  }
 })
+
 
 const submitReport = async () => {
   try {
@@ -127,10 +142,15 @@ const submitReport = async () => {
         fightingPlaces: report.selectedFightingPlaceId ? [report.selectedFightingPlaceId] : [],
         restPlaces: report.restPlaces.map(p => p.id)
       })),
-      extraData: {}, // optional
+      extraData: {
+        departedOrderNumber: departedOrderNumber.value,
+        departedOrderDate: departedOrderDate.value,
+        arrivedOrderNumber: arrivedOrderNumber.value,
+        arrivedOrderDate: arrivedOrderDate.value
+      },
       status: true, // or another meaningful value
-      arrivedContractorIds: contractorData.value.arrived.map(c => c.id),
-      departedContractorIds: contractorData.value.departed.map(c => c.id),
+      arrivedContractors: contractorData.value.arrived.map(c => c.id),
+      departedContractors: contractorData.value.departed.map(c => c.id),
       regionDescription: "description region"
     }
 
@@ -151,7 +171,7 @@ const submitReport = async () => {
 const contractorData = ref({arrived: [], departed: []})
 
 const fetchContractorData = async () => {
-  if (!selectedRegion.value) return
+  if (!selectedRegion.value) return;
 
   try {
     const res = await apiClient.get('/api/daily-work-report/contractors', {
@@ -159,16 +179,15 @@ const fetchContractorData = async () => {
         date: selectedDate.value,
         regionId: selectedRegion.value
       }
-    })
+    });
 
-    // Filter only for selectedRegion
     contractorData.value.arrived = res.data.arrived
       .filter(r => r.region.id === selectedRegion.value)
       .map(r => ({
         ...r.contractor,
         orderNumber: r.orderNumber,
         orderDate: r.orderDate
-      }))
+      }));
 
     contractorData.value.departed = res.data.departed
       .filter(r => r.region.id === selectedRegion.value)
@@ -176,12 +195,24 @@ const fetchContractorData = async () => {
         ...r.contractor,
         orderNumber: r.orderNumber,
         orderDate: r.orderDate
-      }))
+      }));
+
+    // Assign after data is ready
+    if (contractorData.value.arrived?.[0]) {
+      arrivedOrderNumber.value = contractorData.value.arrived[0].orderNumber || '';
+      arrivedOrderDate.value = contractorData.value.arrived[0].orderDate || '';
+    }
+
+    if (contractorData.value.departed?.[0]) {
+      departedOrderNumber.value = contractorData.value.departed[0].orderNumber || '';
+      departedOrderDate.value = contractorData.value.departed[0].orderDate || '';
+    }
 
   } catch (err) {
-    console.error('Failed to fetch contractor data:', err)
+    console.error('Failed to fetch contractor data:', err);
   }
-}
+};
+
 
 const getFieldErrors = (index, fieldName) => {
   const key = `groupReports[${index}].${fieldName}`
@@ -191,14 +222,24 @@ const getFieldErrors = (index, fieldName) => {
 
 const departedOrderNumber = ref('')
 const departedOrderDate = ref('')
-watch([departedOrderNumber, departedOrderDate], ([number, date]) => {
-  contractorData.departed.forEach(c => {
-    c.orderNumber = number
-    c.orderDate = date
-  })
+const arrivedOrderNumber = ref('')
+const arrivedOrderDate = ref('')
+
+
+watch([departedOrderNumber, departedOrderDate], ([newNumber, newDate]) => {
+  if (contractorData.value.departed?.[0]) {
+    contractorData.value.departed[0].orderNumber = newNumber
+    contractorData.value.departed[0].orderDate = newDate
+  }
 })
 
-onMounted(fetchContractorData)
+watch([arrivedOrderNumber, arrivedOrderDate], ([newNumber, newDate]) => {
+  if (contractorData.value.arrived?.[0]) {
+    contractorData.value.arrived[0].orderNumber = newNumber
+    contractorData.value.arrived[0].orderDate = newDate
+  }
+})
+
 
 </script>
 

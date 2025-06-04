@@ -26,6 +26,6 @@ public class RegionReportDto extends TrackedDto {
     private Boolean status;
 
     private Map<String, String> extraData;
-    private List<UUID> arrivedContractorIds;
-    private List<UUID> departedContractorIds;
+    private List<UUID> arrivedContractors;
+    private List<UUID> departedContractors;
 }

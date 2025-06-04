@@ -4,6 +4,7 @@ import NewReport from '../views/NewReport.vue'
 import LoginView from '@/views/LoginView.vue'
 import {getCurrentUser} from '@/api/auth'
 import AdminView from '@/views/AdminView.vue'
+import ExportReport from '@/views/ExportReport.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,7 +13,8 @@ const router = createRouter({
     {path: '/about', name: 'about', component: () => import('../views/AboutView.vue')},
     {path: '/new-report', name: 'new-report', component: NewReport, meta: {requiresAuth: true}},
     {path: '/login', name: 'login', component: LoginView},
-    {path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } }
+    {path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } },
+    {path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } }
   ]
 })
 
