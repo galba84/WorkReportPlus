@@ -28,6 +28,7 @@ public class GroupService {
         return dsl.select(GROUP.ID)
                 .from(GROUP)
                 .where(GROUP.NAME.eq(groupName))
+                .and(GROUP.STATUS.isTrue())
                 .fetchOne(GROUP.ID);
     }
 
@@ -68,6 +69,7 @@ public class GroupService {
     public List<String> getGroupNames() {
         return dsl.select(GROUP.NAME)
                 .from(GROUP)
+                .where(GROUP.STATUS.isTrue())
                 .fetchInto(String.class);
     }
 
