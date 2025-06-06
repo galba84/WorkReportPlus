@@ -1,8 +1,12 @@
 package com.example.workreportplus.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ContractorRelocation {
     ContractorDto contractor;
     RegionDto region;

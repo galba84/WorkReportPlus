@@ -15,5 +15,6 @@ public class GroupDto extends IdDto {
     List<PlaceDto> places;
     List<ContractorDto> contractors;
     String defaultDescription;
+    boolean isFighting;
 }
 

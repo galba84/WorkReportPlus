@@ -13,5 +13,7 @@ public interface UserService {
     List<UserDto> getAllUsers();
     void addOrUpdateUser(UserDto userDto);
 
+    String encodePassword(String rawPassword);
+
     Optional<UUID> getUserIdByEmail(String currentEmail);
 }

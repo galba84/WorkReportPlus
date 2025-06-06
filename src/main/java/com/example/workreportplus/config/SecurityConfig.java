@@ -2,23 +2,27 @@ package com.example.workreportplus.config;
 
 import com.example.jooq.tables.records.UsersRecord;
 import com.example.workreportplus.service.AdminInitializerService;
-import com.example.workreportplus.service.AuditLogService;
 import com.example.workreportplus.service.UserService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-
-import java.util.UUID;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -30,40 +34,26 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   AuditLogService auditLogService, UserService userService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/logout"))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index", "/login", "/register", "/access-denied").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/api/**").hasAnyRole(ROLE_POWER_USER, ROLE_ADMIN)
-                        .requestMatchers("/admin/**", "/read-sheets/**", "/users/**").hasRole(ROLE_ADMIN)
-                        .requestMatchers("/sheets-viewer.html").hasRole(ROLE_ADMIN)
-                        .requestMatchers("/audit-log/admin").hasRole(ROLE_ADMIN)
-                        .requestMatchers(HttpMethod.GET, "/audit-log/").hasAnyRole(ROLE_ADMIN, ROLE_POWER_USER, ROLE_USER)
-                        .requestMatchers(HttpMethod.POST, "/audit-log/").hasAnyRole(ROLE_ADMIN, ROLE_POWER_USER, ROLE_USER)
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .successHandler(customAuthSuccessHandler(auditLogService, userService))
-                        .permitAll()
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())) // ✅ register converter
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .clearAuthentication(true)
-                        .permitAll()
-                )
-                .exceptionHandling(exception -> exception
-                        .accessDeniedPage("/access-denied")
-                );
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(b -> b.disable())
+                .formLogin(form -> form.disable());
 
         return http.build();
     }
+
+
 
     @Bean
     public UserDetailsService userDetailsService(UserService userService) {
@@ -90,25 +80,30 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler customAuthSuccessHandler(
-            AuditLogService auditLogService,
-            UserService userService
-    ) {
-        return (request, response, authentication) -> {
-            String email = authentication.getName();
-            UUID userId = userService.getUserIdByEmail(email).orElse(null);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
 
-            auditLogService.log(
-                    "LOGIN",
-                    "auth",
-                    email,
-                    userId,
-                    request.getRemoteAddr(),
-                    "User logged in successfully"
-            );
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
 
-            response.sendRedirect("/index");
-        };
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return converter;
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        String secret = "verySecretKey123456verySecretKey123456"; // same as in JwtTokenProvider
+        return NimbusJwtDecoder.withSecretKey(
+                new javax.crypto.spec.SecretKeySpec(
+                        secret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        "HmacSHA256"
+                )
+        ).build();
     }
 
 }

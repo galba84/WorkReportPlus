@@ -6,6 +6,7 @@ import com.example.workreportplus.Utils.SecurityUtil;
 import com.example.workreportplus.dto.ContractorDto;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.util.*;
 
 import static com.example.jooq.Tables.CONTRACTOR;
 import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
+import static org.jooq.impl.DSL.*;
 
 @Service
 public class ContractorService {
@@ -32,6 +34,23 @@ public class ContractorService {
                 .where(CONTRACTOR.ID.eq(id))
                 .fetchAnyInto(ContractorDto.class);
     }
+
+    @Cacheable("getContractorByFullname")
+    public UUID getContractorByFullname(String fullName) {
+        return dsl.select(CONTRACTOR.ID) // Select only the ID
+                .from(CONTRACTOR)
+                .where(
+                        lower(
+                                concat(
+                                        CONTRACTOR.LAST_NAME, inline(" "),
+                                        CONTRACTOR.FIRST_NAME, inline(" "),
+                                        CONTRACTOR.MIDDLE_NAME
+                                )
+                        ).eq(fullName.toLowerCase())
+                )
+                .fetchAnyInto(UUID.class); // Fetch one result as UUID
+    }
+
 
     public List<ContractorDto> getContractors() {
         return dsl.selectFrom(CONTRACTOR)
@@ -51,16 +70,6 @@ public class ContractorService {
                 .fetchInto(ContractorDto.class);
     }
 
-    private boolean isValidUUID(String str) {
-        try {
-            UUID.fromString(str.trim());
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            return false;
-        }
-    }
-
-
     public void updateContractorsFromTable() throws IOException {
         String range = "NamesList!A2:I"; // adjust if needed
         List<List<Object>> lists = googleSheetsService.readSheet(DOVIDNYK_TABLE_ID, range);
@@ -76,6 +85,7 @@ public class ContractorService {
         // Map rows to DTOs
         List<ContractorDto> contractors = lists.stream()
                 .filter(row -> row.size() >= 2)
+                .filter(row->!row.get(0).toString().isBlank())
                 .map(row -> mapRowToDto(row, currentUser, positionNameToIds)) // remove groupNameToId param
                 .toList();
 

@@ -32,7 +32,7 @@ public class RegionReportRequest implements ReportRequest {
 
     private Map<String, String> extraData;
     private String status;
-    private List<UUID> arrivedContractorIds;
-    private List<UUID> departedContractorIds;
+    private List<UUID> arrivedContractors;
+    private List<UUID> departedContractors;
 
 }

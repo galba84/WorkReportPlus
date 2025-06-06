@@ -1,65 +1,87 @@
 package com.example.workreportplus.controller;
 
 import com.example.jooq.tables.records.UsersRecord;
+import com.example.workreportplus.config.JwtTokenProvider;
+import com.example.workreportplus.dto.AuthResponse;
+import com.example.workreportplus.dto.LoginRequest;
+import com.example.workreportplus.dto.RegisterRequest;
 import com.example.workreportplus.service.AuditLogService;
 import com.example.workreportplus.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
-@Controller
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
     private final AuditLogService auditLogService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthController(UserService userService, AuditLogService auditLogService) {
+    public AuthController(UserService userService, AuditLogService auditLogService, AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
         this.auditLogService = auditLogService;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
+    @GetMapping("/me")
+    public ResponseEntity<AuthResponse> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = authentication.getName();
+        UsersRecord user = userService.getByEmail(email).orElseThrow();
+
+        return ResponseEntity.ok(new AuthResponse(user.getId(), user.getEmail(), user.getRole()));
     }
 
-    @GetMapping("/register")
-    public String showRegisterForm(Model model) {
-        model.addAttribute("user", new UsersRecord());
-        return "register";
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+
+
+        UsersRecord user = userService.getByEmail(request.email()).orElseThrow();
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole());
+
+        auditLogService.log(
+                "LOGIN", "auth", user.getEmail(), user.getId(), httpRequest.getRemoteAddr(), "User logged in"
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user", new AuthResponse(user.getId(), user.getEmail(), user.getRole())
+        ));
     }
 
     @PostMapping("/register")
-    public String processRegister(@ModelAttribute("user") UsersRecord formUser, Model model,
-                                  HttpServletRequest request) {
-        if (userService.getByEmail(formUser.getEmail()).isPresent()) {
-            model.addAttribute("error", "User already exists");
-            return "register";
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        if (userService.getByEmail(request.email()).isPresent()) {
+            return ResponseEntity.badRequest().body("User already exists");
         }
 
-        // Set default role
-        formUser.setRole("GUEST");
+        UsersRecord user = new UsersRecord();
+        user.setEmail(request.email());
+        user.setPassword(userService.encodePassword(request.password()));
+        user.setRole("GUEST");
 
-        UUID newUserId = userService.getByEmail(formUser.getEmail())
-                .map(UsersRecord::getId)
-                .orElse(null);
+        userService.createUser(user);
 
-        auditLogService.log(
-                "REGISTER",
-                "auth",
-                formUser.getEmail(),
-                newUserId,
-                request.getRemoteAddr(),
-                "User registered with email " + formUser.getEmail()
-        );
+        UUID userId = userService.getByEmail(request.email()).map(UsersRecord::getId).orElse(null);
+        auditLogService.log("REGISTER", "auth", user.getEmail(), userId, httpRequest.getRemoteAddr(), "User registered");
 
-        // Save user via service
-        userService.createUser(formUser);
-        return "redirect:/login?registered";
+        return ResponseEntity.ok("User registered successfully");
     }
 }

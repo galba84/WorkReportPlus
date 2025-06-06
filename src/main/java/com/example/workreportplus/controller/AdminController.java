@@ -1,16 +1,12 @@
 package com.example.workreportplus.controller;
 
 import com.example.workreportplus.service.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@Controller
+@RestController
 @RequestMapping("/admin")
 public class AdminController {
 
@@ -37,66 +33,51 @@ public class AdminController {
         this.unitService = unitService;
     }
 
-    @GetMapping
-    public String admin(Model model) {
-        return "admin";
-    }
-
     @PostMapping("/contractors")
-    public String updateContractorsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateContractorsFromTable() throws IOException {
         contractorService.updateContractorsFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "Contractors updated successfully!");
-        return "redirect:/admin";
+        return ResponseEntity.ok("Contractors updated successfully!");
     }
 
     @PostMapping("/groups")
-    public String updateGroupsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateGroupsFromTable() throws IOException {
         groupService.updateGroupsFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "Groups updated successfully!");
-        return "redirect:/admin";
+        return ResponseEntity.ok("Groups updated successfully!");
     }
 
-
     @PostMapping("/regions")
-    public String updateRegionsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateRegionsFromTable() throws IOException {
         regionService.updateRegionsFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "Regions updated successfully!");
-        return "redirect:/admin";
+        return ResponseEntity.ok("Regions updated successfully!");
     }
 
     @PostMapping("/groups/descriptions")
-    public String updateGroupDescription(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateGroupDescription() throws IOException {
         descriptionTemplateService.updateFromTableSource();
-        redirectAttributes.addFlashAttribute("infoMessage", "Шаблони звітів груп updated successfully!");
-        return "redirect:/admin";
+        return ResponseEntity.ok("Шаблони звітів груп updated successfully!");
     }
 
     @PostMapping("/places")
-    public String updatePlacesFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updatePlacesFromTable() throws IOException {
         placesService.updatePlacesFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "places updated successfully!");
-        return "redirect:/admin";
+        return ResponseEntity.ok("Places updated successfully!");
     }
 
     @PostMapping("/ranks")
-    public String updateRanksFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateRanksFromTable() throws IOException {
         rankService.updateRanksFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "ranks updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return ResponseEntity.ok("Ranks updated successfully!");
     }
 
     @PostMapping("/positions")
-    public String updatePositionsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updatePositionsFromTable() throws IOException {
         positionService.updatePositionsFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "positions updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return ResponseEntity.ok("Positions updated successfully!");
     }
 
     @PostMapping("/units")
-    public String updateUnitsFromTable(RedirectAttributes redirectAttributes) throws IOException {
+    public ResponseEntity<String> updateUnitsFromTable() throws IOException {
         unitService.updateUnitsFromTable();
-        redirectAttributes.addFlashAttribute("infoMessage", "units updated successfully!");
-        return "redirect:/admin"; // redirect with flash message
+        return ResponseEntity.ok("Units updated successfully!");
     }
-
 }

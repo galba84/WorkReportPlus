@@ -114,4 +114,13 @@ public class RegionService {
                 .fetchOptionalInto(RegionDto.class);
     }
 
+    public boolean regionExistsById(UUID regionUUID) {
+        return dsl.fetchExists(
+                dsl.selectOne()
+                        .from(REGION)
+                        .where(REGION.ID.eq(regionUUID))
+        );
+    }
+
+
 }

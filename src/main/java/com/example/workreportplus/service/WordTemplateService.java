@@ -39,9 +39,22 @@ public class WordTemplateService {
             for (Map.Entry<String, String> entry : variables.entrySet()) {
                 String placeholder = "{{" + entry.getKey() + "}}";
                 String value = Optional.ofNullable(entry.getValue()).orElse("");
+
+                // Special formatting for groupName: UPPERCASE
+                if ("groupName".equals(entry.getKey())) {
+                    value =  value.toUpperCase() ;
+                }
+
                 rtfContent = rtfContent.replace(placeholder, value);
             }
         }
+
+
+        // 5️⃣ Remove any remaining placeholders like {{...}}
+        rtfContent = rtfContent.replaceAll("\\{\\{[^}]+}}", "");
+        //leave only one empty line
+        rtfContent = rtfContent.replaceAll("(?m)(\\R\\s*){2,}", System.lineSeparator() + System.lineSeparator());
+
 
         // 5️⃣ Validate that at least something was replaced
         if (rtfContent.contains("{{")) {
