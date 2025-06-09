@@ -12,9 +12,11 @@ import java.util.UUID;
 public class GroupDto extends IdDto {
     String name;
     UUID regionId;
+    String regionName;
     List<PlaceDto> places;
     List<ContractorDto> contractors;
     String defaultDescription;
     boolean isFighting;
+    boolean status;
 }
 
