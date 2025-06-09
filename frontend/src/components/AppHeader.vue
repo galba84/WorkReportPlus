@@ -11,6 +11,7 @@
         <RouterLink to="/new-report">📋 Подати Звіт ТГР</RouterLink>
         <RouterLink to="/admin">🛠️ Admin</RouterLink> <!-- ✅ NEW ADMIN LINK -->
         <RouterLink to="/export-report">🖹 Експорт Звіту</RouterLink> <!-- ✅ NEW ADMIN LINK -->
+        <RouterLink to="/regions">🖹 Регіони</RouterLink> <!-- ✅ NEW ADMIN LINK -->
       </nav>
     </div>
   </header>
