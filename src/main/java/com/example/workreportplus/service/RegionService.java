@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.example.jooq.Tables.REGION;
 import static com.example.workreportplus.service.GoogleSheetsService.DOVIDNYK_TABLE_ID;
@@ -155,6 +157,18 @@ public class RegionService {
                 .where(REGION.ID.eq(id).and(REGION.STATUS.isTrue()))
                 .fetchOptionalInto(RegionDto.class);
     }
+
+    public Map<UUID, String> getAllRegionIdNameMap() {
+        return dsl.select(REGION.ID, REGION.REGION_NAME)
+                .from(REGION)
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        record1 -> record1.get(REGION.ID),
+                        record1 -> record1.get(REGION.REGION_NAME)
+                ));
+    }
+
 
 
 

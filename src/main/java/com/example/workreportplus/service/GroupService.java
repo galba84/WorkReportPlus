@@ -46,6 +46,11 @@ public class GroupService {
                 .fetchInto(GroupDto.class);
     }
 
+    public List<GroupDto> getAllGroupsAnyStatus() {
+        return dsl.selectFrom(GROUP)
+                .fetchInto(GroupDto.class);
+    }
+
     public GroupDto getGroupById(UUID groupId) {
         return dsl.selectFrom(GROUP)
                 .where(GROUP.STATUS.isTrue())
@@ -148,6 +153,35 @@ public class GroupService {
                 });
         System.out.println("Groups updated successfully from sheet.");
     }
+
+    public void insertGroup(GroupDto dto) {
+        dsl.insertInto(GROUP)
+                .set(GROUP.ID, dto.getId() != null ? UUID.fromString(dto.getId()) : UUID.randomUUID())
+                .set(GROUP.NAME, dto.getName())
+                .set(GROUP.REGION_ID, dto.getRegionId())
+                .set(GROUP.STATUS, true)
+                .set(GROUP.IS_FIGHTING, dto.isFighting())
+                .onConflict(GROUP.ID)
+                .doNothing()
+                .execute();
+    }
+
+    public void updateGroup(UUID id, GroupDto dto) {
+        dsl.update(GROUP)
+                .set(GROUP.NAME, dto.getName())
+                .set(GROUP.REGION_ID, dto.getRegionId())
+                .set(GROUP.IS_FIGHTING, dto.isFighting())
+                .where(GROUP.ID.eq(id))
+                .execute();
+    }
+
+    public void updateGroupStatus(UUID id, boolean active) {
+        dsl.update(GROUP)
+                .set(GROUP.STATUS, active)
+                .where(GROUP.ID.eq(id))
+                .execute();
+    }
+
 
 
 }
