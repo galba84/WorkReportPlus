@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RegionDto extends IdDto {
     private String regionName;
+    private Boolean status;
 
     public RegionDto(String regionName) {
         this.regionName = regionName;

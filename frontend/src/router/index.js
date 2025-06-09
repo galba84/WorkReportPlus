@@ -14,7 +14,9 @@ const router = createRouter({
     {path: '/new-report', name: 'new-report', component: NewReport, meta: {requiresAuth: true}},
     {path: '/login', name: 'login', component: LoginView},
     {path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } },
-    {path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } }
+    {path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
+    {path: '/regions', component: () => import('@/views/RegionManager.vue')
+    }
   ]
 })
 

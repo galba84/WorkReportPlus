@@ -54,6 +54,11 @@ public class RegionService {
                 .fetchInto(RegionDto.class);
     }
 
+    public List<RegionDto> getAllRegions() {
+        return dsl.selectFrom(REGION)
+                .fetchInto(RegionDto.class);
+    }
+
     public String getRegionNameById(UUID id) {
         return dsl.select(REGION.REGION_NAME)
                 .from(REGION)
@@ -121,6 +126,37 @@ public class RegionService {
                         .where(REGION.ID.eq(regionUUID))
         );
     }
+
+    public void createRegion(RegionDto regionDto) {
+        dsl.insertInto(REGION)
+                .set(REGION.ID, regionDto.getId() != null ? UUID.fromString(regionDto.getId()) : UUID.randomUUID())
+                .set(REGION.REGION_NAME, regionDto.getRegionName())
+                .set(REGION.STATUS, true)
+                .execute();
+    }
+
+    public void updateRegion(UUID id, RegionDto regionDto) {
+        dsl.update(REGION)
+                .set(REGION.REGION_NAME, regionDto.getRegionName())
+                .set(REGION.STATUS, regionDto.getStatus())
+                .where(REGION.ID.eq(id))
+                .execute();
+    }
+
+    public void softDeleteRegion(UUID id) {
+        dsl.update(REGION)
+                .set(REGION.STATUS, false)
+                .where(REGION.ID.eq(id))
+                .execute();
+    }
+
+    public Optional<RegionDto> getRegionById(UUID id) {
+        return dsl.selectFrom(REGION)
+                .where(REGION.ID.eq(id).and(REGION.STATUS.isTrue()))
+                .fetchOptionalInto(RegionDto.class);
+    }
+
+
 
 
 }
