@@ -31,7 +31,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import apiClient from "@/api/index.js";
 
 const regionNames = ref([])
@@ -58,11 +57,25 @@ async function generateDocument() {
   try {
     const url = `/api/daily-work-report/export/word?templateName=Region Report&reportDate=${encodeURIComponent(reportDate.value)}&regionId=${encodeURIComponent(selectedRegionId.value)}`
     const response = await apiClient.get(url, { responseType: 'blob' })
+
+    const contentType = response.headers['content-type']
+    if (contentType && contentType.includes('application/json')) {
+      // ✅ Convert blob to text first
+      const text = await response.data.text?.() || await new Response(response.data).text()
+      const json = JSON.parse(text)
+      throw new Error(json.message || 'Невідома помилка сервера')
+    }
+
+    // ✅ If it's a file, generate the blob URL
     downloadUrl.value = URL.createObjectURL(response.data)
+
   } catch (err) {
-    alert('Error generating document: ' + err.message)
+    const message = err?.response?.data?.message || err?.message || 'Помилка сервера'
+    alert('❌ ' + message)
   }
 }
+
+
 </script>
 
 <style scoped>

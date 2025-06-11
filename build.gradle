@@ -109,6 +109,10 @@ jooq {
                         inputSchema = 'public'
                         includes = '.*'
                     }
+                    generate {
+                        pojos = true
+                        daos = true
+                    }
                     target {
                         packageName = 'com.example.jooq'
                         directory = layout.buildDirectory.dir("generated/sources/jooq/main").get().asFile.absolutePath

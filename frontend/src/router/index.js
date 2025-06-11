@@ -6,6 +6,7 @@ import {getCurrentUser} from '@/api/auth'
 import AdminView from '@/views/AdminView.vue'
 import ExportReport from '@/views/ExportReport.vue'
 import GroupManager from '@/views/GroupManager.vue'
+import RegionReportTemplate from '@/views/RegionReportTemplate.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,7 +18,8 @@ const router = createRouter({
     {path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } },
     {path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
     {path: '/groups', name: 'groups', component: GroupManager, meta: { requiresAuth: true } },
-    {path: '/regions', component: () => import('@/views/RegionManager.vue'),  meta: { requiresAuth: true }
+    {path: '/regions', component: () => import('@/views/RegionManager.vue'),  meta: { requiresAuth: true }},
+    {path: '/RegionReportTemplate', component: RegionReportTemplate,  meta: { requiresAuth: true }
     }
   ]
 })

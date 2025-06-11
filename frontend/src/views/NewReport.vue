@@ -160,6 +160,14 @@ const submitReport = async () => {
   } catch (err) {
     if (err.response?.status === 400) {
       validationErrors.value = err.response.data
+
+      // ✅ Properly get first validation message
+      const first = Object.entries(err.response.data)[0]
+      if (first) {
+        const [field, message] = first
+        alert(`❌ Помилка в полі "${field}": ${message}`)
+      }
+
     } else {
       console.error('❌ Failed to submit report:', err)
       alert('❌ Submission failed: ' + (err.response?.data?.message || err.message))

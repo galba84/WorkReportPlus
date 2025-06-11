@@ -1,5 +1,6 @@
 package com.example.workreportplus.service;
 
+import com.example.workreportplus.dto.RegionReportTemplateDto;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,8 @@ import java.util.Optional;
 @Service
 public class WordTemplateService {
 
-    public byte[] generateWordFromRtfTemplate(String templateName, Map<String, String> variables) throws IOException {
+    public byte[] generateWordFromRtfTemplate(String templateName, Map<String, String> variables,
+                                              RegionReportTemplateDto template) throws IOException {
         // 1️⃣ Sanitize and convert the template name
         templateName = convertTemplateName(templateName);
         if (templateName == null || templateName.isBlank()) {
@@ -34,6 +36,9 @@ public class WordTemplateService {
 
         String rtfContent = new String(rtfBytes, StandardCharsets.UTF_8);
 
+        if (template != null) {
+            rtfContent =  template.getContent();
+        }
         // 4️⃣ Replace placeholders safely
         if (variables != null) {
             for (Map.Entry<String, String> entry : variables.entrySet()) {
@@ -42,7 +47,7 @@ public class WordTemplateService {
 
                 // Special formatting for groupName: UPPERCASE
                 if ("groupName".equals(entry.getKey())) {
-                    value =  value.toUpperCase() ;
+                    value = value.toUpperCase();
                 }
 
                 rtfContent = rtfContent.replace(placeholder, value);
@@ -69,7 +74,6 @@ public class WordTemplateService {
         // 7️⃣ Return as byte array
         return rtfContent.getBytes(StandardCharsets.UTF_8);
     }
-
 
 
     private String convertTemplateName(String templateName) {

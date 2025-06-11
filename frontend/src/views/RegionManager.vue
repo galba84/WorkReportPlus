@@ -22,7 +22,7 @@
         <td class="p-2">{{ region.id }}</td>
 
         <td class="p-2">
-          <template v-if="editedRegion?.id === region.id">
+          <template v-if="editedRegion && editedRegion.id === region.id">
             <input
               v-model="editedRegion.regionName"
               class="border px-2 py-1 w-full"
@@ -39,7 +39,7 @@
 
         <td class="p-2 space-x-2">
           <button
-            v-if="editedRegion?.id !== region.id"
+            v-if="!editedRegion || editedRegion.id !== region.id"
             @click="editRegion(region)"
             class="bg-blue-500 text-white px-2 py-1 rounded"
           >
