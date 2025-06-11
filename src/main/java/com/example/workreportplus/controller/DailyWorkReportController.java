@@ -23,6 +23,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/daily-work-report")
+@CrossOrigin(origins = "http://localhost:5173")
 public class DailyWorkReportController {
 
     private static final Logger logger = LoggerFactory.getLogger(DailyWorkReportController.class);
@@ -71,7 +72,6 @@ public class DailyWorkReportController {
 
         List<ContractorRelocation> arrived = shpsService.getArrivedContractors(searchDate,regionId );
         List<ContractorRelocation> departed = status_30_100_service.getDepartedContractors(searchDate, regionId);
-        List<ContractorDto> all = contractorService.getContractors();
 
         Map<String, List<ContractorDto>> arrivedMap = new HashMap<>();
         Map<String, List<ContractorDto>> departedMap = new HashMap<>();

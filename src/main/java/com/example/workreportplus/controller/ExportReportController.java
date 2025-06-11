@@ -1,9 +1,6 @@
 package com.example.workreportplus.controller;
 
-import com.example.workreportplus.dto.ContractorDto;
-import com.example.workreportplus.dto.GroupReportDto;
-import com.example.workreportplus.dto.PlaceDto;
-import com.example.workreportplus.dto.RegionReportDto;
+import com.example.workreportplus.dto.*;
 import com.example.workreportplus.service.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -38,13 +36,14 @@ public class ExportReportController {
     private static final Set<String> reportTypes = Set.of(REGION_REPORT);
     private final ContractorService contractorService;
     private final PlacesService placesService;
+    private final RegionReportTemplateService regionReportTemplateService;
     private static final DateTimeFormatter CUSTOM_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public ExportReportController(WordTemplateService wordTemplateService, RegionService regionService,
                                   GroupService groupService, GroupReportService groupReportService,
                                   RegionReportService regionReportService,
                                   DescriptionTemplateService descriptionTemplateService,
-                                  ContractorService contractorService, PlacesService placesService) {
+                                  ContractorService contractorService, PlacesService placesService, RegionReportTemplateService regionReportTemplateService) {
         this.wordTemplateService = wordTemplateService;
         this.regionService = regionService;
         this.groupService = groupService;
@@ -53,6 +52,7 @@ public class ExportReportController {
         this.descriptionTemplateService = descriptionTemplateService;
         this.contractorService = contractorService;
         this.placesService = placesService;
+        this.regionReportTemplateService = regionReportTemplateService;
     }
 
     @GetMapping("/export/word")
@@ -65,14 +65,21 @@ public class ExportReportController {
             return ResponseEntity.badRequest().build();
         }
 
+
         UUID regionUUID = UUID.fromString(regionId);
+        RegionReportTemplateDto recentTemplateByRegionId = regionReportTemplateService
+                .getRecentTemplateByRegionId(regionUUID);
         String regionName = regionService.getRegionNameById(regionUUID);
 
-        Map<String, String> variables = enrichTemplateVariables(regionName, reportDate);
-        byte[] wordBytes = wordTemplateService.generateWordFromRtfTemplate(templateName, variables);
+        Map<String, String> variables = enrichTemplateVariables(regionName, reportDate, recentTemplateByRegionId);
+        byte[] wordBytes = wordTemplateService.generateWordFromRtfTemplate(templateName, variables, recentTemplateByRegionId);
+        LocalDateTime now = LocalDateTime.now();
+        String timestamp = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
+
+        String filename = templateName.replace(" ", "_") + "_" + reportDate + "_" + timestamp + ".rtf";
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + templateName.replace(" ", "_") + "_" + reportDate + ".rtf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.valueOf("application/rtf"))
                 .body(wordBytes);
     }
@@ -92,20 +99,27 @@ public class ExportReportController {
         return true;
     }
 
-    private Map<String, String> enrichTemplateVariables(String regionName, LocalDate reportDate) throws IOException {
+    private Map<String, String> enrichTemplateVariables(String regionName, LocalDate reportDate,
+                                                        RegionReportTemplateDto template) throws IOException {
         UUID regionIdByName = regionService.getRegionIdByName(regionName);
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate, regionIdByName);
         Map<String, String> variables = new HashMap<>();
         variables.put("regionName", regionName);
         variables.put("reportDate", formatDate(reportDate));
 
-        variables.put("preamble", "на виконання Бойового розпорядження Головнокомандуючого Збройних Сил України від 15.03.2023 №12365 та Бойових наказів командира військової частини А4124 від 05.10.2023 №275ДСК, від 03.01.2024 №2ДСК, від 14.10.2023 №286ДСК, від 12.12.2023 №351ДСК та від 21.06.2024 №290ДСК");
 
-        variables.put("signature", " \n" +
-                " \t\n" +
-                "Тимчасово виконуючий обов’язки командира зведеного загону військової частини А4124\n" +
-                "лейтенант                                       _____________                     Максим КРАМАРОВ\n");
+        if (template != null) {
+            variables.put("preamble", template.getPreamble());
+            variables.put("signature", template.getSignature());
+        } else {
+            variables.put("preamble", "на виконання Бойового розпорядження Головнокомандуючого Збройних Сил України від 15.03.2023 №12365 та Бойових наказів командира військової частини А4124 від 05.10.2023 №275ДСК, від 03.01.2024 №2ДСК, від 14.10.2023 №286ДСК, від 12.12.2023 №351ДСК та від 21.06.2024 №290ДСК");
 
+            variables.put("signature", " \n" +
+                    " \t\n" +
+                    "Тимчасово виконуючий обов’язки командира зведеного загону військової частини А4124\n" +
+                    "лейтенант                                       _____________                     Максим КРАМАРОВ\n");
+
+        }
         UUID regionId = regionService.getRegionIdByName(regionName);
         List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
         List<GroupReportDto> groupReportDtoList = groupIds.stream()
@@ -118,9 +132,8 @@ public class ExportReportController {
             Map<String, String> variablesForGroupReport = new HashMap<>();
             String groupNameLocal = groupService.getGroupNameById(groupReportDto.getGroupName());
             enreachGroupReport(groupReportDto, groupNameLocal, reportDate, variablesForGroupReport);
-            byte[] data = wordTemplateService.generateWordFromRtfTemplate(GROUP_REPORT, variablesForGroupReport);
+            byte[] data = wordTemplateService.generateWordFromRtfTemplate(GROUP_REPORT, variablesForGroupReport, null);
             groupReportsString.add(new String(data, StandardCharsets.UTF_8));
-//            groupReportsString.add("___________________________________\n");
         }
 
         variables.put("groupReports", String.join("\n", groupReportsString));
@@ -129,11 +142,16 @@ public class ExportReportController {
         RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
         List<ContractorDto> arrived = contractorService.getContractorsByIds(report.getArrivedContractors());
         List<ContractorDto> departed = contractorService.getContractorsByIds(report.getDepartedContractors());
-
-        String arrivedOrderNumber = (report.getExtraData().get("arrivedOrderNumber"));
-        String departedOrderNumber = (report.getExtraData().get("departedOrderNumber"));
-        LocalDate arrivedOrderDate = safeParseDate(report.getExtraData().get("arrivedOrderDate"));
-        LocalDate departedOrderDate = safeParseDate(report.getExtraData().get("departedOrderDate"));
+        String arrivedOrderNumber = "";
+        String departedOrderNumber = "";
+        LocalDate arrivedOrderDate = null;
+        LocalDate departedOrderDate = null;
+        if (report.getExtraData() != null) {
+            arrivedOrderNumber = (report.getExtraData().get("arrivedOrderNumber"));
+            departedOrderNumber = (report.getExtraData().get("departedOrderNumber"));
+            arrivedOrderDate = safeParseDate(report.getExtraData().get("arrivedOrderDate"));
+            departedOrderDate = safeParseDate(report.getExtraData().get("departedOrderDate"));
+        }
         variables.put("arrivedOrder", "№" + arrivedOrderNumber + " від " + formatDate(arrivedOrderDate));
         variables.put("departedOrder", "№" + departedOrderNumber + " від " + formatDate(departedOrderDate));
 
@@ -143,7 +161,6 @@ public class ExportReportController {
 
         return variables;
     }
-
 
 
     private LocalDate safeParseDate(String dateStr) {
@@ -166,8 +183,11 @@ public class ExportReportController {
         String details = descriptionTemplateService.getDetailsByGroupId(dto.getGroupId());
         UUID regionIdByName = regionService.getRegionIdByName(dto.getRegionName());
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate, regionIdByName);
-        List<PlaceDto> places = placesService.getPlacesByIds(dto.getFightingPlaces());
+        List<PlaceDto> fightingPlaces = placesService.getPlacesByIds(dto.getFightingPlaces());
+        List<PlaceDto> restPlaces = placesService.getPlacesByIds(dto.getRestPlaces());
         String ammoHeader = "Витрата боєприпасів та розхід засобів:" + System.lineSeparator();
+        String restContractorsHeader = "та" + System.lineSeparator();
+        String restPlacesHeader = "на ППД " + System.lineSeparator();
 
         vars.put("groupName", groupName);
         vars.put("groupDetails", details);
@@ -175,19 +195,27 @@ public class ExportReportController {
             vars.put("ammunition", ammoHeader + dto.getAmmunition());
         }
         vars.put("reportDate", formatDate(reportDate));
-        vars.put("fightingPlaces", formatPlaces(places));
+        vars.put("fightingPlaces", formatPlaces(fightingPlaces));
+
 
         UUID groupId = groupService.getGroupIdByName(groupName);
         GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
-        List<ContractorDto> contractors = contractorService.getAllContractorByIds(report.getFightingContractors());
-        vars.put("fightingContractors", printContractors(contractors));
+        List<ContractorDto> fightingContractors = contractorService.getAllContractorByIds(report.getFightingContractors());
+        List<ContractorDto> restContractors = contractorService.getAllContractorByIds(report.getRestContractors());
+        vars.put("fightingContractors", printContractors(fightingContractors));
+        if (!restContractors.isEmpty()) {
+            vars.put("restContractors", restContractorsHeader + printContractors(restContractors));
+        }
+        if (!restContractors.isEmpty()) {
+            vars.put("restPlaces", restPlacesHeader + formatPlaces(restPlaces));
+        }
         vars.put("groupReportDescription", report.getDescription());
         vars.put("successReport", report.getSuccessReport());
     }
 
     private String printContractors(List<ContractorDto> contractors) {
         return contractors.stream()
-                .map(e -> "* " +  e.getC_rank().toLowerCase() + " " + e.getLastName() + " " + e.getFirstName() + " " + e.getMiddleName()  + " <<" + e.getNickName() + ">>")
+                .map(e -> "* " + e.getC_rank().toLowerCase() + " " + e.getLastName() + " " + e.getFirstName() + " " + e.getMiddleName() + " <<" + e.getNickName() + ">>")
                 .collect(Collectors.joining("\n"));
     }
 

@@ -44,7 +44,7 @@
         <td class="p-2">{{ group.id }}</td>
 
           <td class="p-2">
-            <template v-if="editedGroup?.id === group.id">
+            <template v-if="editedGroup && editedGroup.id === group.id">
               <input v-model="editedGroup.name" class="border px-2 py-1 w-full" />
             </template>
             <template v-else>
@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from '@/api'
 
 const groups = ref([])

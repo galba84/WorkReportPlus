@@ -107,7 +107,6 @@ public class RegionService {
                     })
                     .toList();
 
-
             ctx.batch(upserts).execute();
         });
 
@@ -168,9 +167,5 @@ public class RegionService {
                         record1 -> record1.get(REGION.REGION_NAME)
                 ));
     }
-
-
-
-
 
 }

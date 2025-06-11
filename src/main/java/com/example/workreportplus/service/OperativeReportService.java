@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.example.workreportplus.service.GoogleSheetsService.OPERATIVE_TABLE_ID;
+import static com.example.workreportplus.service.GoogleSheetsService.OPERATIVE_BPLA_TABLE_ID;
 
 /**
  * @author Alex Sereda
@@ -33,7 +33,7 @@ public class OperativeReportService {
     @Cacheable("getOperationReportsByDate")
     public List<OperationReportDto> getOperationReportsByDate(LocalDate targetDate, String regionName) throws IOException {
         String range = "ЗвітГруп!A2:L"; // A = Дата Звіту, L = ІД Населеного пункту
-        List<List<Object>> rows = googleSheetsService.readSheet(OPERATIVE_TABLE_ID, range);
+        List<List<Object>> rows = googleSheetsService.readSheet(OPERATIVE_BPLA_TABLE_ID, range);
 
         List<OperationReportDto> result = new ArrayList<>();
 

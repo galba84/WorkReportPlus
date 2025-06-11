@@ -23,7 +23,8 @@ import java.util.Map;
 public class GoogleSheetsService {
     public static final String SHPS_TABLE_ID = "1LkkLuk7y_fB8BTa-T4kYPYTgT-cVhIIgJTlZyo2b0UA";
     public static final String DOVIDNYK_TABLE_ID = "1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss";
-    public static final String OPERATIVE_TABLE_ID = "1YtvuAvmyZ5JZFG9uQTy3GF38oHJpQsHRAjAGOl7ioF8";
+    public static final String OPERATIVE_BPLA_TABLE_ID = "1YtvuAvmyZ5JZFG9uQTy3GF38oHJpQsHRAjAGOl7ioF8";
+    public static final String OPERATIVE_REB_TABLE_ID = "1je5TCzCRfCY-1dcpFrqLk7eCVjiZABgZfzd2POMMCGA";
     public static final String ZAPORIZZIA_100_30_TABLE_ID = "1QzRXeAevTEor857Gp2jY5JlYUvUgcgjyDjxJPB6eHmU";
 
     public static final Map<String, String> regionTo100_30_Map = Map.of(

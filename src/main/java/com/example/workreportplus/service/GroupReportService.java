@@ -296,7 +296,9 @@ public class GroupReportService implements ReportService {
         dto.setGroupName(record.get(GROUPREPORT.GROUP_ID).toString());
         dto.setRegionReportId(record.get(GROUPREPORT.REGION_REPORT_ID));
         dto.setFightingPlaces(Arrays.stream(record.get(GROUPREPORT.FIGHTING_PLACES)).toList()); // check if this is Array or JSONB
+        dto.setRestPlaces(Arrays.stream(record.get(GROUPREPORT.REST_PLACES)).toList()); // check if this is Array or JSONB
         dto.setFightingContractors(Arrays.stream(record.get(GROUPREPORT.FIGHTING_CONTRACTORS)).toList()); // same here
+        dto.setRestContractors(Arrays.stream(record.get(GROUPREPORT.REST_CONTRACTORS)).toList()); // same here
         dto.setDescription(record.get(GROUPREPORT.DESCRIPTION));
         dto.setWorked(record.get(GROUPREPORT.WORKED));
         dto.setReportDate(record.get(GROUPREPORT.REPORT_DATE));
@@ -355,7 +357,6 @@ public class GroupReportService implements ReportService {
         List<GroupReportPrefillDto> result = groupIds.stream()
                 .map(groupId -> {
                     // Fetch group entity with name (assume getGroupById returns a Group object)
-                    var groupName = groupService.getGroupNameById(groupId);
                     var group = groupService.getGroupById(groupId);
                     String groupNameById = groupService.getGroupNameById(groupId);
                     // Fetch reports and assignments for this group and date
