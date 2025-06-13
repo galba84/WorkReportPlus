@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.example.workreportplus.service.GoogleSheetsService.OPERATIVE_BPLA_TABLE_ID;
+import static com.example.workreportplus.service.GoogleSheetsService.OPERATIVE_REB_TABLE_ID;
 
 /**
  * @author Alex Sereda
@@ -32,35 +33,40 @@ public class OperativeReportService {
 
     @Cacheable("getOperationReportsByDate")
     public List<OperationReportDto> getOperationReportsByDate(LocalDate targetDate, String regionName) throws IOException {
-        String range = "ЗвітГруп!A2:L"; // A = Дата Звіту, L = ІД Населеного пункту
-        List<List<Object>> rows = googleSheetsService.readSheet(OPERATIVE_BPLA_TABLE_ID, range);
+        String range = "ЗвітГруп!A2:L"; // Expected columns A–L
+        List<String> sheetIds = List.of(OPERATIVE_BPLA_TABLE_ID, OPERATIVE_REB_TABLE_ID); // Add both table IDs
 
         List<OperationReportDto> result = new ArrayList<>();
 
-        for (List<Object> row : rows) {
-            if (row.size() < 12) continue; // Ensure all expected columns exist
+        for (String sheetId : sheetIds) {
+            List<List<Object>> rows = googleSheetsService.readSheet(sheetId, range);
 
-            LocalDate rowDate = parseDate(row.get(0));
-            if (!targetDate.equals(rowDate)) continue;
+            for (List<Object> row : rows) {
+                if (row.size() < 12) continue; // Ensure all expected columns exist
 
-            OperationReportDto dto = new OperationReportDto();
-            dto.setDate(rowDate);
-            dto.setGroupName(getString(row, 1));
-            dto.setRegionName(getString(row, 2));
-            dto.setPlaceName(getString(row, 3));
-            dto.setDescription(getString(row, 4));
-            dto.setAmmo(getString(row, 5));
-            dto.setAssets(getString(row, 6));
-            dto.setResult(getString(row, 7));
-            dto.setIsAmmoVerified(parseBoolean(row.get(9)));
-            dto.setGroupId(parseUUID(row.get(10)));
-            dto.setPlaceId(parseUUID(row.get(11)));
+                LocalDate rowDate = parseDate(row.get(0));
+                if (!targetDate.equals(rowDate)) continue;
 
-            result.add(dto);
+                OperationReportDto dto = new OperationReportDto();
+                dto.setDate(rowDate);
+                dto.setGroupName(getString(row, 1));
+                dto.setRegionName(getString(row, 2));
+                dto.setPlaceName(getString(row, 3));
+                dto.setDescription(getString(row, 4));
+                dto.setAmmo(getString(row, 5));
+                dto.setAssets(getString(row, 6));
+                dto.setResult(getString(row, 7));
+                dto.setIsAmmoVerified(parseBoolean(row.get(9)));
+                dto.setGroupId(parseUUID(row.get(10)));
+                dto.setPlaceId(parseUUID(row.get(11)));
+
+                result.add(dto);
+            }
         }
 
         return result;
     }
+
 
     private String getString(List<Object> row, int index) {
         return index < row.size() ? String.valueOf(row.get(index)).trim() : "";
