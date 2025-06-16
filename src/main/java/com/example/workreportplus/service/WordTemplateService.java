@@ -37,7 +37,7 @@ public class WordTemplateService {
         String rtfContent = new String(rtfBytes, StandardCharsets.UTF_8);
 
         if (template != null) {
-            rtfContent =  template.getContent();
+            rtfContent = template.getContent();
         }
         // 4️⃣ Replace placeholders safely
         if (variables != null) {
