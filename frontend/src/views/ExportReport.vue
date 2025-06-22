@@ -2,6 +2,9 @@
   <div class="form-container">
     <h2>Експортувати звіт ТГР</h2>
 
+    <!-- Повідомлення про помилку -->
+    <p v-if="errorMessage" class="error-message">❌ {{ errorMessage }}</p>
+
     <form class="report-form" @submit.prevent="generateDocument">
       <!-- Region selection -->
       <label for="regionId">Вибрати регіон:</label>
@@ -16,12 +19,11 @@
       <label for="reportDate">Дата звіту:</label>
       <input type="date" id="reportDate" v-model="reportDate" required />
 
-      <br />
       <button type="submit" class="generate-button">згенерувати</button>
     </form>
 
     <!-- Download link -->
-    <p v-if="downloadUrl" id="downloadLink">
+    <p v-if="downloadUrl" id="downloadLink" class="download-link">
       <a :href="downloadUrl" :download="`RegionReport_${reportDate}.rtf`">
         завантажити
       </a>
@@ -31,12 +33,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import apiClient from "@/api/index.js";
+import apiClient from '@/api/index.js'
 
 const regionNames = ref([])
 const selectedRegionId = ref('')
 const reportDate = ref('')
 const downloadUrl = ref('')
+const errorMessage = ref('')
 
 onMounted(async () => {
   try {
@@ -44,13 +47,16 @@ onMounted(async () => {
     regionNames.value = response.data
   } catch (error) {
     console.error('Failed to fetch regions:', error)
-    alert('Failed to load region list.')
+    errorMessage.value = 'Не вдалося завантажити список регіонів.'
   }
 })
 
 async function generateDocument() {
-  if (!reportDate.value || !selectedRegionId.value) {
-    alert('Please select both a region and a report date.')
+  // Очистка попереднього повідомлення
+  errorMessage.value = ''
+
+  if (!selectedRegionId.value || !reportDate.value) {
+    errorMessage.value = 'Будь ласка, виберіть регіон і дату звіту.'
     return
   }
 
@@ -60,22 +66,20 @@ async function generateDocument() {
 
     const contentType = response.headers['content-type']
     if (contentType && contentType.includes('application/json')) {
-      // ✅ Convert blob to text first
+      // Якщо прийшов JSON з помилкою
       const text = await response.data.text?.() || await new Response(response.data).text()
       const json = JSON.parse(text)
-      throw new Error(json.message || 'Невідома помилка сервера')
+      errorMessage.value = json.message || 'Невідома помилка сервера'
+      return
     }
 
-    // ✅ If it's a file, generate the blob URL
+    // Якщо це файл, генеруємо URL для завантаження
     downloadUrl.value = URL.createObjectURL(response.data)
-
   } catch (err) {
-    const message = err?.response?.data?.message || err?.message || 'Помилка сервера'
-    alert('❌ ' + message)
+    console.error('generateDocument error', err)
+    errorMessage.value = err?.response?.data?.message || err?.message || 'Помилка сервера'
   }
 }
-
-
 </script>
 
 <style scoped>
@@ -95,16 +99,17 @@ async function generateDocument() {
   margin-bottom: 1.5rem;
   font-weight: 700;
 }
-.report-form > * {
-  margin-bottom: 2rem;
+
+.report-form {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  align-items: stretch;
 }
 
 .report-form label {
   font-weight: 600;
-  margin-bottom: 0.3rem;
+  text-align: left;
 }
 
 .report-form select,
@@ -116,7 +121,7 @@ async function generateDocument() {
 }
 
 .generate-button {
-  margin-top: 1rem; /* 👈 adds vertical space above the button */
+  margin-top: 1rem;
   padding: 0.75rem;
   font-size: 1.1rem;
   background-color: #007bff;
@@ -128,9 +133,14 @@ async function generateDocument() {
   transition: background-color 0.3s ease;
 }
 
-
 .generate-button:hover {
   background-color: #0056b3;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .download-link {
@@ -146,5 +156,4 @@ async function generateDocument() {
 .download-link a:hover {
   text-decoration: underline;
 }
-
 </style>

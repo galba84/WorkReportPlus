@@ -2,12 +2,16 @@ package com.example.workreportplus.controller;
 
 import com.example.workreportplus.service.*;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
 @RestController
 @RequestMapping("/admin")
+@PreAuthorize("hasRole('ADMIN')") // ✅ applies to all methods in the controller
 public class AdminController {
 
     private final ContractorService contractorService;

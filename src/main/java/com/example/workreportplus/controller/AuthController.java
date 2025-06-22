@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -41,23 +42,30 @@ public class AuthController {
         }
 
         String email = authentication.getName();
-        UsersRecord user = userService.getByEmail(email).orElseThrow();
+        UsersRecord user = userService.getByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         return ResponseEntity.ok(new AuthResponse(user.getId(), user.getEmail(), user.getRole()));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
+        }
 
-
-        UsersRecord user = userService.getByEmail(request.email()).orElseThrow();
+        UsersRecord user = userService.getByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found after login: " + request.email()));
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole());
 
         auditLogService.log(
-                "LOGIN", "auth", user.getEmail(), user.getId(), httpRequest.getRemoteAddr(), "User logged in"
+                "LOGIN",
+                "auth", user.getEmail(), user.getId(), httpRequest.getRemoteAddr(),
+                "User logged in"
         );
 
         return ResponseEntity.ok(Map.of(
@@ -69,19 +77,27 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         if (userService.getByEmail(request.email()).isPresent()) {
-            return ResponseEntity.badRequest().body("User already exists");
+            return ResponseEntity.badRequest().body(Map.of("error", "User already exists"));
         }
 
         UsersRecord user = new UsersRecord();
         user.setEmail(request.email());
-        user.setPassword(userService.encodePassword(request.password()));
+        user.setPassword(request.password());
+        user.setNickname(request.nickname() != null ? request.nickname() : "Guest");
         user.setRole("GUEST");
 
         userService.createUser(user);
 
-        UUID userId = userService.getByEmail(request.email()).map(UsersRecord::getId).orElse(null);
+        UUID userId = userService.getByEmail(request.email()).map(UsersRecord::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found after registration"));
+
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole());
+
         auditLogService.log("REGISTER", "auth", user.getEmail(), userId, httpRequest.getRemoteAddr(), "User registered");
 
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user", new AuthResponse(userId, user.getEmail(), user.getRole())
+        ));
     }
 }

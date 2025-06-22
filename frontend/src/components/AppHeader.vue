@@ -8,21 +8,56 @@
       <nav>
         <RouterLink to="/">🏠 Home</RouterLink>
         <RouterLink to="/about">ℹ️ About</RouterLink>
-        <RouterLink to="/new-report">📋 Подати Звіт ТГР</RouterLink>
-        <RouterLink to="/admin">🛠️ Admin</RouterLink> <!-- ✅ NEW ADMIN LINK -->
-        <RouterLink to="/export-report">🖹 Експорт Звіту</RouterLink> <!-- ✅ NEW ADMIN LINK -->
-        <RouterLink to="/regions">🖹 Регіони</RouterLink> <!-- ✅ NEW ADMIN LINK -->
-        <RouterLink to="/groups">👥 Групи</RouterLink>
-        <RouterLink to="/RegionReportTemplate">👥 ТГР Темплейти</RouterLink>
+        <RouterLink to="/new-report" v-if="['POWER_USER', 'ADMIN'].includes(userStore.role)">📋 Подати Звіт ТГР</RouterLink>
+        <RouterLink to="/admin" v-if="userStore.role === 'ADMIN'">🛠️ Admin</RouterLink>
+        <RouterLink to="/export-report" v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)">🖹 Експорт Звіту</RouterLink>
+        <RouterLink to="/regions" v-if="userStore.role === 'ADMIN'">🖹 Регіони</RouterLink>
+        <RouterLink to="/groups" v-if="userStore.role === 'ADMIN'">👥 Групи</RouterLink>
+        <RouterLink to="/RegionReportTemplate" v-if="userStore.role === 'ADMIN'">👥 ТГР Темплейти</RouterLink>
       </nav>
     </div>
+
+    <div class="user-info">
+      <div class="user-details" v-if="userStore.isLoggedIn">
+        <div><strong>{{ userStore.username }}</strong></div>
+        <div style="font-size: 0.85em;">🧑‍💼 {{ userStore.role }}</div>
+      </div>
+
+      <button @click="logout" v-if="userStore.isLoggedIn">🚪 Logout</button>
+
+      <div v-else class="auth-links">
+        <RouterLink to="/login">🔐 Login</RouterLink>
+        <p>
+          Don’t have an account?
+          <RouterLink to="/register">Register here</RouterLink>
+        </p>
+      </div>
+    </div>
+
+
   </header>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import HelloWorld from '@/components/HelloWorld.vue'
+import { onMounted } from 'vue'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
+const router = useRouter()
+
+onMounted(() => {
+  userStore.loadFromStorage()
+})
+
+function logout() {
+  userStore.logout()
+  router.push('/login')
+}
 </script>
+
+
 
 <style scoped>
 .header {
@@ -68,4 +103,43 @@ nav a:first-of-type {
 nav a.router-link-exact-active {
   text-decoration: underline;
 }
+
+.user-info {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-left: 1rem;
+  color: white;
+  min-width: 120px;
+}
+
+.user-info button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.user-info button:hover {
+  background: #c0392b;
+}
+
+.user-details {
+  text-align: right;
+}
+
+.auth-links {
+  color: white;
+  margin-top: 0.5em;
+}
+.auth-links a {
+  color: white;
+  text-decoration: underline;
+}
+
 </style>

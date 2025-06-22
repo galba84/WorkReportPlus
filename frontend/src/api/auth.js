@@ -14,10 +14,15 @@ export async function login(email, password) {
 }
 
 // ✅ Register a new user
-export async function register(email, password) {
-  const response = await apiClient.post('/api/auth/register', { email, password })
+export async function register(email, password, nickname) {
+  const response = await apiClient.post('/api/auth/register', {
+    email,
+    password,
+    nickname
+  })
   return response.data
 }
+
 
 // ✅ Logout: clear session data
 export function logout() {

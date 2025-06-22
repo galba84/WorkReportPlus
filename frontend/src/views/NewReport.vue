@@ -3,7 +3,8 @@
 import {ref, onMounted, watch, computed} from 'vue'
 import apiClient from '@/api'
 
-const selectedDate = ref('2025-05-25')
+const today = new Date().toISOString().split('T')[0]
+const selectedDate = ref(today)
 
 const reports = ref([])
 const loading = ref(false)

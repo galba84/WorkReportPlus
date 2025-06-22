@@ -4,6 +4,7 @@ import com.example.workreportplus.dto.*;
 import com.example.workreportplus.service.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -56,7 +57,7 @@ public class ExportReportController {
     }
 
     @GetMapping("/export/word")
-    public ResponseEntity<byte[]> exportWord(@RequestParam String templateName,
+    public ResponseEntity<?> exportWord(@RequestParam String templateName,
                                              @RequestParam(required = false) String regionId,
                                              @RequestParam(required = false) String groupName,
                                              @RequestParam @Valid LocalDate reportDate) throws IOException {
@@ -70,6 +71,15 @@ public class ExportReportController {
         RegionReportTemplateDto recentTemplateByRegionId = regionReportTemplateService
                 .getRecentTemplateByRegionId(regionUUID);
         String regionName = regionService.getRegionNameById(regionUUID);
+
+        boolean isReportExist = regionReportService.existsByRegionIdAndDate(regionUUID, reportDate);
+
+        if (!isReportExist) {
+            // Якщо звіту немає — повертаємо 404 Not Found з повідомленням
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Немає звіту для обраної дати та регіону");
+        }
 
         Map<String, String> variables = enrichTemplateVariables(regionName, reportDate, recentTemplateByRegionId);
         byte[] wordBytes = wordTemplateService.generateWordFromRtfTemplate(templateName, variables, recentTemplateByRegionId);
