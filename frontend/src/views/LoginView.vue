@@ -1,17 +1,23 @@
+<!--LoginView.vue-->
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
+import { useUserStore } from '@/stores/userStore'
 
 const email = ref('')
 const password = ref('')
 const error = ref(null)
 const router = useRouter()
+const userStore = useUserStore()
 
 const submit = async () => {
   try {
-    const user = await login(email.value, password.value)
-    console.log('✅ Login successful:', user)
+    // ✅ login вже зберігає токен + юзера, повертає лише user
+    await login(email.value, password.value)
+
+    // ✅ оновлюємо store
+    userStore.loadFromStorage()
 
     const redirect = router.currentRoute.value.query.redirect || '/'
     router.push(redirect)
@@ -22,6 +28,7 @@ const submit = async () => {
   }
 }
 </script>
+
 
 <template>
   <div class="login">

@@ -15,11 +15,27 @@ const router = createRouter({
     {path: '/about', name: 'about', component: () => import('../views/AboutView.vue')},
     {path: '/new-report', name: 'new-report', component: NewReport, meta: {requiresAuth: true}},
     {path: '/login', name: 'login', component: LoginView},
-    {path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAuth: true } },
-    {path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
-    {path: '/groups', name: 'groups', component: GroupManager, meta: { requiresAuth: true } },
-    {path: '/regions', component: () => import('@/views/RegionManager.vue'),  meta: { requiresAuth: true }},
-    {path: '/RegionReportTemplate', component: RegionReportTemplate,  meta: { requiresAuth: true }
+    {path: '/admin', component: AdminView, meta: {requiresAuth: true, roles: ['ADMIN']}},
+    {
+      path: '/export-report',
+      name: 'export-report',
+      component: ExportReport,
+      meta: {requiresAuth: true}
+    },
+    {path: '/groups', name: 'groups', component: GroupManager, meta: {requiresAuth: true}},
+    {
+      path: '/regions',
+      component: () => import('@/views/RegionManager.vue'),
+      meta: {requiresAuth: true}
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+      meta: {requiresAuth: false}
+    },
+    {
+      path: '/RegionReportTemplate', component: RegionReportTemplate, meta: {requiresAuth: true}
     }
   ]
 })

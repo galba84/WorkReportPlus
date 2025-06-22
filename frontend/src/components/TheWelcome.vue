@@ -1,94 +1,161 @@
+<template>
+  <div class="welcome-dashboard">
+    <WelcomeItem>
+      <template #icon>
+        <DocsIcon />
+      </template>
+      <template #heading>Personal Manager Plus</template>
+      <strong>Personal Manager Plus</strong> — це безпечний та гнучкий інструмент для управління персоналом, який
+      забезпечує звітність, координацію та контроль доступу на основі ролей у розподілених командах.
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <AdminIcon />
+      </template>
+      <template #heading>Роль ADMIN</template>
+      Користувачі з роллю <strong>ADMIN</strong> мають повний доступ до системи. Вони можуть:
+      <ul>
+        <li>Керувати користувачами та призначати ролі</li>
+        <li>Отримувати доступ до всіх регіонів і звітів</li>
+        <li>Створювати та змінювати шаблони</li>
+        <li>Переглядати адміністративну панель</li>
+        <li>Експортувати будь-які звіти</li>
+      </ul>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <PowerUserIcon />
+      </template>
+      <template #heading>Роль POWER_USER</template>
+      Користувачі з роллю <strong>POWER_USER</strong> є менеджерами на рівні регіону. Вони можуть:
+      <ul>
+        <li>Переглядати та подавати звіти по призначених регіонах</li>
+        <li>Керувати даними груп і підрядників</li>
+        <li>Генерувати та експортувати звіти по регіону</li>
+      </ul>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <UserIcon />
+      </template>
+      <template #heading>Роль USER</template>
+      Користувачі з роллю <strong>USER</strong> мають обмежений доступ. Вони можуть:
+      <ul>
+        <li>Переглядати дані, що стосуються їхньої групи або завдань</li>
+        <li>Експортувати звіти, доступні їм</li>
+        <li>Не мають доступу до шаблонів чи адміністративних функцій</li>
+      </ul>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <GuestIcon />
+      </template>
+      <template #heading>Роль GUEST</template>
+      Користувачі з роллю <strong>GUEST</strong> мають мінімальні права:
+      <ul>
+        <li>Надавати базові звіти (якщо дозволено)</li>
+        <li>Переглядати лише загальнодоступні або надані дані</li>
+        <li>Не мають доступу до експорту чи адміністрування</li>
+      </ul>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <SupportIcon />
+      </template>
+      <template #heading>Підтримка</template>
+      Зверніться до свого адміністратора для зміни ролі або отримання доступу. З технічних питань — перегляньте
+      <a
+        href="https://github.com/galba84/WorkReportPlus"
+        target="_blank"
+        rel="noopener"
+      >
+        репозиторій GitHub
+      </a>
+      або скористайтеся внутрішнім каналом підтримки.
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <SupportIcon />
+      </template>
+      <template #heading>Джерела Даних</template>
+      <strong>Довідник:</strong>
+      <a
+        href="https://docs.google.com/spreadsheets/d/1z78PLdhrabCpJR1fQfCW28d9FOE8B8YHvgq-aStBkss/edit?gid=2039202704"
+        target="_blank"
+        rel="noopener"
+      >
+        Google Sheets
+      </a>
+
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <SupportIcon />
+      </template>
+      <template #heading>Підтримка</template>
+      <strong>БПЛА оперативний звіт:</strong>
+      <a
+        href="https://docs.google.com/spreadsheets/d/1YtvuAvmyZ5JZFG9uQTy3GF38oHJpQsHRAjAGOl7ioF8"
+        target="_blank"
+        rel="noopener"
+      > звіт
+      </a>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <SupportIcon />
+      </template>
+      <template #heading>Підтримка</template>
+      <strong>РЕБ оперативний звіт:</strong>
+      <a
+        href="https://docs.google.com/spreadsheets/d/1je5TCzCRfCY-1dcpFrqLk7eCVjiZABgZfzd2POMMCGA"
+        target="_blank"
+        rel="noopener"
+      > звіт
+      </a>
+    </WelcomeItem>
+
+    <WelcomeItem>
+      <template #icon>
+        <SupportIcon />
+      </template>
+      <template #heading>Підтримка</template>
+      <strong>РЕБ оперативний звіт:</strong>
+      <a
+        href="https://docs.google.com/spreadsheets/d/1je5TCzCRfCY-1dcpFrqLk7eCVjiZABgZfzd2POMMCGA"
+        target="_blank"
+        rel="noopener"
+      > звіт
+      </a>
+    </WelcomeItem>
+
+  </div>
+</template>
+
 <script setup>
 import WelcomeItem from './WelcomeItem.vue'
-import DocumentationIcon from './icons/IconDocumentation.vue'
-import ToolingIcon from './icons/IconTooling.vue'
-import EcosystemIcon from './icons/IconEcosystem.vue'
-import CommunityIcon from './icons/IconCommunity.vue'
+import AdminIcon from './icons/IconTooling.vue'
+import PowerUserIcon from './icons/IconEcosystem.vue'
+import GuestIcon from './icons/IconCommunity.vue'
+import DocsIcon from './icons/IconDocumentation.vue'
 import SupportIcon from './icons/IconSupport.vue'
-
-const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
+import UserIcon from './icons/IconSupport.vue'
 </script>
 
-<template>
-  <WelcomeItem>
-    <template #icon>
-      <DocumentationIcon />
-    </template>
-    <template #heading>Documentation</template>
-
-    Vue’s
-    <a href="https://vuejs.org/" target="_blank" rel="noopener">official documentation</a>
-    provides you with all information you need to get started.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <ToolingIcon />
-    </template>
-    <template #heading>Tooling</template>
-
-    This project is served and bundled with
-    <a href="https://vite.dev/guide/features.html" target="_blank" rel="noopener">Vite</a>. The
-    recommended IDE setup is
-    <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">VSCode</a>
-    +
-    <a href="https://github.com/vuejs/language-tools" target="_blank" rel="noopener">Vue - Official</a>. If
-    you need to test your components and web pages, check out
-    <a href="https://vitest.dev/" target="_blank" rel="noopener">Vitest</a>
-    and
-    <a href="https://www.cypress.io/" target="_blank" rel="noopener">Cypress</a>
-    /
-    <a href="https://playwright.dev/" target="_blank" rel="noopener">Playwright</a>.
-
-    <br />
-
-    More instructions are available in
-    <a href="javascript:void(0)" @click="openReadmeInEditor"><code>README.md</code></a
-    >.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <EcosystemIcon />
-    </template>
-    <template #heading>Ecosystem</template>
-
-    Get official tools and libraries for your project:
-    <a href="https://pinia.vuejs.org/" target="_blank" rel="noopener">Pinia</a>,
-    <a href="https://router.vuejs.org/" target="_blank" rel="noopener">Vue Router</a>,
-    <a href="https://test-utils.vuejs.org/" target="_blank" rel="noopener">Vue Test Utils</a>, and
-    <a href="https://github.com/vuejs/devtools" target="_blank" rel="noopener">Vue Dev Tools</a>. If
-    you need more resources, we suggest paying
-    <a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">Awesome Vue</a>
-    a visit.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <CommunityIcon />
-    </template>
-    <template #heading>Community</template>
-
-    Got stuck? Ask your question on
-    <a href="https://chat.vuejs.org" target="_blank" rel="noopener">Vue Land</a>
-    (our official Discord server), or
-    <a href="https://stackoverflow.com/questions/tagged/vue.js" target="_blank" rel="noopener"
-      >StackOverflow</a
-    >. You should also follow the official
-    <a href="https://bsky.app/profile/vuejs.org" target="_blank" rel="noopener">@vuejs.org</a>
-    Bluesky account or the
-    <a href="https://x.com/vuejs" target="_blank" rel="noopener">@vuejs</a>
-    X account for latest news in the Vue world.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <SupportIcon />
-    </template>
-    <template #heading>Support Vue</template>
-
-    As an independent project, Vue relies on community backing for its sustainability. You can help
-    us by
-    <a href="https://vuejs.org/sponsor/" target="_blank" rel="noopener">becoming a sponsor</a>.
-  </WelcomeItem>
-</template>
+<style scoped>
+.welcome-dashboard {
+  display: grid;
+  gap: 1.5rem;
+  padding: 2rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+</style>

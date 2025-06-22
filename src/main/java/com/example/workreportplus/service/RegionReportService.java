@@ -454,6 +454,25 @@ public class RegionReportService implements ReportService {
                 .fetchOneInto(RegionReportDto.class);
     }
 
+    public boolean existsByRegionIdAndDate(UUID regionId, LocalDate reportDate) {
+        // Базова умова: фільтруємо по regionId і статусу = true
+        Condition condition = REGIONREPORT.REGION_ID.eq(regionId)
+                .and(REGIONREPORT.STATUS.eq(true));
+
+        // Додаємо перевірку дати, якщо вона задана
+        if (reportDate != null) {
+            condition = condition.and(REGIONREPORT.REPORT_DATE.eq(reportDate));
+        }
+
+        // Використовуємо jOOQ fetchExists для перевірки, чи є хоч один такий запис
+        return dsl.fetchExists(
+                DSL.selectOne()
+                        .from(REGIONREPORT)
+                        .where(condition)
+        );
+    }
+
+
     public UUID getLastReportIdByDate(LocalDate reportDate, UUID regionId) {
         return dsl.select(REGIONREPORT.ID)
                 .from(REGIONREPORT)
