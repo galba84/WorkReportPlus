@@ -1,14 +1,21 @@
-# Use an official OpenJDK runtime as a parent image
+# syntax=docker/dockerfile:1
+
+# 1) Build stage (якщо ви хочете збирати jar всередині контейнера)
+# FROM gradle:7.6-jdk17-alpine AS builder
+# WORKDIR /app
+# COPY --chown=gradle:gradle . .
+# RUN gradle bootJar --no-daemon
+
+# 2) Runtime stage
 FROM openjdk:17-jdk-slim
 
-# Set the working directory inside the container
+ARG JAR_FILE=build/libs/PersonalManagerPlus-0.0.2.20250623-2008.jar
+
 WORKDIR /app
 
-# Copy the built JAR file into the container
-COPY build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar app.jar
+# Копіюємо ззовні зібраний .jar
+COPY ${JAR_FILE} app.jar
 
-# Expose port 8080 to the outside
 EXPOSE 8080
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

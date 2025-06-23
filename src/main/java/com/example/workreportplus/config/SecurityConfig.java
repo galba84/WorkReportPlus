@@ -6,8 +6,8 @@ import com.example.workreportplus.service.UserService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +23,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -37,10 +41,23 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(Customizer.withDefaults())
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration cfg = new CorsConfiguration();
+                    cfg.setAllowedOrigins(List.of(
+                            "https://localhost:5178",
+                            "https://192.168.201.62:5178"
+                    ));
+                    cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+                    cfg.setAllowedHeaders(List.of("*"));
+                    cfg.setAllowCredentials(false);
+                    UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+                    src.registerCorsConfiguration("/**", cfg);
+                    return src.getCorsConfiguration(request);
+                }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/ping").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
