@@ -28,7 +28,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        JAR_FILE: build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar
+        JAR_FILE: build/libs/PersonalManagerPlus-0.0.2.20250623-2008.jar
+    image: sered2a/workreportplus:PersonalManagerPlus-0.0.2.20250623-2008
     container_name: workreportplus_app
     restart: always
     ports:
@@ -57,6 +58,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: sered2a/workreportplus:fe-0.0.1   # if you also push your frontend later
     container_name: vue_frontend
     ports:
       - "5178:5178"

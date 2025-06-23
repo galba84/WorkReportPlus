@@ -1,4 +1,6 @@
 import nu.studer.gradle.jooq.JooqGenerate
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
 
 plugins {
     id 'org.springframework.boot' version '3.4.2'
@@ -8,8 +10,10 @@ plugins {
 }
 
 apply plugin: 'java'
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
+group = 'com.personalmanagerplus'
+def timestamp = LocalDateTime.now()
+        .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
+version = "0.0.2.${timestamp}"
 
 java {
     toolchain {

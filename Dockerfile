@@ -9,7 +9,7 @@
 # 2) Runtime stage
 FROM openjdk:17-jdk-slim
 
-ARG JAR_FILE=build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar
+ARG JAR_FILE=build/libs/PersonalManagerPlus-0.0.2.20250623-2008.jar
 
 WORKDIR /app
 
