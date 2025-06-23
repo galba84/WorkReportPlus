@@ -1,49 +1,71 @@
+#  compose.yaml
+version: '3.8'
 
 services:
   db:
-    image: postgres:15.3
+    image: postgres:15.3-alpine
     container_name: postgres_container
     restart: always
     environment:
-      - POSTGRES_USER=workreport_user
-      - POSTGRES_PASSWORD=userpass
-      - POSTGRES_DB=postgres
+      POSTGRES_USER: workreport_user
+      POSTGRES_PASSWORD: userpass
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data  # ✅ Persistent storage
-      - ./init-scripts:/docker-entrypoint-initdb.d # ✅ Runs init.sql on first startup
-    networks:
-      - mynetwork
+      - db_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U workreport_user -d postgres"]
       interval: 10s
-      retries: 5
       timeout: 5s
+      retries: 5
+    networks:
+      - backend         # ← add this
 
   app:
     build:
       context: .
+      dockerfile: Dockerfile
       args:
-        - JAR_FILE=build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar
+        JAR_FILE: build/libs/WorkReportPlus-0.0.1-SNAPSHOT.jar
     container_name: workreportplus_app
     restart: always
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres
-      - SPRING_DATASOURCE_USERNAME=workreport_user
-      - SPRING_DATASOURCE_PASSWORD=userpass
-      - SPRING_FLYWAY_URL=jdbc:postgresql://db:5432/postgres
-      - SPRING_FLYWAY_USER=workreport_user
-      - SPRING_FLYWAY_PASSWORD=userpass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: workreport_user
+      SPRING_DATASOURCE_PASSWORD: userpass
+      SPRING_FLYWAY_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_FLYWAY_USER: workreport_user
+      SPRING_FLYWAY_PASSWORD: userpass
+      SPRING_PROFILES_ACTIVE: docker
     networks:
-      - mynetwork
+      - backend
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/api/ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vue_frontend
+    ports:
+      - "5178:5178"
+
+    networks:
+      - backend
 
 networks:
-  mynetwork:
+  backend:
     driver: bridge
 
 volumes:
