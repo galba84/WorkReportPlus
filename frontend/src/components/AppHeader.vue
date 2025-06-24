@@ -27,6 +27,7 @@
           <RouterLink to="/groups">👥 Групи</RouterLink>
           <RouterLink to="/RegionReportTemplate">👥 ТГР Темплейти</RouterLink>
           <RouterLink to="/users">👥 UsersView</RouterLink>
+          <RouterLink to="/audit-logs">👥 Audit Logs</RouterLink>
         </div>
       </nav>
     </div>
