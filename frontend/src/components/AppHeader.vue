@@ -18,10 +18,10 @@
             to="/search-report"
             v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
           >🖹 Пошук Звіту</RouterLink>
-          <RouterLink
-            to="/export-report"
-            v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
-          >🖹 Експорт Звіту</RouterLink>
+<!--          <RouterLink-->
+<!--            to="/export-report"-->
+<!--            v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"-->
+<!--          >🖹 Експорт Звіту</RouterLink>-->
         </div>
 
         <!-- bottom row: only ADMINs -->

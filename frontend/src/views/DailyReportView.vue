@@ -7,6 +7,10 @@
       <div v-if="error" class="error-msg">{{ error }}</div>
 
       <div class="report-details" v-if="report">
+
+        <!-- Export Button -->
+        <button @click="exportReport" class="export-button">Експортувати звіт</button>
+
         <p><strong>ID:</strong> {{ report.id }}</p>
         <p><strong>Date:</strong> {{ report.date }}</p>
         <p><strong>Region:</strong> {{ report.regionName }}</p>
@@ -16,6 +20,10 @@
         <p><strong>Updated By:</strong> {{ report.updatedBy }}</p>
         <p><strong>Updated On:</strong> {{ report.updatedOn }}</p>
         <p><strong>Status:</strong> {{ report.status }}</p>
+
+        <p v-if="downloadUrl" class="download-link">
+          <a :href="downloadUrl" :download="downloadName">{{ downloadName }}</a>
+        </p>
 
         <h3>Arrived Contractors</h3>
         <ul>
@@ -106,11 +114,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import apiClient from '@/api/index.js'
 import { getReportById } from '@/api/dailyWorkReport'
 
 const route = useRoute()
 const report = ref(null)
 const error = ref(null)
+const downloadUrl = ref('')
+const downloadName = ref('')
 
 async function fetchReport() {
   try {
@@ -123,11 +134,25 @@ async function fetchReport() {
 onMounted(fetchReport)
 
 const hasExtraData = computed(() => report.value && Object.keys(report.value.extraData || {}).length > 0)
+
+async function exportReport() {
+  if (!report.value) return
+  try {
+    const url = `/api/daily-work-report/export/word?templateName=Region Report&reportDate=${report.value.date}&regionId=${encodeURIComponent(report.value.regionName)}`
+    const response = await apiClient.get(url, { responseType: 'blob' })
+    const cd = response.headers['content-disposition'] || ''
+    const m = cd.match(/filename\*?=([^;]+)/)
+    downloadName.value = m ? decodeURIComponent(m[1].replace(/UTF-8''/, '')) : `Report_${report.value.regionName}_${report.value.date}.rtf`
+    downloadUrl.value = URL.createObjectURL(response.data)
+  } catch (err) {
+    console.error('Export error', err)
+    error.value = 'Failed to export report.'
+  }
+}
 </script>
 
 <style scoped>
 .daily-report-page {
-  /* full viewport height minus header height */
   height: calc(100vh - 60px);
   overflow-y: auto;
   padding: 1.5rem;
@@ -136,36 +161,36 @@ const hasExtraData = computed(() => report.value && Object.keys(report.value.ext
 .main-content {
   background: white;
   border-radius: 8px;
-  padding: 5rem;
+  padding: 2rem;
+}
+
+.export-button {
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.export-button:hover {
+  background-color: #0056b3;
+}
+
+.download-link a {
+  color: #28a745;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.download-link a:hover {
+  text-decoration: underline;
 }
 
 .error-msg {
   color: red;
   margin-bottom: 1rem;
 }
-
-.report-details p {
-  margin: 0.5rem 0;
-}
-
-.group-report {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 1rem;
-}
-
-.sub-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-
-.sub-table th, .sub-table td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
-}
-
-.sub-table thead th {
-  background: #f4f4f4;
-}
 </style>
+

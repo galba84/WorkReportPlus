@@ -58,9 +58,14 @@ public class ExportReportController {
 
     @GetMapping("/export/word")
     public ResponseEntity<?> exportWord(@RequestParam String templateName,
-                                             @RequestParam(required = false) String regionId,
-                                             @RequestParam(required = false) String groupName,
-                                             @RequestParam @Valid LocalDate reportDate) throws IOException {
+                                        @RequestParam(required = false) String regionId,
+                                        @RequestParam(required = false) String groupName,
+                                        @RequestParam @Valid LocalDate reportDate) throws IOException {
+
+        UUID regionIdByName = regionService.getRegionIdByName(regionId);
+        if (null != regionIdByName) {
+            regionId=regionIdByName.toString();
+        }
 
         if (!validateRequest(templateName, regionId, groupName, reportDate)) {
             return ResponseEntity.badRequest().build();
@@ -95,6 +100,8 @@ public class ExportReportController {
     }
 
     private boolean validateRequest(String templateName, String regionId, String groupName, LocalDate reportDate) {
+
+
         if (!StringUtils.hasText(templateName) || !reportTypes.contains(templateName)) {
             return false;
         } else if (REGION_REPORT.equalsIgnoreCase(templateName)) {
