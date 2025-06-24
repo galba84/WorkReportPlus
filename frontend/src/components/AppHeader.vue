@@ -15,6 +15,10 @@
             v-if="['POWER_USER', 'ADMIN'].includes(userStore.role)"
           >📋 Подати Звіт ТГР</RouterLink>
           <RouterLink
+            to="/search-report"
+            v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
+          >🖹 Пошук Звіту</RouterLink>
+          <RouterLink
             to="/export-report"
             v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
           >🖹 Експорт Звіту</RouterLink>

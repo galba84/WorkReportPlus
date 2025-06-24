@@ -23,7 +23,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/daily-work-report")
-@CrossOrigin(origins = "http://localhost:5173")
 public class DailyWorkReportController {
 
     private static final Logger logger = LoggerFactory.getLogger(DailyWorkReportController.class);

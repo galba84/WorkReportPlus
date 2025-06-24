@@ -5,6 +5,7 @@ import LoginView from '@/views/LoginView.vue'
 import { getCurrentUser } from '@/api/auth'
 import AdminView from '@/views/AdminView.vue'
 import ExportReport from '@/views/ExportReport.vue'
+import SearchReport from '@/views/SearchReportsView.vue'
 import GroupManager from '@/views/GroupManager.vue'
 import RegionReportTemplate from '@/views/RegionReportTemplate.vue'
 import UsersView from '@/views/UsersView.vue'
@@ -19,6 +20,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView },
     { path: '/admin', component: AdminView, meta: { requiresAuth: true, roles: ['ADMIN'] } },
     { path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
+    { path: '/search-report', name: 'search-report', component: SearchReport, meta: { requiresAuth: true } },
     { path: '/groups', name: 'groups', component: GroupManager, meta: { requiresAuth: true } },
     { path: '/regions', component: () => import('@/views/RegionManager.vue'), meta: { requiresAuth: true } },
     { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { requiresAuth: false } },
