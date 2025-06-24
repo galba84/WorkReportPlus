@@ -1,7 +1,4 @@
-
-// ---------------------------------------------
-// File: frontend/src/views/SearchReportsView.vue
-// ---------------------------------------------
+<!--SearchReportView.vue-->
 <template>
   <div class="search-reports-page">
     <h2>📋 Search Reports</h2>
@@ -59,7 +56,7 @@
             <td>{{ r.regionName }}</td>
             <td>{{ r.description }}</td>
             <td>
-              <RouterLink :to="`/daily-work-report/${r.id}`">Open</RouterLink>
+               <RouterLink :to="{ name: 'open-report', params: { id: r.id } }">Open</RouterLink>
             </td>
           </tr>
           </tbody>
@@ -95,10 +92,8 @@ async function fetchData() {
   error.value = null
   try {
     const data = await searchReports(filters)
-    // Data includes { reports, startDate, endDate, regionNames }
     reports.value = data.reports
     regionNames.value = data.regionNames
-    // sync filters with server defaults
     filters.startDate = data.startDate
     filters.endDate = data.endDate
   } catch (e) {
@@ -112,9 +107,7 @@ function onSearch() {
   fetchData()
 }
 
-onMounted(() => {
-  fetchData()
-})
+onMounted(fetchData)
 </script>
 
 <style scoped>

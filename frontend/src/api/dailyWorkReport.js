@@ -16,3 +16,15 @@ export function searchReports(params = {}) {
   return apiClient.get('/api/daily-work-report/search', { params })
     .then(res => res.data)
 }
+
+/**
+ * Fetch a single daily work report by ID.
+ * @param {string} id - Report UUID
+ * @returns {Promise<Object>} - ReportResponse object
+ */
+export function getReportById(id) {
+  return apiClient
+    .get(`/api/daily-work-report/view/${id}`)
+    .then(res => res.data)
+}
+

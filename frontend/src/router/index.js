@@ -10,6 +10,7 @@ import GroupManager from '@/views/GroupManager.vue'
 import RegionReportTemplate from '@/views/RegionReportTemplate.vue'
 import UsersView from '@/views/UsersView.vue'
 import AuditLog from '@/views/AuditLogView.vue'
+import DailyReportView from "@/views/DailyReportView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,12 @@ const router = createRouter({
     { path: '/admin', component: AdminView, meta: { requiresAuth: true, roles: ['ADMIN'] } },
     { path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
     { path: '/search-report', name: 'search-report', component: SearchReport, meta: { requiresAuth: true } },
+    {
+      path: '/view/:id',
+      name: 'open-report',
+      component: DailyReportView,
+      meta: { requiresAuth: true }
+    },
     { path: '/groups', name: 'groups', component: GroupManager, meta: { requiresAuth: true } },
     { path: '/regions', component: () => import('@/views/RegionManager.vue'), meta: { requiresAuth: true } },
     { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { requiresAuth: false } },

@@ -58,7 +58,7 @@ public class DailyWorkReportController {
                 request.getRegionName() != null ? request.getRegionName() : "unknown",
                 currentUserId,
                 httpRequest.getRemoteAddr(),
-                "Submitted daily region report"
+                "Submitted daily region report : " + response.getId()
         );
 
         return ResponseEntity.ok(response);

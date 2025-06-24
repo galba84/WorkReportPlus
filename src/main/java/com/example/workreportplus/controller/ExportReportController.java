@@ -125,7 +125,7 @@ public class ExportReportController {
             variables.put("preamble", "на виконання Бойового розпорядження Головнокомандуючого Збройних Сил України від 15.03.2023 №12365 та Бойових наказів командира військової частини А4124 від 05.10.2023 №275ДСК, від 03.01.2024 №2ДСК, від 14.10.2023 №286ДСК, від 12.12.2023 №351ДСК та від 21.06.2024 №290ДСК");
 
             variables.put("signature", " \n" +
-                    " \t\n" +
+                    " \n" +
                     "Тимчасово виконуючий обов’язки командира зведеного загону військової частини А4124\n" +
                     "лейтенант                                       _____________                     Максим КРАМАРОВ\n");
 
@@ -209,9 +209,9 @@ public class ExportReportController {
 
 
         UUID groupId = groupService.getGroupIdByName(groupName);
-        GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
-        List<ContractorDto> fightingContractors = contractorService.getAllContractorByIds(report.getFightingContractors());
-        List<ContractorDto> restContractors = contractorService.getAllContractorByIds(report.getRestContractors());
+//        GroupReportDto report = groupReportService.getReportByGroupIdAndDate(groupId, reportDate, lastReportIdByDate);
+        List<ContractorDto> fightingContractors = contractorService.getAllContractorByIds(dto.getFightingContractors());
+        List<ContractorDto> restContractors = contractorService.getAllContractorByIds(dto.getRestContractors());
         vars.put("fightingContractors", printContractors(fightingContractors));
         if (!restContractors.isEmpty()) {
             vars.put("restContractors", restContractorsHeader + printContractors(restContractors));
@@ -219,8 +219,8 @@ public class ExportReportController {
         if (!restContractors.isEmpty()) {
             vars.put("restPlaces", restPlacesHeader + formatPlaces(restPlaces));
         }
-        vars.put("groupReportDescription", report.getDescription());
-        vars.put("successReport", report.getSuccessReport());
+        vars.put("groupReportDescription", dto.getDescription());
+        vars.put("successReport", dto.getSuccessReport());
     }
 
     private String printContractors(List<ContractorDto> contractors) {

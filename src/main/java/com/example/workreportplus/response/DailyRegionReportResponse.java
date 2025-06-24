@@ -31,7 +31,7 @@ public class DailyRegionReportResponse implements ReportResponse {
     private LocalDate updatedOn;
     private ReportStatus status;
     private Map<String, String> extraData;
-    private List <UUID> arrivedContractors;
+    private Map<UUID, ContractorDto> arrivedContractors;
     private Map<UUID, ContractorDto> departedContractors;
 
     List<DailyGroupReportResponse> groupReports;

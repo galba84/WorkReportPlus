@@ -43,6 +43,7 @@ public class AuditLogService {
                 .set(AUDIT_LOG.SERVICE_ID, serviceId)
                 .set(AUDIT_LOG.ENTITY_ID, entityId)
                 .set(AUDIT_LOG.USER_ID, userId)
+                .set(AUDIT_LOG.DETAILS, details)
                 // ✅ Use raw SQL with bind placeholder and casting
                 .set(AUDIT_LOG.IP_ADDRESS, DSL.val(optionalIp, SQLDataType.VARCHAR))
                 .execute();
