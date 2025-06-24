@@ -157,12 +157,12 @@ public class ContractorService {
         dto.setNickName(row.size() > 4 ? row.get(4).toString() : "N/A");
 
         // ✅ Use unit_id directly
-        if (!row.get(8).toString().isEmpty() && !row.get(8).toString().equals("-") ) {
+        if (row.size() > 8 && !row.get(8).toString().isEmpty() && !row.get(8).toString().equals("-") ) {
             dto.setUnitId(UUID.fromString(row.get(8).toString()));
         } else {
             dto.setUnitId(UUID.fromString("00000000-0000-0000-0000-000000000000"));
         }
-        if (!row.get(6).toString().isEmpty()&& !row.get(6).toString().equals("-")) {
+        if (row.size() > 6 && !row.get(6).toString().isEmpty()&& !row.get(6).toString().equals("-")) {
             dto.setGroupId(UUID.fromString(row.get(6).toString()));
         }
 
