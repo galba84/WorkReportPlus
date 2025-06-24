@@ -23,7 +23,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/daily-work-report")
-@CrossOrigin(origins = "http://localhost:5173")
 public class DailyWorkReportController {
 
     private static final Logger logger = LoggerFactory.getLogger(DailyWorkReportController.class);
@@ -59,7 +58,7 @@ public class DailyWorkReportController {
                 request.getRegionName() != null ? request.getRegionName() : "unknown",
                 currentUserId,
                 httpRequest.getRemoteAddr(),
-                "Submitted daily region report"
+                "Submitted daily region report : " + response.getId()
         );
 
         return ResponseEntity.ok(response);

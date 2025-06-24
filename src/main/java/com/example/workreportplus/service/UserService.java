@@ -11,7 +11,7 @@ public interface UserService {
     Optional<UsersRecord> getByEmail(String email);
     void createUser(UsersRecord user);
     List<UserDto> getAllUsers();
-    void addOrUpdateUser(UserDto userDto);
+    UserDto addOrUpdateUser(UserDto userDto);
 
     String encodePassword(String rawPassword);
 

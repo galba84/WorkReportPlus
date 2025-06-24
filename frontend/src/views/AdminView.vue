@@ -99,6 +99,7 @@ function submit(endpoint) {
 <style scoped>
 .container {
   padding: 2rem;
+  padding-bottom: 3rem
 }
 .alert {
   background-color: #e0f3ff;

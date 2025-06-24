@@ -170,7 +170,7 @@ public class RegionReportService implements ReportService {
                                         .description(record.get(REGIONREPORT.REGION_DESCRIPTION))
                                         .status(status)
                                         .extraData(JsonUtils.jsonbToMap(record.get(REGIONREPORT.EXTRA_DATA)))
-                                        .arrivedContractors(Arrays.asList(record.get(REGIONREPORT.ARRIVED_CONTRACTORS)))
+                                        .arrivedContractors(populateContractorData(record.get(REGIONREPORT.ARRIVED_CONTRACTORS)))
                                         .departedContractors(populateContractorData(record.get(REGIONREPORT.DEPARTED_CONTRACTORS)))
                                         .date(record.get(REGIONREPORT.REPORT_DATE))
                                         .regionName(regionService.getRegionNameById(record.get(REGIONREPORT.REGION_ID)))
@@ -233,7 +233,9 @@ public class RegionReportService implements ReportService {
             });
         }
 
-        return new DailyRegionReportResponse();
+        DailyRegionReportResponse dailyRegionReportResponse = new DailyRegionReportResponse();
+        dailyRegionReportResponse.setId(regionReportId);
+        return dailyRegionReportResponse;
     }
 
     private List<AmmunitionDto> parseAmmunition(String raw) {
@@ -410,36 +412,6 @@ public class RegionReportService implements ReportService {
             }
         });
     }
-
-//    private void setAmmunition(GroupReportDto groupReportDto, GroupreportRecord record) throws JsonProcessingException {
-//        List<AmmunitionDto> ammunitionList = groupReportDto.getAmmunition();
-//        if (ammunitionList == null || ammunitionList.isEmpty()) {
-//            record.setAmmunition(JSONB.valueOf("[]"));
-//            return;
-//        }
-//
-//        ArrayNode jsonArray = objectMapper.createArrayNode();
-//
-//        for (AmmunitionDto ammo : ammunitionList) {
-//            if (ammo.getName() == null || ammo.getName().trim().isEmpty()) continue;
-//
-//            ObjectNode entry = objectMapper.createObjectNode();
-//            entry.put("name", ammo.getName().trim());
-//
-//            if (ammo.getAmount() != 0) {
-//                entry.put("amount", ammo.getAmount());
-//            }
-//
-//            if (ammo.getUnit() != null && !ammo.getUnit().isBlank()) {
-//                entry.put("unit", ammo.getUnit().trim());
-//            }
-//
-//            jsonArray.add(entry);
-//        }
-//
-//        String ammoJson = objectMapper.writeValueAsString(jsonArray);
-//        record.setAmmunition(JSONB.valueOf(ammoJson));
-//    }
 
 
     public RegionReportDto getReportByRegionIdAndDate(UUID regionId, LocalDate reportDate) {

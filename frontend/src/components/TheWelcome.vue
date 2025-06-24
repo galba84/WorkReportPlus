@@ -157,5 +157,6 @@ import UserIcon from './icons/IconSupport.vue'
   padding: 2rem;
   max-height: 80vh;
   overflow-y: auto;
+  padding-bottom: 3rem
 }
 </style>

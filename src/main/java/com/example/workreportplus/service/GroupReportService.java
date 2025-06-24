@@ -131,6 +131,7 @@ public class GroupReportService implements ReportService {
         try {
             // Fetch reports
             Condition condition = GROUPREPORT.REGION_REPORT_ID.eq(regionReportId);
+            condition = condition.and(GROUPREPORT.STATUS).eq(Boolean.TRUE);
             Result<GroupreportRecord> records = dsl.selectFrom(GROUPREPORT)
                     .where(condition)
                     .fetch();
@@ -151,21 +152,30 @@ public class GroupReportService implements ReportService {
     }
 
     private List<ContractorResponse> getContractorResponses(GroupreportRecord record) {
-        UUID[] contractorIds = record.get(GROUPREPORT.FIGHTING_CONTRACTORS);
+        UUID[] fightingIds = record.get(GROUPREPORT.FIGHTING_CONTRACTORS);
+        UUID[] restIds     = record.get(GROUPREPORT.REST_CONTRACTORS);
 
-        return (contractorIds == null || contractorIds.length == 0)
-                ? List.of()
-                : Arrays.stream(contractorIds)
+        // Merge arrays, filter out nulls, flatten and dedupe
+        List<UUID> allIds = Stream.of(fightingIds, restIds)
+                .filter(arr -> arr != null)
+                .flatMap(Arrays::stream)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (allIds.isEmpty()) {
+            return List.of();
+        }
+
+        return allIds.stream()
                 .map(contractorService::getContractorById)
-                .map(e -> ContractorResponse
-                        .builder()
+                .map(e -> ContractorResponse.builder()
                         .firstName(e.getFirstName())
                         .lastName(e.getLastName())
                         .rank(e.getC_rank())
                         .position(positionService.getNameById(e.getPositionId()))
                         .nickname(e.getNickName())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
 
 

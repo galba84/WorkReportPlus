@@ -58,11 +58,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addOrUpdateUser(UserDto userDto) {
+    public UserDto addOrUpdateUser(UserDto userDto) {
         Optional<UsersRecord> existing = getByEmail(userDto.getEmail());
-
+        UsersRecord user;
         if (existing.isPresent()) {
-            UsersRecord user = existing.get();
+            user = existing.get();
 
             dsl.attach(user); // 🛠️ ключовий момент
 
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
 
             user.update();
         } else {
-            UsersRecord user = dsl.newRecord(USERS);
+            user = dsl.newRecord(USERS);
             user.setId(UUID.randomUUID());
             user.setEmail(userDto.getEmail());
             user.setNickname(userDto.getNickname());
@@ -83,6 +83,7 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(userDto.getPassword()));
             user.insert();
         }
+        return userDto;
     }
 
     @Override

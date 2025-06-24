@@ -5,15 +5,34 @@
     <div class="wrapper">
       <HelloWorld msg="Personal Manager Plus" />
 
-      <nav>
-        <RouterLink to="/">🏠 Home</RouterLink>
-        <RouterLink to="/about">ℹ️ About</RouterLink>
-        <RouterLink to="/new-report" v-if="['POWER_USER', 'ADMIN'].includes(userStore.role)">📋 Подати Звіт ТГР</RouterLink>
-        <RouterLink to="/admin" v-if="userStore.role === 'ADMIN'">🛠️ Admin</RouterLink>
-        <RouterLink to="/export-report" v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)">🖹 Експорт Звіту</RouterLink>
-        <RouterLink to="/regions" v-if="userStore.role === 'ADMIN'">🖹 Регіони</RouterLink>
-        <RouterLink to="/groups" v-if="userStore.role === 'ADMIN'">👥 Групи</RouterLink>
-        <RouterLink to="/RegionReportTemplate" v-if="userStore.role === 'ADMIN'">👥 ТГР Темплейти</RouterLink>
+      <nav class="header-nav">
+        <!-- top row: visible to any logged-in user -->
+        <div class="nav-row public-links">
+          <RouterLink to="/">🏠 Home</RouterLink>
+          <RouterLink to="/about">ℹ️ About</RouterLink>
+          <RouterLink
+            to="/new-report"
+            v-if="['POWER_USER', 'ADMIN'].includes(userStore.role)"
+          >📋 Подати Звіт ТГР</RouterLink>
+          <RouterLink
+            to="/search-report"
+            v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
+          >🖹 Пошук Звіту</RouterLink>
+<!--          <RouterLink-->
+<!--            to="/export-report"-->
+<!--            v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"-->
+<!--          >🖹 Експорт Звіту</RouterLink>-->
+        </div>
+
+        <!-- bottom row: only ADMINs -->
+        <div class="nav-row admin-links" v-if="userStore.role === 'ADMIN'">
+          <RouterLink to="/admin">🛠️ Admin</RouterLink>
+          <RouterLink to="/regions">🖹 Регіони</RouterLink>
+          <RouterLink to="/groups">👥 Групи</RouterLink>
+          <RouterLink to="/RegionReportTemplate">👥 ТГР Темплейти</RouterLink>
+          <RouterLink to="/users">👥 UsersView</RouterLink>
+          <RouterLink to="/audit-logs">👥 Audit Logs</RouterLink>
+        </div>
       </nav>
     </div>
 
@@ -81,13 +100,6 @@ function logout() {
   justify-content: center;
 }
 
-nav {
-  margin-top: 0.5rem;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 nav a {
   color: white;
   text-decoration: none;
@@ -140,6 +152,24 @@ nav a.router-link-exact-active {
 .auth-links a {
   color: white;
   text-decoration: underline;
+}
+
+.header-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* space between rows */
+}
+
+/* each row lays out links in a row */
+.nav-row {
+  display: flex;
+  gap: 1rem;
+}
+
+/* optional: visually separate the admin row */
+.admin-links {
+  padding-top: 0.5rem;
+  border-top: 1px solid #ccc;
 }
 
 </style>
