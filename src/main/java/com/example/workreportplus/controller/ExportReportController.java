@@ -8,15 +8,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -56,6 +55,67 @@ public class ExportReportController {
         this.regionReportTemplateService = regionReportTemplateService;
     }
 
+
+    /**
+     * Export all daily region reports for the given month.
+     * URL: /api/daily-work-report/export/word/{month}?templateName=...&regionId=...
+     * month in ISO-8601 Year-Month format: YYYY-MM
+     */
+    @GetMapping("/export/word/{month}")
+    public ResponseEntity<byte[]> exportMonthlyWord(
+            @PathVariable String month,
+            @RequestParam String templateName,
+            @RequestParam String regionId) throws IOException {
+        // Parse YearMonth
+        YearMonth ym;
+        try {
+            ym = YearMonth.parse(month);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+        // Validate region
+        UUID regionUUID;
+        try {
+            regionUUID = UUID.fromString(regionId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!regionService.regionExistsById(regionUUID)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Load most recent template for region
+        RegionReportTemplateDto templateDto =
+                regionReportTemplateService.getRecentTemplateByRegionId(regionUUID);
+
+        ByteArrayOutputStream allReports = new ByteArrayOutputStream();
+
+        // Iterate each day in month
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
+            if (!regionReportService.existsByRegionIdAndDate(regionUUID, date)) continue;
+            Map<String, String> vars = enrichTemplateVariables(regionService.getRegionNameById(regionUUID), date, templateDto);
+            byte[] piece = wordTemplateService.generateWordFromRtfTemplate(
+                    templateName,
+                    vars,
+                    templateDto);
+            allReports.write(piece);
+        }
+
+        // Build filename
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
+        String filename = templateName.replace(" ", "_")
+                + "_" + ym + "_" + timestamp + ".rtf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.valueOf("application/rtf"))
+                .body(allReports.toByteArray());
+    }
+
+
     @GetMapping("/export/word")
     public ResponseEntity<?> exportWord(@RequestParam String templateName,
                                         @RequestParam(required = false) String regionId,
@@ -64,7 +124,7 @@ public class ExportReportController {
 
         UUID regionIdByName = regionService.getRegionIdByName(regionId);
         if (null != regionIdByName) {
-            regionId=regionIdByName.toString();
+            regionId = regionIdByName.toString();
         }
 
         if (!validateRequest(templateName, regionId, groupName, reportDate)) {
@@ -119,6 +179,7 @@ public class ExportReportController {
     private Map<String, String> enrichTemplateVariables(String regionName, LocalDate reportDate,
                                                         RegionReportTemplateDto template) throws IOException {
         UUID regionIdByName = regionService.getRegionIdByName(regionName);
+
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate, regionIdByName);
         Map<String, String> variables = new HashMap<>();
         variables.put("regionName", regionName);
@@ -131,14 +192,13 @@ public class ExportReportController {
         } else {
             variables.put("preamble", "на виконання Бойового розпорядження Головнокомандуючого Збройних Сил України від 15.03.2023 №12365 та Бойових наказів командира військової частини А4124 від 05.10.2023 №275ДСК, від 03.01.2024 №2ДСК, від 14.10.2023 №286ДСК, від 12.12.2023 №351ДСК та від 21.06.2024 №290ДСК");
 
-            variables.put("signature", " \n" +
+            variables.put("signature",
                     " \n" +
                     "Тимчасово виконуючий обов’язки командира зведеного загону військової частини А4124\n" +
-                    "лейтенант                                       _____________                     Максим КРАМАРОВ\n");
+                    "лейтенант                        _____________                     Максим КРАМАРОВ\n");
 
         }
-        UUID regionId = regionService.getRegionIdByName(regionName);
-        List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionId);
+        List<UUID> groupIds = groupService.getGroupIdsByRegionId(regionIdByName);
         List<GroupReportDto> groupReportDtoList = groupIds.stream()
                 .map(gid -> groupReportService.getReportByGroupIdAndDate(gid, reportDate, lastReportIdByDate))
                 .filter(Objects::nonNull)
@@ -156,9 +216,15 @@ public class ExportReportController {
         variables.put("groupReports", String.join("\n", groupReportsString));
 
 
-        RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionId, reportDate);
-        List<ContractorDto> arrived = contractorService.getContractorsByIds(report.getArrivedContractors());
-        List<ContractorDto> departed = contractorService.getContractorsByIds(report.getDepartedContractors());
+        RegionReportDto report = regionReportService.getReportByRegionIdAndDate(regionIdByName, reportDate);
+        // Null-safe contractor lists
+        List<ContractorDto> arrived = (report.getArrivedContractors() != null && !report.getArrivedContractors().isEmpty())
+                ? contractorService.getContractorsByIds(report.getArrivedContractors())
+                : List.of();
+
+        List<ContractorDto> departed = (report.getDepartedContractors() != null && !report.getDepartedContractors().isEmpty())
+                ? contractorService.getContractorsByIds(report.getDepartedContractors())
+                : List.of();
         String arrivedOrderNumber = "";
         String departedOrderNumber = "";
         LocalDate arrivedOrderDate = null;
@@ -202,13 +268,13 @@ public class ExportReportController {
         UUID lastReportIdByDate = regionReportService.getLastReportIdByDate(reportDate, regionIdByName);
         List<PlaceDto> fightingPlaces = placesService.getPlacesByIds(dto.getFightingPlaces());
         List<PlaceDto> restPlaces = placesService.getPlacesByIds(dto.getRestPlaces());
-        String ammoHeader = "Витрата боєприпасів та розхід засобів:" + System.lineSeparator();
+        String ammoHeader = "Витрата боєприпасів та розхід засобів: " ;
         String restContractorsHeader = "та" + System.lineSeparator();
         String restPlacesHeader = "на ППД " + System.lineSeparator();
 
         vars.put("groupName", groupName);
         vars.put("groupDetails", details);
-        if (dto.getAmmunition() != null && dto.getAmmunition().length() > 2) {
+        if (dto.getAmmunition() != null && dto.getAmmunition().length() > 6) {
             vars.put("ammunition", ammoHeader + dto.getAmmunition());
         }
         vars.put("reportDate", formatDate(reportDate));

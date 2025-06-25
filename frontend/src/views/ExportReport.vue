@@ -17,7 +17,7 @@
 
       <!-- Report date -->
       <label for="reportDate">Дата звіту:</label>
-      <input type="date" id="reportDate" v-model="reportDate" required />
+      <input type="month" id="reportDate" v-model="reportDate" required />
 
       <button type="submit" class="generate-button">згенерувати</button>
     </form>
@@ -61,7 +61,9 @@ async function generateDocument() {
   }
 
   try {
-    const url = `/api/daily-work-report/export/word?templateName=Region Report&reportDate=${encodeURIComponent(reportDate.value)}&regionId=${encodeURIComponent(selectedRegionId.value)}`
+// new
+    const url = `/api/daily-work-report/export/word/${reportDate.value}` +
+      `?templateName=Region Report&regionId=${encodeURIComponent(selectedRegionId.value)}`
     const response = await apiClient.get(url, { responseType: 'blob' })
 
     const contentType = response.headers['content-type']
