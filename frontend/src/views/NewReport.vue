@@ -3,6 +3,22 @@
 import {ref, onMounted, watch, computed} from 'vue'
 import apiClient from '@/api'
 
+// — Editing logic for each group card —
+  const editGroup = idx => {
+    const r = reports.value[idx]
+    r.isEditing = true
+    }
+const saveGroup = idx => {
+    reports.value[idx].isEditing = false
+    }
+const cancelEdit = idx => {
+    const r = reports.value[idx]
+    // revert local edits
+    r.description    = r.tempDescription
+    r.successReport = r.tempsuccessReport
+    r.isEditing      = false
+    }
+
 const today = new Date().toISOString().split('T')[0]
 const selectedDate = ref(today)
 
@@ -45,10 +61,16 @@ const fetchReports = async () => {
     })
 
     // Set up report list with per-report selectedFightingPlaceId
-    reports.value = response.data.map(report => ({
-      ...report,
-      selectedFightingPlaceId: report.fightingPlaces?.[0]?.id || null
-    }))
+        reports.value = response.data.map(report => ({
+                ...report,
+            selectedFightingPlaceId: report.fightingPlaces?.[0]?.id || null,
+            // keep your editing flags
+              isEditing: false,
+            tempDescription: report.description,
+            tempSuccessReport: report.successReport,
+          fightingContractors: report.fightingContractors || [],
+            restContractors:     report.restContractors    || []
+        }))
 
     error.value = null
   } catch (err) {
@@ -68,13 +90,13 @@ const totalFightingGroups = computed(() =>
 
 const totalFightingGroupsWorked = computed(() =>
   reports.value.filter(r =>
-    r.fightingGroup == true && r.fightingReport?.trim() !== ''
+    r.fightingGroup == true && r.successReport?.trim() !== ''
   ).length
 )
 
 const totalFightingGroupsWorkedVerified = computed(() =>
   reports.value.filter(r =>
-    r.fightingGroup == true && r.fightingReport?.trim() !== '' && r.ammoVerified == true
+    r.fightingGroup == true && r.successReport?.trim() !== '' && r.ammoVerified == true
   ).length
 )
 
@@ -130,14 +152,13 @@ const submitReport = async () => {
         description: report.description,
         placeCoefficients: report.placeCoefficients || {}, // Map<UUID, String>
         contractorPlaceMap: report.contractorPlaceMap || {}, // Map<String, List<String>>
-        successReport: report.fightingReport || '', // renamed in DTO
+        successReport: report.successReport || '', // renamed in DTO
         ammunition: report.ammunition || '',
 
         contractorLoosesIdTypeMap: report.contractorLoosesIdTypeMap || {}, // optional
-        worked: report.fightingReport?.trim() !== '',
+        worked: report.successReport?.trim() !== '',
         ammoVerified: report.ammoVerified || false,
         extraDataGroupReport: report.extraDataGroupReport || {},
-
         fightingContractors: report.fightingContractors.map(c => c.id),
         restContractors: report.restContractors.map(c => c.id),
         fightingPlaces: report.selectedFightingPlaceId ? [report.selectedFightingPlaceId] : [],
@@ -421,16 +442,37 @@ watch([arrivedOrderNumber, arrivedOrderDate], ([newNumber, newDate]) => {
 
 
       <ul v-else class="report-list">
-        <li
-          v-for="(report, index) in reports"
-          :key="report.groupId"
-          :class="[
-    'report-card',
+        <li v-for="(report, index) in reports" :key="report.groupId" :class="['report-card',
     report.isFighting ? 'fighting' : 'non-fighting',
     hasValidationErrorsForGroup(index) ? 'tab-error' : ''
   ]"
           style="position: relative;"
         >
+
+          <!-- Edit controls -->
+                    <div class="edit-controls" style="text-align:right; margin-bottom:.5rem;">
+                      <button v-if="!report.isEditing" @click="editGroup(index)">✏️ Редагувати</button>
+                      <template v-else>
+                        <button @click="saveGroup(index)">💾 Зберегти</button>
+                        <button @click="cancelEdit(index)">❌ Скасувати</button>
+                      </template>
+                    </div>
+
+                    <!-- Editable description & result -->
+                    <div v-if="report.isEditing">
+                      <label>📋 Опис:</label>
+                      <textarea rows="3" v-model="report.description" placeholder="Опис групи"></textarea>
+                      <label>📣 Результат:</label>
+                      <textarea rows="3" v-model="report.successReport" placeholder="Результат бойової роботи"></textarea>
+                    </div>
+
+                    <!-- Static display when not editing -->
+                    <div v-else>
+                      <strong>👥 {{ report.groupName }}</strong><br/>
+                      📋 Опис: {{ report.description || '—' }}<br/>
+                      📣 Результат бойової роботи: {{ report.successReport || '—' }}<br/>
+                    </div>
+
           <!-- 🗡️ Іконка меча для бойової групи -->
           <span
             v-if="report.isFighting"
@@ -463,8 +505,8 @@ watch([arrivedOrderNumber, arrivedOrderDate], ([newNumber, newDate]) => {
 
           <!-- Заголовки -->
           <strong>👥 {{ report.groupName }}</strong><br/>
-          📋 Опис: {{ report.description || '—' }}<br/>
-          📣 Результат бойової роботи: {{ report.fightingReport || '—' }}<br/>
+<!--          📋 Опис: {{ report.description || '—' }}<br/>-->
+<!--          📣 Результат бойової роботи: {{ report.successReport || '—' }}<br/>-->
           💥 Розхід БК: {{ report.ammunition || '—' }}<br/>
 
           <!-- Перевірка БК -->

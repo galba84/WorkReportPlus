@@ -11,7 +11,7 @@ public record GroupReportPrefillDto(
         UUID groupId,
         String groupName,
         String description,
-        String fightingReport,
+        String successReport,
         List<ContractorDto> fightingContractors,
         List<PlaceDto> fightingPlaces,
         List<ContractorDto> restContractors,

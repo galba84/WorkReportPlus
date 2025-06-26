@@ -13,33 +13,33 @@
 
         <p><strong>ID:</strong> {{ report.id }}</p>
         <p><strong>Date:</strong> {{ report.date }}</p>
-        <p><strong>Region:</strong> {{ report.regionName }}</p>
-        <p><strong>Description:</strong> {{ report.description }}</p>
+        <p><strong>Регіон:</strong> {{ report.regionName }}</p>
+        <p><strong>Опис:</strong> {{ report.description }}</p>
         <p><strong>Created By:</strong> {{ report.createdBy }}</p>
         <p><strong>Created On:</strong> {{ report.createdOn }}</p>
         <p><strong>Updated By:</strong> {{ report.updatedBy }}</p>
         <p><strong>Updated On:</strong> {{ report.updatedOn }}</p>
-        <p><strong>Status:</strong> {{ report.status }}</p>
+        <p><strong>Статус:</strong> {{ report.status }}</p>
 
         <p v-if="downloadUrl" class="download-link">
           <a :href="downloadUrl" :download="downloadName">{{ downloadName }}</a>
         </p>
 
-        <h3>Arrived Contractors</h3>
+        <h3>Прибувші Contractors</h3>
         <ul>
           <li v-for="([key, dto]) in Object.entries(report.arrivedContractors)" :key="key">
             {{ dto.lastName }} {{ dto.firstName }} ({{ dto.nickName }})
           </li>
         </ul>
 
-        <h3>Departed Contractors</h3>
+        <h3>Вибувші Contractors</h3>
         <ul>
           <li v-for="([key, dto]) in Object.entries(report.departedContractors)" :key="key">
             {{ dto.lastName }} {{ dto.firstName }} ({{ dto.nickName }})
           </li>
         </ul>
 
-        <h3>Additional Information</h3>
+        <h3>Додаткова Information</h3>
         <table v-if="hasExtraData">
           <thead><tr><th>Key</th><th>Value</th></tr></thead>
           <tbody>
@@ -59,7 +59,7 @@
             <p><strong>Created On:</strong> {{ group.createdOn }}</p>
             <p><strong>Updated By:</strong> {{ group.updatedBy }}</p>
             <p><strong>Updated On:</strong> {{ group.updatedOn }}</p>
-            <p><strong>Status:</strong> {{ group.status }}</p>
+            <p><strong>Статус:</strong> {{ group.status }}</p>
             <p><strong>Звіт:</strong> {{ group.description }}</p>
             <p><strong>Успіхи:</strong> {{ group.successReport }}</p>
 
@@ -72,7 +72,7 @@
 
             <h5>Contractors</h5>
             <table class="sub-table">
-              <thead><tr><th>Name</th><th>Rank</th><th>Position</th><th>Nickname</th></tr></thead>
+              <thead><tr><th>Імя</th><th>Звання</th><th>Посада</th><th>Нікнейм</th></tr></thead>
               <tbody>
               <tr v-for="con in group.contractors" :key="con.id">
                 <td>{{ con.firstName }} {{ con.lastName }}</td>
@@ -83,7 +83,7 @@
               </tbody>
             </table>
 
-            <h5>Working Areas</h5>
+            <h5>Бойові населені пункти</h5>
             <table class="sub-table">
               <thead><tr><th>Name</th><th>Type</th><th>County</th><th>District</th><th>Coef</th></tr></thead>
               <tbody>
