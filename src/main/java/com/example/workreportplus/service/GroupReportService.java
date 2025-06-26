@@ -232,6 +232,7 @@ public class GroupReportService implements ReportService {
                 .regionReportId(record.get(GROUPREPORT.REGION_REPORT_ID))
                 .date(record.get(GROUPREPORT.REPORT_DATE))
                 .description(record.get(GROUPREPORT.DESCRIPTION))
+                .successReport(record.get(GROUPREPORT.SUCCESS_REPORT))
                 .status(status)
                 .worked(record.get(GROUPREPORT.WORKED))
                 .contractors(getContractorResponses(record))

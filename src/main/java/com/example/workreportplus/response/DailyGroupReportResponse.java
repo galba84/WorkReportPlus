@@ -3,6 +3,7 @@ package com.example.workreportplus.response;
 import com.example.workreportplus.ENUM.ReportStatus;
 import com.example.workreportplus.dto.AmmunitionDto;
 import com.example.workreportplus.dto.PlaceDto;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
@@ -36,6 +37,8 @@ public class DailyGroupReportResponse implements ReportResponse {
     private List<UUID> contractorLooses;
 
     private String description;
+    @JsonProperty("successReport")
+    private String successReport;
 
     private boolean worked;
 
