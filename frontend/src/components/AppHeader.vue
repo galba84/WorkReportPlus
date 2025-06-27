@@ -22,11 +22,13 @@
             to="/export-report"
             v-if="['USER', 'POWER_USER', 'ADMIN'].includes(userStore.role)"
           >🖹 Експорт Звіту</RouterLink>
+          <RouterLink to="/attendance">🛠️ Табель</RouterLink>
         </div>
 
         <!-- bottom row: only ADMINs -->
         <div class="nav-row admin-links" v-if="userStore.role === 'ADMIN'">
           <RouterLink to="/admin">🛠️ Admin</RouterLink>
+
           <RouterLink to="/regions">🖹 Регіони</RouterLink>
           <RouterLink to="/groups">👥 Групи</RouterLink>
           <RouterLink to="/RegionReportTemplate">👥 ТГР Темплейти</RouterLink>

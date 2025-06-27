@@ -11,6 +11,7 @@ import RegionReportTemplate from '@/views/RegionReportTemplate.vue'
 import UsersView from '@/views/UsersView.vue'
 import AuditLog from '@/views/AuditLogView.vue'
 import DailyReportView from "@/views/DailyReportView.vue";
+import AttendanceTable from "@/views/AttendanceTable.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,6 +21,7 @@ const router = createRouter({
     { path: '/new-report', name: 'new-report', component: NewReport, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/admin', component: AdminView, meta: { requiresAuth: true, roles: ['ADMIN'] } },
+    { path: '/attendance', component: AttendanceTable, meta: { requiresAuth: true, roles: ['ADMIN'] } },
     { path: '/export-report', name: 'export-report', component: ExportReport, meta: { requiresAuth: true } },
     { path: '/search-report', name: 'search-report', component: SearchReport, meta: { requiresAuth: true } },
     {

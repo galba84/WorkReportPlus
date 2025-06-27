@@ -333,15 +333,25 @@ public class GroupReportService implements ReportService {
                 .fetch()
                 .stream()
                 .flatMap(record -> {
-                    UUID[] contractorIds = record.getFightingContractors();
+                    UUID[] fightingContractors = record.getFightingContractors();
+                    UUID[] restContractors = record.getRestContractors();
                     LocalDate date = record.getReportDate();
-                    Boolean isWorked = record.getWorked();
                     String groupName = groupService.getGroupNameById(record.getGroupId());
 
-                    if (contractorIds == null) return Stream.empty();
+                    if (restContractors == null) return Stream.empty();
 
-                    return Arrays.stream(contractorIds)
-                            .map(id -> new ContractorWorkReportDtoRecord(id, date, isWorked, groupName));
+                    Stream<ContractorWorkReportDtoRecord> fightStream = fightingContractors == null
+                            ? Stream.empty()
+                            : Arrays.stream(fightingContractors)
+                            .map(id -> new ContractorWorkReportDtoRecord(id, date, true, groupName));
+
+                    Stream<ContractorWorkReportDtoRecord> restStream = restContractors == null
+                            ? Stream.empty()
+                            : Arrays.stream(restContractors)
+                            .map(id -> new ContractorWorkReportDtoRecord(id, date, false, groupName));
+
+                    return Stream.concat(fightStream, restStream);
+
                 })
                 .collect(Collectors.toList());
     }

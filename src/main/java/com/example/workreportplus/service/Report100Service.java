@@ -4,9 +4,17 @@ import com.example.workreportplus.dto.ContractorDto;
 import com.example.workreportplus.dto.ContractorWorkReportDtoRecord;
 import com.example.workreportplus.dto.Report100Record;
 import jakarta.validation.Valid;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +115,48 @@ public class Report100Service {
 
 
 
-    public byte[] exportToExcel(String regionName, @Valid LocalDate reportDate) {
-        return new byte[0];
+    public byte[] exportToExcel(String regionName, LocalDate reportDate) {
+        // 1) fetch raw data and build the 2D table
+        List<Report100Record> records = getReportForRegionAndMonth(regionName, reportDate);
+        int daysInMonth = YearMonth.from(reportDate).lengthOfMonth();
+        List<List<String>> table = buildAttendanceTable(records, daysInMonth);
+
+        // 2) create workbook
+        try (Workbook wb = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = wb.createSheet("Attendance");
+
+            // 3) header row
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Name");
+            header.createCell(1).setCellValue("Rank");
+            header.createCell(2).setCellValue("Nickname");
+            header.createCell(3).setCellValue("Group");
+            for (int d = 1; d <= daysInMonth; d++) {
+                header.createCell(3 + d).setCellValue("Day " + d);
+            }
+
+            // 4) data rows
+            for (int i = 0; i < table.size(); i++) {
+                List<String> rowData = table.get(i);
+                Row row = sheet.createRow(i + 1);
+                for (int j = 0; j < rowData.size(); j++) {
+                    row.createCell(j).setCellValue(rowData.get(j));
+                }
+            }
+
+            // 5) auto-size columns (optional)
+            for (int col = 0; col < 4 + daysInMonth; col++) {
+                sheet.autoSizeColumn(col);
+            }
+
+            // 6) write out and return bytes
+            wb.write(out);
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to generate Excel report", e);
+        }
     }
 }
