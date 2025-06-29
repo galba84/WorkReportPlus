@@ -1,3 +1,4 @@
+// userStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 

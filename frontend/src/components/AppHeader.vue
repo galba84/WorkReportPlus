@@ -34,6 +34,7 @@
           <RouterLink to="/RegionReportTemplate">👥 ТГР Темплейти</RouterLink>
           <RouterLink to="/users">👥 UsersView</RouterLink>
           <RouterLink to="/audit-logs">👥 Audit Logs</RouterLink>
+          <RouterLink to="/settings">👥 Налаштування</RouterLink>
         </div>
       </nav>
     </div>

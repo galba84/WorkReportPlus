@@ -30,7 +30,8 @@ public class RegionService {
     public UUID getRegionIdByName(String name) {
         return dsl.select(REGION.ID)
                 .from(REGION)
-                .where(REGION.REGION_NAME.eq(name))
+                .where(REGION.REGION_NAME.eq(name)
+                        .and(REGION.STATUS.isTrue()))
                 .fetchOne(REGION.ID);
     }
 

@@ -12,6 +12,7 @@ import UsersView from '@/views/UsersView.vue'
 import AuditLog from '@/views/AuditLogView.vue'
 import DailyReportView from "@/views/DailyReportView.vue";
 import AttendanceTable from "@/views/AttendanceTable.vue";
+import SettingsView from "@/views/SettingsView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,7 @@ const router = createRouter({
     { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { requiresAuth: false } },
     { path: '/RegionReportTemplate', component: RegionReportTemplate, meta: { requiresAuth: true } },
     { path: '/audit-logs', component: AuditLog, meta: { requiresAuth: true } },
+    { path: '/settings', component: SettingsView, meta: { requiresAuth: true } },
     {
       path: '/users',
       name: 'users',

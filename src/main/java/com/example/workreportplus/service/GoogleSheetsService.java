@@ -18,6 +18,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class GoogleSheetsService {
@@ -27,9 +28,9 @@ public class GoogleSheetsService {
     public static final String OPERATIVE_REB_TABLE_ID = "1je5TCzCRfCY-1dcpFrqLk7eCVjiZABgZfzd2POMMCGA";
     public static final String ZAPORIZZIA_100_30_TABLE_ID = "1QzRXeAevTEor857Gp2jY5JlYUvUgcgjyDjxJPB6eHmU";
 
-    public static final Map<String, String> regionTo100_30_Map = Map.of(
+    public static Map<String, String> regionTo100_30_Map = new ConcurrentHashMap<>(Map.of(
             "a0e76880-4ff6-4b0b-b6a8-2e4ca73b481e", ZAPORIZZIA_100_30_TABLE_ID
-    );
+    ));
 
 
     private static final String APPLICATION_NAME = "WorkReportPlus";

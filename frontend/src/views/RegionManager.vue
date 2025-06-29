@@ -189,6 +189,7 @@ table {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
+  overflow-y: auto
 }
 
 th,
