@@ -1,83 +1,79 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">App Settings</h1>
+  <div class="app-settings">
+    <h1>App Settings</h1>
 
-    <!-- existing settings -->
-    <table class="min-w-full bg-white mb-6">
-      <thead>
-      <tr>
-        <th class="py-2">Key</th>
-        <th class="py-2">Value</th>
-        <th class="py-2">Format</th>
-        <th class="py-2">description</th>
-        <th class="py-2">settingData</th>
-        <th class="py-2">Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="s in settings" :key="s.settingKey">
-        <td class="border px-4 py-2">{{ s.settingKey }}</td>
-        <td class="border px-4 py-2">{{ s.settingValue }}</td>
-        <td class="border px-4 py-2">{{ s.format }}</td>
-        <td class="border px-4 py-2">{{ s.description }}</td>
-        <td class="border px-4 py-2">{{ s.settingData }}</td>
-        <td class="border px-4 py-2">
-          <button @click="onEdit(s)" class="px-2 py-1 bg-green-200 rounded">Edit</button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+    <!-- Scrollable table -->
+    <div class="settings-table-wrapper">
+      <table class="settings-table">
+        <thead>
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+          <th>Format</th>
+          <th>Description</th>
+          <th>Setting Data</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="s in settings" :key="s.settingKey">
+          <td>{{ s.settingKey }}</td>
+          <td>{{ s.settingValue }}</td>
+          <td>{{ s.format }}</td>
+          <td>{{ s.description }}</td>
+          <td class="json-cell">{{ s.settingData }}</td>
+          <td>
+            <button @click="onEdit(s)">Edit</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <!-- form: new/edit -->
-    <div class="space-y-4">
-      <h2 class="text-lg font-medium">{{ editing ? 'Edit' : 'New' }} Setting</h2>
-      <form @submit.prevent="onSave" class="space-y-2">
-        <!-- key selector -->
-        <div>
-          <label class="block mb-1">Key</label>
-          <select v-model="form.settingKey" :disabled="editing" required class="border p-2 w-full">
+    <!-- Form -->
+    <div class="settings-form">
+      <h2>{{ editing ? 'Edit' : 'New' }} Setting</h2>
+      <form @submit.prevent="onSave">
+        <label>Key
+          <select v-model="form.settingKey" :disabled="editing" required>
             <option value="" disabled>Select key</option>
             <option v-for="k in availableKeys" :key="k" :value="k">{{ k }}</option>
           </select>
-        </div>
+        </label>
 
-        <!-- value input -->
-        <div>
-          <label class="block mb-1">Value</label>
-          <input v-model="form.settingValue" required class="border p-2 w-full" />
-        </div>
+        <label>Value
+          <template v-if="form.format === 'boolean'">
+            <div class="radio-group">
+              <label><input type="radio" value="true" v-model="form.settingValue" /> True</label>
+              <label><input type="radio" value="false" v-model="form.settingValue" /> False</label>
+            </div>
+          </template>
+          <template v-else>
+            <input v-model="form.settingValue" required />
+          </template>
+        </label>
 
-        <!-- format (readonly) -->
-        <div>
-          <label class="block mb-1">Format</label>
-          <input v-model="form.format" readonly class="border bg-gray-100 p-2 w-full" />
-        </div>
+        <label>Format
+          <input v-model="form.format" readonly />
+        </label>
 
-        <!-- data JSON -->
-        <div>
-          <label class="block mb-1">Data (JSON)</label>
-          <textarea v-model="form.settingData" rows="4" class="border p-2 w-full"></textarea>
-        </div>
+        <label>Data (JSON)
+          <textarea v-model="form.settingData" rows="4"></textarea>
+        </label>
 
-        <!-- description -->
-        <div>
-          <label class="block mb-1">Description</label>
-          <textarea v-model="form.description" rows="2" class="border p-2 w-full"></textarea>
-        </div>
+        <label>Description
+          <textarea v-model="form.description" rows="2"></textarea>
+        </label>
 
-        <!-- actions -->
-        <div class="flex space-x-2">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-            {{ editing ? 'Update' : 'Create' }}
-          </button>
-          <button v-if="editing" type="button" @click="onReset" class="bg-gray-300 px-4 py-2 rounded">
-            Cancel
-          </button>
+        <div class="form-actions">
+          <button type="submit">{{ editing ? 'Update' : 'Create' }}</button>
+          <button v-if="editing" type="button" @click="onReset">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
@@ -146,32 +142,109 @@ onMounted(async () => {
 });
 </script>
 <style scoped>
-/* Custom scrollbar styling for the settings table */
-div.bg-white.shadow.rounded-lg.overflow-hidden table::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.app-settings {
+  padding: 3rem;
+  font-family: sans-serif;
+  max-width: 1000px;
+  overflow-y: auto
 }
-div.bg-white.shadow.rounded-lg.overflow-hidden table::-webkit-scrollbar-track {
-  background: #f1f1f1;
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
-div.bg-white.shadow.rounded-lg.overflow-hidden table::-webkit-scrollbar-thumb {
-  background: #cbd5e0; /* Tailwind gray-300 */
+
+.settings-table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-y: auto
+}
+
+.settings-table th,
+.settings-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.settings-table th {
+  background-color: #f5f5f5;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.json-cell {
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.settings-form {
+  margin-top: 2rem;
+  padding: 10px;
+
+  overflow-y: auto
+}
+
+.settings-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto
+}
+
+.settings-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+}
+
+.settings-form input,
+.settings-form select,
+.settings-form textarea {
+  font-weight: normal;
+  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #aaa;
   border-radius: 4px;
 }
-div.bg-white.shadow.rounded-lg.overflow-hidden table::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0; /* Tailwind gray-400 */
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
 }
 
-/* Smooth row hover transition */
-tbody tr {
-  transition: background-color 0.2s ease;
-}
-
-/* Button transition */
 button {
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  padding: 6px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #e0e0e0;
 }
-button:active {
-  transform: scale(0.98);
+
+button:hover {
+  background-color: #d0d0d0;
 }
+
+.radio-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-weight: normal;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: 0.4rem;
+}
+
 </style>

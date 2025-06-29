@@ -24,11 +24,12 @@ public class AppSettingsController {
     private final AppSettingsService appSettingsService;
 
 
-
+    public static final String VOCABULARY_UPDATE_JOB = "vocabulary_update_job";
     private static final Map<String, String> DEFAULT_METADATA = Map.of(
             OPERATIVE_REPORT_BPLA, "map",
             OPERATIVE_REPORT_REB, "map",
-            ATTENDANCE_MAP, "map"
+            ATTENDANCE_MAP, "map",
+            VOCABULARY_UPDATE_JOB, "boolean"
     );
 
     public AppSettingsController(AppSettingsService appSettingsService) {

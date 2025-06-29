@@ -21,6 +21,7 @@
       <button @click="submit('/admin/ranks')">{{ $t('button.Ranks') }}</button>
       <button @click="submit('/admin/positions')">{{ $t('button.Positions') }}</button>
       <button @click="submit('/admin/units')">{{ $t('button.Units') }}</button>
+      <button @click="submit('/admin/sync')">ALL SYNC</button>
 
       <div>
         <p>
