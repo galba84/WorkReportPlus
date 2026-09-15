@@ -80,7 +80,7 @@ docker compose up -d db
 bash gradlew bootRun
 ```
 
-Use `.\gradlew.bat bootRun` on Windows. The default Spring profile is `demo`; the Java process listens on port 8080. Use a free port and set `API_PROXY_TARGET` for Vite if another application occupies 8080.
+Use `.\gradlew.bat bootRun` on Windows. The default Spring profile is `demo`; the Java process listens on port 8082. If another application occupies 8082, set `SERVER_PORT` for the backend and `API_PROXY_TARGET` for Vite to the corresponding backend URL.
 
 In another terminal:
 
@@ -90,7 +90,7 @@ npm ci
 npm run dev
 ```
 
-Vite listens on http://localhost:5178 and proxies `/api` to http://localhost:8080. Stop the Compose frontend before using Vite on the same port.
+Vite listens on http://localhost:5178 and proxies `/api` to http://localhost:8082. Stop the Compose frontend before using Vite on the same port.
 
 ## Architecture
 
