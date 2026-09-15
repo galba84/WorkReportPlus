@@ -1,0 +1,35 @@
+name: workreportplus-demo
+services:
+  db:
+    image: postgres:16.6-alpine
+    environment:
+      POSTGRES_USER: workreportplus
+      POSTGRES_PASSWORD: demo-database-password
+      POSTGRES_DB: workreportplus
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["demo_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workreportplus -d workreportplus"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  app:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: demo
+      DB_URL: jdbc:postgresql://db:5432/workreportplus
+      DB_PASSWORD: demo-database-password
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  frontend:
+    build: ./frontend
+    ports: ["127.0.0.1:5178:5178"]
+    depends_on:
+      app: {condition: service_healthy}
+volumes:
+  demo_data:

@@ -1,0 +1,106 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+apply plugin: 'java'
+group = 'com.personalmanagerplus'
+ext['testcontainers.version'] = '1.21.4'
+ext['jooq.version'] = '3.19.20'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.google.api-client:google-api-client:1.32.1'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
+    implementation 'com.google.apis:google-api-services-sheets:v4-rev612-1.25.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.41.5'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // or jjwt-gson if preferred
+
+
+    runtimeOnly 'org.postgresql:postgresql:42.7.5' // PostgreSQL driver
+
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    implementation 'org.jooq:jooq:3.19.20' // Ensure consistent jOOQ version
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    compileOnly 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.flywaydb:flyway-database-postgresql:11.3.4'
+
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.poi:poi-scratchpad:5.2.3'  // Required for RTF processing
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'user.timezone', 'UTC'
+}
+
+
+// Generate types from migrations in a disposable PostgreSQL database, never a developer DB.
+sourceSets {
+    codegen { java.srcDir 'build-tools/src/main/java' }
+    main { java.srcDir layout.buildDirectory.dir('generated/sources/jooq/main') }
+}
+dependencies {
+    codegenImplementation 'org.jooq:jooq-codegen:3.19.20'
+    codegenRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+    codegenImplementation 'org.postgresql:postgresql:42.7.5'
+    codegenImplementation 'org.flywaydb:flyway-database-postgresql:11.3.4'
+    codegenImplementation 'org.testcontainers:postgresql:1.21.4'
+    testImplementation 'org.testcontainers:postgresql:1.21.4'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
+}
+tasks.register('generateJooq', JavaExec) {
+    dependsOn tasks.named('codegenClasses')
+    classpath = sourceSets.codegen.runtimeClasspath
+    mainClass = 'GenerateJooq'
+    args file('src/main/resources/db/migration').absolutePath,
+         layout.buildDirectory.dir('generated/sources/jooq/main').get().asFile.absolutePath
+    inputs.dir('src/main/resources/db/migration')
+    inputs.files(sourceSets.codegen.output)
+    outputs.dir(layout.buildDirectory.dir('generated/sources/jooq/main'))
+}
+tasks.named('compileJava') { dependsOn tasks.named('generateJooq') }
+tasks.named('bootJar') { archiveFileName = 'workreportplus.jar' }
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}

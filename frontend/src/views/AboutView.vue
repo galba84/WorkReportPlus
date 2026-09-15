@@ -1,0 +1,1 @@
+<template><main style="padding:2rem"><h1>About WorkReportPlus</h1><p>A Java and Vue application for regional reports, personnel management, and document exports.</p><p>The public demo contains synthetic data. The reporting interface retains Ukrainian labels from the original workflow.</p></main></template>

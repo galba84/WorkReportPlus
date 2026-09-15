@@ -1,0 +1,2 @@
+Deployment instructions are in README.md.
+No hostnames, usernames, or private deployment paths are stored in this public version.

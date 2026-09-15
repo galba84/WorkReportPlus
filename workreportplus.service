@@ -1,0 +1,14 @@
+[Unit]
+Description=WorkReportPlus
+After=network.target
+[Service]
+User=workreportplus
+WorkingDirectory=/opt/workreportplus
+EnvironmentFile=/etc/workreportplus.env
+ExecStart=/usr/bin/java -jar /opt/workreportplus/workreportplus.jar
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

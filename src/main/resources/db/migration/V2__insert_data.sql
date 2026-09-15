@@ -1,0 +1,1 @@
+-- Public edition: synthetic fixtures live in demo/data.sql and run only in the demo profile.
